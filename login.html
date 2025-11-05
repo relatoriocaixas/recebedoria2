@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Recebedoria</title>
+  <link rel="icon" type="image/x-icon" href="assets/icon-32.ico">
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <h2 id="formTitle">Login</h2>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <input type="text" id="loginMatricula" placeholder="?? Matrícula" required />
+      <input type="password" id="loginSenha" placeholder="?? Senha" required />
+      <button id="btnLogin">Entrar</button>
+      <div class="toggle-link" id="showRegister">Criar uma conta</div>
+    </div>
+
+    <!-- Registro -->
+    <div id="registerForm">
+      <input type="text" id="regNome" placeholder="Nome completo" required />
+      <input type="text" id="regMatricula" placeholder="Matrícula" required />
+      <input type="date" id="regDataAdmissao" placeholder="Data de Admissão" required />
+      <input type="password" id="regSenha" placeholder="Senha" required />
+      <input type="password" id="regConfirmaSenha" placeholder="Confirmar senha" required />
+      <button id="btnRegistrar">Registrar</button>
+      <div class="toggle-link" id="showLogin">Já tenho conta</div>
+    </div>
+  </div>
+
+  <footer>
+    Developed by Lucas L Custodio - Portal Recebedoria v1
+  </footer>
+
+  <script type="module">
+    import { app, auth, db } from "./firebaseConfig_v2.js";
+    import {
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import {
+      doc,
+      setDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const showRegister = document.getElementById("showRegister");
+    const showLogin = document.getElementById("showLogin");
+    const formTitle = document.getElementById("formTitle");
+
+    // Inicializa visibilidade
+    registerForm.style.display = "none";
+
+    showRegister.addEventListener("click", () => {
+      loginForm.style.display = "none";
+      registerForm.style.display = "block";
+      formTitle.textContent = "Registrar";
+    });
+
+    showLogin.addEventListener("click", () => {
+      registerForm.style.display = "none";
+      loginForm.style.display = "block";
+      formTitle.textContent = "Login";
+    });
+
+    // =======================================================
+    // ?? LOGIN
+    // =======================================================
+    document.getElementById("btnLogin").addEventListener("click", async () => {
+      const matricula = document.getElementById("loginMatricula").value.trim();
+      const senha = document.getElementById("loginSenha").value.trim();
+
+      if (!matricula || !senha) return alert("Preencha todos os campos.");
+
+      try {
+        await signInWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
+        window.location.href = "index.html";
+      } catch (e) {
+        alert("Erro ao fazer login: " + e.message);
+      }
+    });
+
+    // =======================================================
+    // ?? REGISTRO
+    // =======================================================
+    document.getElementById("btnRegistrar").addEventListener("click", async () => {
+      const nome = document.getElementById("regNome").value.trim();
+      const matricula = document.getElementById("regMatricula").value.trim();
+      const dataAdmissao = document.getElementById("regDataAdmissao").value.trim();
+      const senha = document.getElementById("regSenha").value.trim();
+      const confirmaSenha = document.getElementById("regConfirmaSenha").value.trim();
+
+      if (!nome || !matricula || !senha || !confirmaSenha || !dataAdmissao)
+        return alert("Preencha todos os campos.");
+
+      if (senha !== confirmaSenha)
+        return alert("As senhas não conferem.");
+
+      try {
+        // Cria o usuário no Auth
+        const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
+
+        // Define o displayName (nome)
+        await updateProfile(cred.user, { displayName: nome });
+
+        // Salva na coleção USERS (apenas ela)
+        await setDoc(doc(db, "users", cred.user.uid), {
+          uid: cred.user.uid,
+          nome,
+          matricula,
+          email: `${matricula}@movebuss.local`,
+          dataAdmissao,
+          createdAt: new Date(),
+          admin: false
+        });
+
+        alert("Usuário registrado com sucesso!");
+        registerForm.style.display = "none";
+        loginForm.style.display = "block";
+        formTitle.textContent = "Login";
+      } catch (e) {
+        alert("Erro ao registrar: " + e.message);
+      }
+    });
+  </script>
+</body>
+</html>
