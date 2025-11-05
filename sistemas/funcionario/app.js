@@ -232,12 +232,25 @@ async function carregarGraficoIndividual(matricula) {
       options: {
         maintainAspectRatio: false,
         responsive: true,
-        scales: {
-          y: { beginAtZero: true, ticks: { color: "#00bfff" } },
-          y1: { position: "right", ticks: { color: "#ffd700" }, grid: { drawOnChartArea: false } },
-          x: { ticks: { color: "#ccc" } }
+        interaction: { mode: "index", intersect: false },
+        stacked: false,
+        plugins: {
+          legend: {
+            labels: { color: "#fff", font: { size: 14, weight: "600" } }
+          },
+          title: {
+            display: true,
+            text: `Abastecimentos e Valores - ${agora.toLocaleString("pt-BR", { month: "long", year: "numeric" })}`,
+            color: "#fff",
+            font: { size: 18, weight: "700" }
+          },
+          tooltip: { titleFont: { size: 14 }, bodyFont: { size: 13 } }
         },
-        plugins: { legend: { labels: { color: "#fff" } } }
+        scales: {
+          x: { ticks: { color: "#ccc", font: { size: 13 } }, grid: { color: "rgba(255,255,255,0.1)" } },
+          y: { type: "linear", beginAtZero: true, ticks: { color: "#00bfff", font: { size: 13 } }, grid: { color: "rgba(255,255,255,0.1)" } },
+          y1: { type: "linear", position: "right", ticks: { color: "#ffd700", font: { size: 13 } }, grid: { drawOnChartArea: false } }
+        }
       }
     });
   });
@@ -247,6 +260,8 @@ async function carregarGraficoIndividual(matricula) {
 
 // --- COMPARATIVO (todos funcionários — admin)
 async function carregarComparativo() {
+  if (!usuarioAtual || !usuarioAtual.isAdmin) return; // só admin
+
   const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
@@ -274,24 +289,27 @@ async function carregarComparativo() {
     data: {
       labels,
       datasets: [
-        {
-          label: "Abastecimentos",
-          data: abastecimentos,
-          backgroundColor: cores
-        },
-        {
-          label: "Valor Total Folha (R$)",
-          data: valores,
-          type: "line",
-          borderColor: "#ffd700",
-          backgroundColor: "rgba(255,215,0,0.3)"
-        }
+        { label: "Abastecimentos", data: abastecimentos, backgroundColor: cores },
+        { label: "Valor Total Folha (R$)", data: valores, type: "line", borderColor: "#ffd700", backgroundColor: "rgba(255,215,0,0.3)" }
       ]
     },
     options: {
       maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, ticks: { color: "#fff" } }, x: { ticks: { color: "#ccc" } } },
-      plugins: { legend: { labels: { color: "#fff" } } }
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#fff", font: { size: 14, weight: "600" } } },
+        title: {
+          display: true,
+          text: `Comparativo Mensal - ${mes}`,
+          color: "#fff",
+          font: { size: 16, weight: "700" }
+        },
+        tooltip: { titleFont: { size: 14 }, bodyFont: { size: 13 } }
+      },
+      scales: {
+        x: { ticks: { color: "#ccc", font: { size: 13 } } },
+        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 13 } } }
+      }
     }
   });
 }
