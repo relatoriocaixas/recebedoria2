@@ -184,7 +184,8 @@ async function carregarComparativo() {
   }
   comparativoChartCtx.parentElement.style.display = "block";
 
-  const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
+  const mes = mesEscolhidoInput.value;
+
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
 
@@ -192,7 +193,9 @@ async function carregarComparativo() {
     const r = d.data();
     if (!r.dataCaixa) return;
     const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
-    const mesRegistro = data.toISOString().slice(0, 7);
+    
+    // FILTRO CORRIGIDO: usa mês local
+    const mesRegistro = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2,'0')}`;
     if (mesRegistro !== mes) return;
 
     if (!mapa[r.matricula]) mapa[r.matricula] = { abastecimentos: 0, valorFolha: 0 };
@@ -229,7 +232,6 @@ async function carregarComparativo() {
     }
   });
 }
-
 document.getElementById("mesEscolhido").addEventListener("change", carregarComparativo);
 
 // --- AVISOS ---
