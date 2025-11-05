@@ -220,3 +220,8 @@ body {
     margin-right: 0;
   }
 }
+.charts canvas {
+  width: 100% !important;
+  height: 400px !important; /* maior que antes */
+  margin-bottom: 20px; /* separa do total-info */
+}

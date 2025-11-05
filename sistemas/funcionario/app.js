@@ -4,7 +4,6 @@ import {
   getDocs,
   addDoc,
   setDoc,
-  doc,
   query,
   where,
   orderBy,
@@ -29,7 +28,6 @@ const totalInfoEl = document.getElementById("totalInfo");
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
-let isAdmin = false;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -49,27 +47,20 @@ async function carregarPerfil(user) {
   const dados = snap.docs[0].data();
 
   matriculaAtual = dados.matricula;
-  isAdmin = !!dados.isAdmin;
 
-  // Nome com cor conforme matrícula
+  // Nome com cor
   const matriculasRosa = ["9003", "5271", "6414", "8789"];
   nomeEl.textContent = dados.nome;
   nomeEl.style.color = matriculasRosa.includes(dados.matricula) ? "#ff69b4" : "#00ffff";
 
   matriculaEl.textContent = dados.matricula;
-
-  // Data de admissão no padrão brasileiro
   admissaoEl.textContent = dados.dataAdmissao
     ? new Date(dados.dataAdmissao.seconds ? dados.dataAdmissao.seconds * 1000 : dados.dataAdmissao).toLocaleDateString("pt-BR")
     : "—";
-
-  // Horário
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
-  // Carregar gráfico individual
+  // Carregar gráfico e avisos
   carregarGraficoIndividual(dados.matricula);
-
-  // Carregar avisos
   carregarAvisos(dados.matricula);
 
   // Configura input de mês
@@ -83,14 +74,21 @@ async function carregarPerfil(user) {
     });
   }
 
-  // Mostrar painel admin se for admin
-  if (isAdmin) {
-    document.getElementById("adminControls").classList.remove("hidden");
+  // --- ADMIN PANEL ---
+  if (dados.isAdmin) {
+    const adminPanel = document.getElementById("adminControls");
+    if (adminPanel) adminPanel.classList.remove("hidden");
+
     await popularMatriculaSelect();
 
-    document.getElementById("btnSalvarHorario").addEventListener("click", salvarHorarioAdmin);
-    document.getElementById("btnSalvarAviso").addEventListener("click", salvarAvisoAdmin);
-    document.getElementById("btnVerAvisosAdmin").addEventListener("click", mostrarModalAvisosAdmin);
+    // Adiciona eventos aos botões
+    const btnHorario = document.getElementById("btnSalvarHorario");
+    const btnAviso = document.getElementById("btnSalvarAviso");
+    const btnVerAvisos = document.getElementById("btnVerAvisosAdmin");
+
+    if (btnHorario) btnHorario.onclick = salvarHorarioAdmin;
+    if (btnAviso) btnAviso.onclick = salvarAvisoAdmin;
+    if (btnVerAvisos) btnVerAvisos.onclick = mostrarModalAvisosAdmin;
   }
 }
 
@@ -101,13 +99,14 @@ async function carregarAvisos(matricula) {
 
   if (snap.empty) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
-    btnAvisos.classList.remove("aviso-vermelho");
     btnAvisos.style.backgroundColor = "#888";
+    btnAvisos.style.animation = "none";
     return;
   }
 
   btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
-  btnAvisos.classList.add("aviso-vermelho");
+  btnAvisos.style.backgroundColor = "red";
+  btnAvisos.style.animation = "brilhoPulse 1.5s infinite";
 
   avisosLista.innerHTML = "";
   snap.forEach((d) => {
@@ -117,11 +116,9 @@ async function carregarAvisos(matricula) {
   });
 }
 
-btnAvisos.addEventListener("click", () => {
-  modalAvisos.showModal();
-});
+btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// --- GRÁFICO INDIVIDUAL ---
+// --- GRÁFICO ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
@@ -168,69 +165,71 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     if (chartMensal) chartMensal.destroy();
 
     chartMensal = new Chart(mensalChartCtx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Abastecimentos",
-            data: abastecimentos,
-            backgroundColor: "rgba(136,136,136,0.6)",
-            borderColor: "#004d4d",
-            borderWidth: 2,
-            borderRadius: 8,
-            yAxisID: "y",
-          },
-          {
-            label: "Valor Folha (R$)",
-            data: valores,
-            type: "line",
-            borderColor: "#00CED1",
-            backgroundColor: "rgba(0,206,209,0.2)",
-            borderWidth: 3,
-            tension: 0.4,
-            yAxisID: "y1",
-            pointStyle: "rectRot",
-            pointRadius: 6,
-            pointBackgroundColor: "#00CED1",
-          },
-        ],
+  type: "bar",
+  data: {
+    labels,
+    datasets: [
+      {
+        label: "Abastecimentos",
+        data: abastecimentos,
+        backgroundColor: "rgba(136,136,136,0.6)", // cinza translúcido
+        borderColor: "#004d4d", // azul escuro
+        borderWidth: 2,
+        borderRadius: 8,
+        yAxisID: "y",
       },
-      options: {
-        maintainAspectRatio: false,
-        responsive: true,
-        plugins: {
-          legend: {
-            labels: { color: "#fff", font: { size: 14 } },
-          },
-          tooltip: {
-            mode: "index",
-            intersect: false,
-            backgroundColor: "rgba(0,0,0,0.9)",
-            titleColor: "#00CED1",
-            bodyColor: "#fff",
-            borderColor: "#00CED1",
-            borderWidth: 1,
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: "#888", font: { size: 12 } },
-            grid: { color: "rgba(136,136,136,0.2)", borderDash: [4, 2] },
-          },
-          y1: {
-            position: "right",
-            ticks: { color: "#00CED1", font: { size: 12 } },
-            grid: { drawOnChartArea: false },
-          },
-          x: {
-            ticks: { color: "#fff", font: { size: 12 } },
-            grid: { color: "rgba(255,255,255,0.05)" },
-          },
-        },
+      {
+        label: "Valor Folha (R$)",
+        data: valores,
+        type: "line",
+        borderColor: "#00CED1", // turquesa
+        backgroundColor: "rgba(0,206,209,0.2)", // turquesa translúcido
+        borderWidth: 3,
+        tension: 0.4,
+        yAxisID: "y1",
+        pointStyle: "rectRot",
+        pointRadius: 6,
+        pointBackgroundColor: "#00CED1",
       },
-    });
+    ],
+  },
+  options: {
+    maintainAspectRatio: false,
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: "#fff", font: { size: 14 } },
+      },
+      tooltip: {
+        mode: "index",
+        intersect: false,
+        backgroundColor: "rgba(0,0,0,0.9)",
+        titleColor: "#00CED1",
+        bodyColor: "#fff",
+        borderColor: "#00CED1",
+        borderWidth: 1,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { color: "#888", font: { size: 12 } },
+        grid: { color: "rgba(136,136,136,0.2)", borderDash: [4, 2] },
+        title: { display: true, text: "Abastecimentos", color: "#888", font: { size: 12 } }
+      },
+      y1: {
+        position: "right",
+        ticks: { color: "#00CED1", font: { size: 12 } },
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: "Valor Folha (R$)", color: "#00CED1", font: { size: 12 } }
+      },
+      x: {
+        ticks: { color: "#fff", font: { size: 12 } },
+        grid: { color: "rgba(255,255,255,0.05)" },
+      },
+    },
+  },
+});
 
     totalInfoEl.innerHTML = `
       <div class="resumo">
@@ -244,6 +243,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
 // --- ADMIN FUNCTIONS ---
 async function popularMatriculaSelect() {
   const select = document.getElementById("adminMatriculaSelect");
+  if (!select) return;
   select.innerHTML = "";
   const usersSnap = await getDocs(collection(db, "users"));
   usersSnap.forEach((d) => {
@@ -292,7 +292,6 @@ async function mostrarModalAvisosAdmin() {
   snap.forEach((d) => {
     const aviso = d.data();
     const div = document.createElement("div");
-    div.classList.add("admin-aviso-item");
     div.textContent = `${aviso.matricula}: ${aviso.texto}`;
     lista.appendChild(div);
   });
