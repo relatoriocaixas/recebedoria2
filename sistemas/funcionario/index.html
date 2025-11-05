@@ -11,11 +11,12 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <h1 id="funcTitle">Funcionário</h1>
+      <h1>Funcionário</h1>
     </div>
   </header>
 
   <main class="wrap charts-wrapper">
+    <!-- PERFIL -->
     <section class="card profile-card">
       <div class="profile-left">
         <h2 id="funcNome">—</h2>
@@ -34,6 +35,7 @@
         <!-- Painel Admin -->
         <div id="adminControls" class="admin-only hidden">
           <h3>Painel do Administrador</h3>
+
           <div class="admin-row">
             <label>Matrícula:</label>
             <select id="adminMatriculaSelect"></select>
@@ -58,19 +60,25 @@
       </div>
     </section>
 
-    <!-- Escolher mês -->
+    <!-- GRÁFICO MENSAL -->
     <section class="card charts">
       <div class="chart-col">
         <h3>Resumo Mensal — Caixa</h3>
-        <input id="mesEscolhido" type="month" />
+
+        <div class="controls">
+          <label for="mesEscolhido">Mês:</label>
+          <input id="mesEscolhido" type="month" />
+        </div>
+
         <canvas id="mensalChart"></canvas>
       </div>
     </section>
 
+    <!-- RESUMO ABAIXO DO GRÁFICO -->
     <div id="totalInfo" class="total-info"></div>
   </main>
 
-  <!-- Modal de Avisos -->
+  <!-- MODAL DE AVISOS -->
   <dialog id="modalAvisos" class="modal">
     <form method="dialog" class="modal-body">
       <h3>Avisos</h3>
@@ -79,7 +87,7 @@
     </form>
   </dialog>
 
-  <!-- Modal Admin Avisos -->
+  <!-- MODAL ADMIN AVISOS -->
   <dialog id="modalAdminAvisos" class="modal">
     <form method="dialog" class="modal-body">
       <h3>Todos os Avisos</h3>

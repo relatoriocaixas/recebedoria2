@@ -1,227 +1,121 @@
 ﻿/* Reset básico */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Arial', sans-serif;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Fundo e cores gerais */
+/* Fundo radial animado */
 body {
-  background: radial-gradient(circle at top left, #000000, #111111);
-  color: #fff;
   min-height: 100vh;
+  background: radial-gradient(circle at center, #000000, #111111, #000000);
+  animation: pulse 10s infinite alternate;
+  color: #fff;
 }
 
+@keyframes pulse {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 50% 50%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* Topbar */
 .topbar {
-  padding: 12px 20px;
-  border-bottom: 2px solid #006666;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #004d4d; /* azul petróleo */
   display: flex;
   align-items: center;
-  background-color: #000;
 }
 
 .topbar h1 {
   font-size: 1.5rem;
-  color: #fff;
-}
-
-.wrap {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 0 20px;
+  margin-left: 0;
 }
 
 /* Cards */
 .card {
-  background-color: #111;
-  border: 2px solid #006666;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid #004d4d; /* azul petróleo */
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 0 10px rgba(0,102,102,0.5);
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 900px;
 }
 
-/* Profile Card */
-.profile-left h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
+/* Perfil */
+.profile-left h2 { 
+  font-size: 1.5rem; 
+  margin-bottom: 0.5rem; 
 }
 
-/* Nome colorido */
-.nome-rosa { color: #ff69b4; }
-.nome-azul { color: #00bfff; }
+/* Cores do nome */
+.nome-rosa { color: #ff00ff; }
+.nome-azul { color: #00cfff; }
 
-/* Meta info */
-.meta div {
-  margin-bottom: 6px;
-}
+/* Meta informações */
+.meta div { margin-bottom: 0.25rem; }
 
 /* Botão de avisos */
 .btn-avisos {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.btn-cinza {
-  background-color: #666;
-  color: #fff;
-}
-
-/* Botão vermelho piscando */
-@keyframes brilhoPulse {
-  0% { box-shadow: 0 0 4px 2px rgba(255,0,0,0.3); }
-  50% { box-shadow: 0 0 10px 4px rgba(255,0,0,0.8); }
-  100% { box-shadow: 0 0 4px 2px rgba(255,0,0,0.3); }
-}
-.aviso-vermelho {
-  background-color: red;
-  color: #fff;
-  animation: brilhoPulse 1.5s infinite;
-}
-
-/* Admin only hidden */
-.hidden { display: none; }
-
-/* Admin rows */
-.admin-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  flex-wrap: wrap; /* Garante responsividade */
-}
-
-.admin-row label {
-  width: 80px;
-  margin-right: 6px;
-}
-
-.admin-row input,
-.admin-row select {
-  flex: 1;
-  min-width: 120px;
-  padding: 6px 8px;
-  margin-right: 6px;
-  border-radius: 6px;
-  border: 1px solid #006666;
-  background-color: #222;
-  color: #fff;
-}
-
-.admin-row button {
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  margin-top: 4px; /* Pequeno espaçamento em telas pequenas */
+  transition: all 0.3s;
 }
 
-.admin-row button.primary {
-  background-color: #00bfff;
-  color: #000;
+.btn-cinza { 
+  background-color: #888; 
+  color: #fff; 
 }
 
-/* Charts */
-.charts canvas {
-  width: 100% !important;
-  height: 300px !important;
+.aviso-vermelho { 
+  background-color: #ff0000; 
+  color: #fff; 
 }
 
-/* Total info */
-.total-info {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 10px;
-  font-size: 1.1rem;
+.blink { 
+  animation: blink 1s infinite; 
 }
 
-.resumo span {
-  display: inline-block;
-  margin-right: 20px;
+@keyframes blink { 
+  0%,50%,100% { opacity:1; } 
+  25%,75% { opacity:0.3; } 
 }
 
-/* Modal */
-.modal::backdrop {
-  background: rgba(0,0,0,0.7);
+/* Gráficos */
+.charts-wrapper { padding: 1rem; }
+.chart-col { 
+  margin-top: 1rem; 
+  height: 400px; 
 }
 
-.modal-body {
-  background: #111;
-  border: 2px solid #006666;
-  border-radius: 12px;
-  padding: 20px;
-  width: 400px;
-  max-width: 90%; /* Para telas pequenas */
+/* Resumo abaixo do gráfico */
+.resumo { 
+  margin-top: 1rem; 
+  font-size: 1rem; 
+  display: flex; 
+  justify-content: space-around; 
 }
 
-.modal-body h3 {
-  margin-bottom: 10px;
+.resumo .abastecimentos { 
+  color: #888; 
+  font-weight: bold; 
 }
 
-.modal-body p {
-  margin-bottom: 6px;
+.resumo .dinheiro { 
+  color: #00f5ff; 
+  font-weight: bold; 
 }
 
-.modal-body .admin-aviso-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.modal-body .admin-aviso-item input {
-  flex: 1;
-  margin: 0 6px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #006666;
-  background-color: #222;
-  color: #fff;
-}
-
-.modal-body .admin-aviso-item button {
-  padding: 4px 8px;
-  margin-left: 4px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.btn-editar { background-color: #00bfff; color: #000; }
-.btn-excluir { background-color: red; color: #fff; }
-
-/* Inputs mês */
+/* Input para escolher mês */
 #mesEscolhido {
-  margin-bottom: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #006666;
-  background-color: #222;
+  margin-top: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #004d4d;
+  background-color: rgba(0,0,0,0.3);
   color: #fff;
-}
-
-/* Ajustes de responsividade para painel admin */
-@media (max-width: 600px) {
-  .admin-row label {
-    width: 100%;
-    margin-bottom: 4px;
-  }
-
-  .admin-row input,
-  .admin-row select,
-  .admin-row button {
-    width: 100%;
-    margin-right: 0;
-  }
-}
-.charts canvas {
-  width: 100% !important;
-  height: 400px !important; /* maior que antes */
-  margin-bottom: 20px; /* separa do total-info */
 }
