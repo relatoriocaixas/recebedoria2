@@ -82,6 +82,9 @@ async function carregarGraficoIndividual(matricula) {
 
   onSnapshot(q, (snap) => {
     const dias = {};
+    let totalAbastecimentos = 0;
+    let totalValor = 0;
+
     snap.forEach(docSnap => {
       const r = docSnap.data();
       if (!r.dataCaixa) return;
@@ -90,18 +93,30 @@ async function carregarGraficoIndividual(matricula) {
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
       dias[dia].abastecimentos++;
       dias[dia].valorFolha += Number(r.valorFolha || 0);
+
+      totalAbastecimentos++;
+      totalValor += Number(r.valorFolha || 0);
     });
 
     const labels = [];
     const abastecimentos = [];
     const valores = [];
+
     for (let d = 1; d <= ultimoDia.getDate(); d++) {
       labels.push(d.toString().padStart(2, "0"));
       abastecimentos.push(dias[d]?.abastecimentos || 0);
       valores.push(dias[d]?.valorFolha || 0);
     }
 
+    // Exibe resumo acima do gráfico
+    const totalInfoEl = document.getElementById("totalInfo");
+    totalInfoEl.innerHTML = `
+      <strong>Total Abastecimentos:</strong> ${totalAbastecimentos} |
+      <strong>Total Recebido:</strong> R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+    `;
+
     if (chartMensal) chartMensal.destroy();
+
     chartMensal = new Chart(mensalChartCtx, {
       type: "bar",
       data: {
@@ -110,9 +125,10 @@ async function carregarGraficoIndividual(matricula) {
           {
             label: "Abastecimentos",
             data: abastecimentos,
-            backgroundColor: "rgba(0,191,255,0.5)",
-            borderColor: "#00bfff",
-            borderWidth: 1,
+            backgroundColor: "rgba(0, 255, 255, 0.7)",
+            borderColor: "#00ffff",
+            borderWidth: 2,
+            borderRadius: 6,
             yAxisID: "y"
           },
           {
@@ -120,19 +136,56 @@ async function carregarGraficoIndividual(matricula) {
             data: valores,
             type: "line",
             borderColor: "#ffd700",
-            backgroundColor: "rgba(255,215,0,0.3)",
-            yAxisID: "y1"
+            backgroundColor: "rgba(255,215,0,0.4)",
+            borderWidth: 3,
+            tension: 0.3,
+            yAxisID: "y1",
+            pointStyle: "rectRot",
+            pointRadius: 6,
+            pointBackgroundColor: "#ffd700"
           }
         ]
       },
       options: {
         maintainAspectRatio: false,
         responsive: true,
-        plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
+        plugins: {
+          legend: {
+            labels: {
+              color: "#fff",
+              font: { size: 14 },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            },
+            onClick: null
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            titleColor: "#00ffff",
+            bodyColor: "#fff",
+            borderColor: "#00ffff",
+            borderWidth: 1
+          }
+        },
         scales: {
-          y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 12 } } },
-          y1: { position: "right", ticks: { color: "#ffd700", font: { size: 12 } }, grid: { drawOnChartArea: false } },
-          x: { ticks: { color: "#ccc", font: { size: 12 } } }
+          y: {
+            beginAtZero: true,
+            ticks: { color: "#0ff", font: { size: 12 } },
+            grid: {
+              color: "rgba(0,255,255,0.2)"
+            }
+          },
+          y1: {
+            position: "right",
+            ticks: { color: "#ffd700", font: { size: 12 } },
+            grid: { drawOnChartArea: false }
+          },
+          x: {
+            ticks: { color: "#fff", font: { size: 12 } },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          }
         }
       }
     });
