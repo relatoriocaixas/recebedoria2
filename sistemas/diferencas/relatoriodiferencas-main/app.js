@@ -1,12 +1,34 @@
-import { auth, db } from "../firebaseConfig_v2.js";
+// Importações diretas do Firebase (sem precisar de módulos locais)
 import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore,
   collection,
   addDoc,
   getDocs,
   query,
   orderBy,
-  serverTimestamp,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getAuth
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+// === CONFIGURAÇÃO FIREBASE ===
+const firebaseConfig = {
+  apiKey: "AIzaSyDbv2jGEJbA_0J0w9rEwflhYpKaqhe_RgU",
+  authDomain: "unificado-441cd.firebaseapp.com",
+  projectId: "unificado-441cd",
+  storageBucket: "unificado-441cd.appspot.com",
+  messagingSenderId: "932372316846",
+  appId: "1:932372316846:web:4b1906cb0b3ff405b021d0"
+};
+
+// Inicialização
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // ELEMENTOS
 const btnSalvarRelatorio = document.getElementById("btnSalvarRelatorio");
@@ -33,15 +55,20 @@ function atualizarSobraFalta() {
 valorFolhaInput.addEventListener("input", atualizarSobraFalta);
 valorDinheiroInput.addEventListener("input", atualizarSobraFalta);
 
-// CARREGA LISTA DE USUÁRIOS (para admins)
+// CARREGA LISTA DE USUÁRIOS
 async function carregarUsuarios() {
-  const snapshot = await getDocs(collection(db, "users"));
-  snapshot.forEach((doc) => {
-    const opt = document.createElement("option");
-    opt.value = doc.data().matricula;
-    opt.textContent = `${doc.data().matricula} - ${doc.data().nome}`;
-    matriculaForm.appendChild(opt);
-  });
+  try {
+    const usersCol = collection(db, "users");
+    const snapshot = await getDocs(usersCol);
+    snapshot.forEach((doc) => {
+      const opt = document.createElement("option");
+      opt.value = doc.data().matricula;
+      opt.textContent = `${doc.data().matricula} - ${doc.data().nome}`;
+      matriculaForm.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar usuários:", err);
+  }
 }
 carregarUsuarios();
 
@@ -52,7 +79,7 @@ btnSalvarRelatorio.addEventListener("click", async () => {
   const valorFolha = parseFloat(valorFolhaInput.value) || 0;
   const valorDinheiro = parseFloat(valorDinheiroInput.value) || 0;
   const sobraFalta = parseFloat(sobraFaltaInput.value) || 0;
-  const abastecimento = parseInt(abastecimentoInput.value) || 0; // ✅ campo abastecimento
+  const abastecimento = parseInt(abastecimentoInput.value) || 0;
   const observacao = observacaoInput.value.trim();
 
   if (!matricula || !dataCaixa) {
@@ -75,17 +102,17 @@ btnSalvarRelatorio.addEventListener("click", async () => {
     alert("Relatório salvo com sucesso!");
     limparCamposFormulario();
 
-    // 🔄 Limpa e recarrega a lista automaticamente
+    // 🔄 Atualiza automaticamente
     listaRelatorios.innerHTML = "";
     await carregarRelatorios();
 
   } catch (error) {
     console.error("Erro ao salvar relatório:", error);
-    alert("Erro ao salvar relatório. Verifique o console.");
+    alert("Erro ao salvar relatório. Veja o console.");
   }
 });
 
-// LIMPA OS CAMPOS DO FORMULÁRIO
+// LIMPA OS CAMPOS
 function limparCamposFormulario() {
   dataCaixaInput.value = "";
   valorFolhaInput.value = "";
@@ -96,27 +123,33 @@ function limparCamposFormulario() {
   matriculaForm.selectedIndex = 0;
 }
 
-// EXIBIR RELATÓRIOS
+// CARREGAR RELATÓRIOS
 async function carregarRelatorios() {
   listaRelatorios.innerHTML = "<p>Carregando...</p>";
-  const q = query(collection(db, "relatorios"), orderBy("criadoEm", "desc"));
-  const snapshot = await getDocs(q);
-  listaRelatorios.innerHTML = "";
 
-  snapshot.forEach((doc) => {
-    const r = doc.data();
-    const item = document.createElement("div");
-    item.classList.add("item");
-    item.innerHTML = `
-      <p><strong>${r.matricula}</strong> — ${r.dataCaixa}</p>
-      <p>Folha: R$ ${r.valorFolha.toFixed(2)} | Dinheiro: R$ ${r.valorDinheiro.toFixed(2)}</p>
-      <p>Sobra/Falta: R$ ${r.sobraFalta.toFixed(2)}</p>
-      <p>Abastecimento: ${r.abastecimento || 0} documentos</p>
-      <p>${r.observacao || ""}</p>
-    `;
-    listaRelatorios.appendChild(item);
-  });
+  try {
+    const q = query(collection(db, "relatorios"), orderBy("criadoEm", "desc"));
+    const snapshot = await getDocs(q);
+
+    listaRelatorios.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const r = doc.data();
+      const item = document.createElement("div");
+      item.classList.add("item");
+      item.innerHTML = `
+        <p><strong>${r.matricula}</strong> — ${r.dataCaixa}</p>
+        <p>Folha: R$ ${r.valorFolha.toFixed(2)} | Dinheiro: R$ ${r.valorDinheiro.toFixed(2)}</p>
+        <p>Sobra/Falta: R$ ${r.sobraFalta.toFixed(2)}</p>
+        <p>Abastecimento: ${r.abastecimento || 0}</p>
+        <p>${r.observacao || ""}</p>
+      `;
+      listaRelatorios.appendChild(item);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar relatórios:", err);
+    listaRelatorios.innerHTML = "<p>Erro ao carregar relatórios.</p>";
+  }
 }
 
-// 🔄 Carrega os relatórios ao iniciar
+// 🔄 Carregar ao abrir
 carregarRelatorios();
