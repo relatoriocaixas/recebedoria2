@@ -6,8 +6,9 @@ import {
   query,
   where,
   onSnapshot,
-  serverTimestamp,
-  orderBy
+  updateDoc,
+  doc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -47,6 +48,10 @@ onAuthStateChanged(auth, async (user) => {
   }
   usuarioAtual = user;
   await carregarPerfil(user);
+  if (usuarioAtual.admin) {
+    adminControls.classList.remove("hidden");
+    carregarMatriculasAdmin();
+  }
 });
 
 // --- PERFIL ---
@@ -55,7 +60,6 @@ async function carregarPerfil(user) {
   const snap = await getDocs(q);
   if (snap.empty) return;
   const dados = snap.docs[0].data();
-
   matriculaAtual = dados.matricula;
 
   // Nome rosa ou azul
@@ -71,21 +75,15 @@ async function carregarPerfil(user) {
 
   matriculaEl.textContent = dados.matricula;
 
-  // Corrige timezone para data de admissão
-  if(dados.dataAdmissao){
-    const dt = new Date(dados.dataAdmissao);
+  // Data admissão padrão BR (corrigido)
+  if (dados.dataAdmissao) {
+    const dt = new Date(dados.dataAdmissao.toDate ? dados.dataAdmissao.toDate() : dados.dataAdmissao);
     admissaoEl.textContent = dt.toLocaleDateString("pt-BR");
   } else {
     admissaoEl.textContent = "—";
   }
 
   horarioEl.textContent = dados.horarioTrabalho || "—";
-
-  // Mostrar painel admin se admin
-  if (dados.admin) {
-    adminControls.classList.remove("hidden");
-    await popularSelectMatriculas();
-  }
 
   // Carregar gráfico individual
   carregarGraficoIndividual(dados.matricula);
@@ -97,6 +95,7 @@ async function carregarPerfil(user) {
   const hoje = new Date();
   const mesAtual = hoje.toISOString().slice(0, 7);
   mesInput.value = mesAtual;
+
   mesInput.addEventListener("change", () => {
     carregarGraficoIndividual(matriculaAtual, mesInput.value);
   });
@@ -126,60 +125,12 @@ async function carregarAvisos(matricula) {
 
 btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// --- POPULAR SELECT MATRICULAS ---
-async function popularSelectMatriculas() {
-  const snap = await getDocs(collection(db, "users"));
-  adminMatriculaSelect.innerHTML = "";
-  snap.forEach(docSnap => {
-    const opt = document.createElement("option");
-    const data = docSnap.data();
-    opt.value = data.matricula;
-    opt.textContent = `${data.matricula} - ${data.nome}`;
-    adminMatriculaSelect.appendChild(opt);
-  });
-}
-
-// --- SALVAR HORÁRIO ---
-btnSalvarHorario.addEventListener("click", async () => {
-  const matricula = adminMatriculaSelect.value;
-  const horario = adminHorarioInput.value;
-  if(!matricula || !horario) return;
-  const q = query(collection(db, "users"), where("matricula","==",matricula));
-  const snap = await getDocs(q);
-  if(snap.empty) return;
-  await snap.docs[0].ref.update({horarioTrabalho: horario});
-  alert("Horário atualizado!");
-});
-
-// --- SALVAR AVISO ---
-btnSalvarAviso.addEventListener("click", async () => {
-  const matricula = adminMatriculaSelect.value;
-  const texto = adminAvisoInput.value;
-  if(!matricula || !texto) return;
-  await addDoc(collection(db,"avisos"), { matricula, texto, createdAt: serverTimestamp() });
-  adminAvisoInput.value = "";
-  alert("Aviso salvo!");
-});
-
-// --- VER/EDITAR TODOS OS AVISOS ---
-btnVerAvisosAdmin.addEventListener("click", async () => {
-  const snap = await getDocs(query(collection(db,"avisos"), orderBy("createdAt","desc")));
-  adminAvisosLista.innerHTML = "";
-  snap.forEach(docSnap => {
-    const p = document.createElement("p");
-    const data = docSnap.data();
-    p.textContent = `${data.matricula}: ${data.texto}`;
-    adminAvisosLista.appendChild(p);
-  });
-  modalAdminAvisos.showModal();
-});
-
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
   const ano = agora.getFullYear();
-  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1])-1 : agora.getMonth();
 
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
@@ -196,7 +147,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     let totalAbastecimentos = 0;
     let totalDinheiro = 0;
 
-    snap.forEach((docSnap) => {
+    snap.forEach(docSnap => {
       const r = docSnap.data();
       if (!r.dataCaixa) return;
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
@@ -204,6 +155,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
       dias[dia].abastecimentos++;
       dias[dia].valorFolha += Number(r.valorFolha || 0);
+
       totalAbastecimentos++;
       totalDinheiro += Number(r.valorFolha || 0);
     });
@@ -231,7 +183,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             borderColor: "#444",
             borderWidth: 2,
             borderRadius: 8,
-            yAxisID: "y",
+            yAxisID: "y"
           },
           {
             label: "Valor Folha (R$)",
@@ -244,9 +196,9 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             yAxisID: "y1",
             pointStyle: "rectRot",
             pointRadius: 6,
-            pointBackgroundColor: "#00f5ff",
-          },
-        ],
+            pointBackgroundColor: "#00f5ff"
+          }
+        ]
       },
       options: {
         maintainAspectRatio: false,
@@ -260,93 +212,72 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             titleColor: "#00f5ff",
             bodyColor: "#fff",
             borderColor: "#00f5ff",
-            borderWidth: 1,
-          },
+            borderWidth: 1
+          }
         },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: "#888", font: { size: 12 } },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] },
-          },
-          y1: {
-            position: "right",
-            ticks: { color: "#00f5ff", font: { size: 12 } },
-            grid: { drawOnChartArea: false },
-          },
-          x: { ticks: { color: "#fff", font: { size: 12 } }, grid: { color: "rgba(255,255,255,0.05)" } },
-        },
-      },
+          y: { beginAtZero: true, ticks: { color: "#888", font: { size: 12 } }, grid: { color: "rgba(0,128,128,0.2)", borderDash: [4,2] } },
+          y1: { position: "right", ticks: { color: "#00f5ff", font: { size: 12 } }, grid: { drawOnChartArea: false } },
+          x: { ticks: { color: "#fff", font: { size: 12 } }, grid: { color: "rgba(255,255,255,0.05)" } }
+        }
+      }
     });
 
+    // Resumo abaixo do gráfico
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
-        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>
       </div>
     `;
   });
 }
 
-// --- ADMIN ---
-async function popularMatriculaSelect() {
-  const select = document.getElementById("adminMatriculaSelect");
-  select.innerHTML = "";
-
-  const usersSnap = await getDocs(collection(db, "users"));
-  usersSnap.forEach((d) => {
-    const u = d.data();
-    const opt = document.createElement("option");
-    opt.value = u.matricula;
-    opt.textContent = `${u.matricula} - ${u.nome}`;
-    select.appendChild(opt);
+// --- FUNÇÕES ADMIN ---
+async function carregarMatriculasAdmin() {
+  const snap = await getDocs(collection(db, "users"));
+  adminMatriculaSelect.innerHTML = "";
+  snap.forEach(doc => {
+    const d = doc.data();
+    const option = document.createElement("option");
+    option.value = d.matricula;
+    option.textContent = `${d.matricula} - ${d.nome}`;
+    adminMatriculaSelect.appendChild(option);
   });
 }
 
-async function salvarHorarioAdmin() {
-  const mat = document.getElementById("adminMatriculaSelect").value;
-  const horario = document.getElementById("adminHorarioInput").value.trim();
-  if (!mat || !horario) return alert("Informe matrícula e horário.");
+// Salvar horário
+btnSalvarHorario.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const horario = adminHorarioInput.value;
+  if (!matricula || !horario) return;
+  const q = query(collection(db, "users"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    await updateDoc(snap.docs[0].ref, { horarioTrabalho: horario });
+    alert("Horário salvo!");
+  }
+});
 
-  const q = query(collection(db, "users"), where("matricula", "==", mat));
-  const s = await getDocs(q);
-  if (s.empty) return;
-  const ref = s.docs[0].ref;
-  await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
+// Salvar aviso
+btnSalvarAviso.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const texto = adminAvisoInput.value;
+  if (!matricula || !texto) return;
+  await addDoc(collection(db, "avisos"), { matricula, texto, timestamp: serverTimestamp() });
+  adminAvisoInput.value = "";
+  alert("Aviso salvo!");
+});
 
-  alert("Horário atualizado!");
-  if (mat === matriculaAtual) horarioEl.textContent = horario;
-}
-
-async function salvarAvisoAdmin() {
-  const mat = document.getElementById("adminMatriculaSelect").value;
-  const texto = document.getElementById("adminAvisoInput").value.trim();
-  if (!mat || !texto) return alert("Informe matrícula e aviso.");
-
-  await addDoc(collection(db, "avisos"), {
-    matricula: mat,
-    texto,
-    criadoEm: serverTimestamp(),
-  });
-
-  alert("Aviso adicionado!");
-  document.getElementById("adminAvisoInput").value = "";
-
-  if (mat === matriculaAtual) carregarAvisos(matriculaAtual);
-}
-
-async function mostrarModalAvisosAdmin() {
-  const modal = document.getElementById("modalAdminAvisos");
-  const lista = document.getElementById("adminAvisosLista");
-  lista.innerHTML = "";
-
+// Ver todos os avisos
+btnVerAvisosAdmin.addEventListener("click", async () => {
+  adminAvisosLista.innerHTML = "";
   const snap = await getDocs(collection(db, "avisos"));
-  snap.forEach((d) => {
+  snap.forEach(doc => {
     const p = document.createElement("p");
-    const data = d.data();
-    p.textContent = `[${data.matricula}] ${data.texto}`;
-    lista.appendChild(p);
+    const d = doc.data();
+    p.textContent = `${d.matricula}: ${d.texto}`;
+    adminAvisosLista.appendChild(p);
   });
-
-  modal.showModal();
-}
+  modalAdminAvisos.showModal();
+});
