@@ -2,12 +2,14 @@
 import {
   collection,
   getDocs,
+  getDoc,
+  setDoc,
+  addDoc,
+  doc,
   query,
   where,
-  onSnapshot,
-  addDoc,
-  setDoc,
   orderBy,
+  onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -35,7 +37,6 @@ const btnPesquisarAvisos = document.getElementById("btnPesquisarAvisos");
 
 const mensalChartCtx = document.getElementById("mensalChart");
 const comparativoChartCtx = document.getElementById("comparativoChart");
-const mesEscolhidoInput = document.getElementById("mesEscolhido");
 
 let usuarioAtual = null;
 let chartMensal, chartComparativo;
@@ -54,10 +55,6 @@ const CORES_FUNCIONARIOS = {
   "1858": "#556b2f",
   "70029": "#c0c0c0"
 };
-
-// Define mês atual no input
-const agora = new Date();
-mesEscolhidoInput.value = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -83,8 +80,8 @@ async function carregarPerfil(user) {
 
   if (dados.isAdmin) {
     adminControls.classList.remove("hidden");
-    await carregarMatriculas();
-    carregarComparativo(); // já carrega o gráfico comparativo do mês atual
+    carregarMatriculas();
+    carregarComparativo(); // Garante que admins vejam gráfico geral
   }
 
   carregarGraficoIndividual(dados.matricula);
@@ -175,6 +172,7 @@ btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula) {
   const relatoriosRef = collection(db, "relatorios");
+  const agora = new Date();
   const primeiroDia = new Date(agora.getFullYear(), agora.getMonth(), 1);
   const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
 
@@ -253,12 +251,14 @@ async function carregarComparativo() {
   const userData = userSnap.docs.find(d => d.data().email === usuarioAtual.email)?.data();
   if (!userData?.isAdmin) {
     comparativoChartCtx.parentElement.style.display = "none";
-    return;
+    return; // só admins veem
   }
   comparativoChartCtx.parentElement.style.display = "block";
 
-  const mes = mesEscolhidoInput.value;
+  // Mês selecionado
+  const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
 
+  // Consulta todos os relatórios
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
 
@@ -266,7 +266,7 @@ async function carregarComparativo() {
     const r = d.data();
     if (!r.dataCaixa) return;
     const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
-    const mesRegistro = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
+    const mesRegistro = data.toISOString().slice(0, 7);
     if (mesRegistro !== mes) return;
 
     if (!mapa[r.matricula]) mapa[r.matricula] = { abastecimentos: 0, valorFolha: 0 };
@@ -274,13 +274,16 @@ async function carregarComparativo() {
     mapa[r.matricula].valorFolha += Number(r.valorFolha || 0);
   });
 
-  const labels = Object.keys(mapa).sort();
+  // Prepara os dados do gráfico
+  const labels = Object.keys(mapa).sort(); // Ordena por matrícula
   const abastecimentos = labels.map(m => mapa[m].abastecimentos);
   const valores = labels.map(m => mapa[m].valorFolha);
   const cores = labels.map(m => CORES_FUNCIONARIOS[m] || "#888");
 
+  // Destrói gráfico anterior
   if (chartComparativo) chartComparativo.destroy();
 
+  // Cria gráfico
   chartComparativo = new Chart(comparativoChartCtx, {
     type: "bar",
     data: {
@@ -290,7 +293,7 @@ async function carregarComparativo() {
           label: "Abastecimentos",
           data: abastecimentos,
           backgroundColor: cores,
-          borderColor: cores,
+          borderColor: cores.map(c => c),
           borderWidth: 1,
           yAxisID: "y"
         },
@@ -321,5 +324,4 @@ async function carregarComparativo() {
   });
 }
 
-// Atualiza gráfico ao mudar mês
-mesEscolhidoInput.addEventListener("change", carregarComparativo);
+document.getElementById("mesEscolhido").addEventListener("change", carregarComparativo);
