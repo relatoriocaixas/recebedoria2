@@ -1,121 +1,110 @@
-﻿/* Reset básico */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-/* Fundo radial animado */
-body {
-  min-height: 100vh;
-  background: radial-gradient(circle at center, #000000, #111111, #000000);
-  animation: pulse 10s infinite alternate;
-  color: #fff;
-}
-
-@keyframes pulse {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 50% 50%; }
-  100% { background-position: 100% 100%; }
-}
-
-/* Topbar */
-.topbar {
-  padding: 1rem 2rem;
-  border-bottom: 2px solid #004d4d; /* azul petróleo */
-  display: flex;
-  align-items: center;
-}
-
-.topbar h1 {
-  font-size: 1.5rem;
-  margin-left: 0;
-}
-
-/* Cards */
-.card {
-  background: rgba(0,0,0,0.5);
-  border: 2px solid #004d4d; /* azul petróleo */
+﻿/* Painel Admin */
+#adminControls {
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #00cfff;
   border-radius: 12px;
   padding: 1rem;
   margin: 1rem auto;
   max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Perfil */
-.profile-left h2 { 
-  font-size: 1.5rem; 
-  margin-bottom: 0.5rem; 
+#adminControls.hidden {
+  display: none;
 }
 
-/* Cores do nome */
-.nome-rosa { color: #ff00ff; }
-.nome-azul { color: #00cfff; }
+/* Linhas de controle */
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
 
-/* Meta informações */
-.meta div { margin-bottom: 0.25rem; }
+/* Labels */
+.admin-row label {
+  min-width: 100px;
+  color: #00cfff;
+  font-weight: bold;
+}
 
-/* Botão de avisos */
-.btn-avisos {
+/* Inputs */
+#adminMatriculaSelect,
+#adminHorarioInput,
+#adminAvisoInput {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #004d4d;
+  background-color: rgba(0,0,0,0.3);
+  color: #fff;
+}
+
+/* Botões Admin */
+#btnSalvarHorario,
+#btnSalvarAviso,
+#btnVerAvisosAdmin {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: bold;
+  color: #fff;
+  background-color: #00cfff;
   transition: all 0.3s;
 }
 
-.btn-cinza { 
-  background-color: #888; 
-  color: #fff; 
+#btnSalvarHorario:hover,
+#btnSalvarAviso:hover,
+#btnVerAvisosAdmin:hover {
+  background-color: #0088aa;
 }
 
-.aviso-vermelho { 
-  background-color: #ff0000; 
-  color: #fff; 
+/* Modal Admin */
+#modalAdminAvisos {
+  background: rgba(0,0,0,0.95);
+  border: 2px solid #00cfff;
+  border-radius: 12px;
+  padding: 1rem;
+  max-width: 500px;
 }
 
-.blink { 
-  animation: blink 1s infinite; 
+#modalAdminAvisos h3 {
+  color: #00cfff;
+  margin-bottom: 0.5rem;
 }
 
-@keyframes blink { 
-  0%,50%,100% { opacity:1; } 
-  25%,75% { opacity:0.3; } 
-}
-
-/* Gráficos */
-.charts-wrapper { padding: 1rem; }
-.chart-col { 
-  margin-top: 1rem; 
-  height: 400px; 
-}
-
-/* Resumo abaixo do gráfico */
-.resumo { 
-  margin-top: 1rem; 
-  font-size: 1rem; 
-  display: flex; 
-  justify-content: space-around; 
-}
-
-.resumo .abastecimentos { 
-  color: #888; 
-  font-weight: bold; 
-}
-
-.resumo .dinheiro { 
-  color: #00f5ff; 
-  font-weight: bold; 
-}
-
-/* Input para escolher mês */
-#mesEscolhido {
-  margin-top: 1rem;
-  padding: 0.25rem 0.5rem;
+#adminAvisosLista {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.05);
   border-radius: 5px;
-  border: 1px solid #004d4d;
-  background-color: rgba(0,0,0,0.3);
+  margin-bottom: 1rem;
+}
+
+#adminAvisosLista p {
+  margin: 0.25rem 0;
   color: #fff;
+}
+
+/* Estilização select */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Distribuição geral */
+.admin-row > * {
+  min-width: 150px;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+  .admin-row {
+    flex-direction: column;
+  }
 }

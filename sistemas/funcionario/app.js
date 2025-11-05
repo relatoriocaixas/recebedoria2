@@ -6,8 +6,8 @@ import {
   query,
   where,
   onSnapshot,
-  setDoc,
-  serverTimestamp
+  serverTimestamp,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -24,6 +24,16 @@ const avisosLista = document.getElementById("avisosLista");
 const mensalChartCtx = document.getElementById("mensalChart");
 const totalInfoEl = document.getElementById("totalInfo");
 const mesInput = document.getElementById("mesEscolhido");
+
+const adminControls = document.getElementById("adminControls");
+const adminMatriculaSelect = document.getElementById("adminMatriculaSelect");
+const adminHorarioInput = document.getElementById("adminHorarioInput");
+const adminAvisoInput = document.getElementById("adminAvisoInput");
+const btnSalvarHorario = document.getElementById("btnSalvarHorario");
+const btnSalvarAviso = document.getElementById("btnSalvarAviso");
+const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
+const modalAdminAvisos = document.getElementById("modalAdminAvisos");
+const adminAvisosLista = document.getElementById("adminAvisosLista");
 
 let usuarioAtual = null;
 let chartMensal = null;
@@ -61,22 +71,23 @@ async function carregarPerfil(user) {
 
   matriculaEl.textContent = dados.matricula;
 
-  // Data de admissão no padrão brasileiro (corrige dia anterior)
-  if (dados.dataAdmissao) {
-    let data = dados.dataAdmissao.seconds
-      ? new Date(dados.dataAdmissao.seconds * 1000)
-      : new Date(dados.dataAdmissao);
-    const dia = String(data.getDate()).padStart(2, "0");
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const ano = data.getFullYear();
-    admissaoEl.textContent = `${dia}/${mes}/${ano}`;
+  // Corrige timezone para data de admissão
+  if(dados.dataAdmissao){
+    const dt = new Date(dados.dataAdmissao);
+    admissaoEl.textContent = dt.toLocaleDateString("pt-BR");
   } else {
     admissaoEl.textContent = "—";
   }
 
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
-  // Carregar gráfico individual (não altera nada do gráfico)
+  // Mostrar painel admin se admin
+  if (dados.admin) {
+    adminControls.classList.remove("hidden");
+    await popularSelectMatriculas();
+  }
+
+  // Carregar gráfico individual
   carregarGraficoIndividual(dados.matricula);
 
   // Carregar avisos
@@ -89,19 +100,15 @@ async function carregarPerfil(user) {
   mesInput.addEventListener("change", () => {
     carregarGraficoIndividual(matriculaAtual, mesInput.value);
   });
-
-  // Painel admin
-  if (dados.isAdmin) await configurarPainelAdmin();
 }
 
-// --- AVISOS ---
+// --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
   if (snap.empty) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
-    btnAvisos.classList.remove("blink");
-    btnAvisos.classList.remove("aviso-vermelho");
+    btnAvisos.classList.remove("blink", "aviso-vermelho");
     btnAvisos.classList.add("btn-cinza");
     return;
   }
@@ -110,7 +117,7 @@ async function carregarAvisos(matricula) {
   btnAvisos.classList.remove("btn-cinza");
 
   avisosLista.innerHTML = "";
-  snap.forEach(d => {
+  snap.forEach((d) => {
     const p = document.createElement("p");
     p.textContent = d.data().texto;
     avisosLista.appendChild(p);
@@ -119,56 +126,227 @@ async function carregarAvisos(matricula) {
 
 btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// --- ADMIN PANEL ---
-async function configurarPainelAdmin() {
-  const adminPanel = document.getElementById("adminControls");
-  adminPanel.classList.remove("hidden");
+// --- POPULAR SELECT MATRICULAS ---
+async function popularSelectMatriculas() {
+  const snap = await getDocs(collection(db, "users"));
+  adminMatriculaSelect.innerHTML = "";
+  snap.forEach(docSnap => {
+    const opt = document.createElement("option");
+    const data = docSnap.data();
+    opt.value = data.matricula;
+    opt.textContent = `${data.matricula} - ${data.nome}`;
+    adminMatriculaSelect.appendChild(opt);
+  });
+}
 
+// --- SALVAR HORÁRIO ---
+btnSalvarHorario.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const horario = adminHorarioInput.value;
+  if(!matricula || !horario) return;
+  const q = query(collection(db, "users"), where("matricula","==",matricula));
+  const snap = await getDocs(q);
+  if(snap.empty) return;
+  await snap.docs[0].ref.update({horarioTrabalho: horario});
+  alert("Horário atualizado!");
+});
+
+// --- SALVAR AVISO ---
+btnSalvarAviso.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const texto = adminAvisoInput.value;
+  if(!matricula || !texto) return;
+  await addDoc(collection(db,"avisos"), { matricula, texto, createdAt: serverTimestamp() });
+  adminAvisoInput.value = "";
+  alert("Aviso salvo!");
+});
+
+// --- VER/EDITAR TODOS OS AVISOS ---
+btnVerAvisosAdmin.addEventListener("click", async () => {
+  const snap = await getDocs(query(collection(db,"avisos"), orderBy("createdAt","desc")));
+  adminAvisosLista.innerHTML = "";
+  snap.forEach(docSnap => {
+    const p = document.createElement("p");
+    const data = docSnap.data();
+    p.textContent = `${data.matricula}: ${data.texto}`;
+    adminAvisosLista.appendChild(p);
+  });
+  modalAdminAvisos.showModal();
+});
+
+// --- GRÁFICO INDIVIDUAL ---
+async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
+  const relatoriosRef = collection(db, "relatorios");
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
+
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes + 1, 0);
+
+  const q = query(
+    relatoriosRef,
+    where("matricula", "==", matricula),
+    where("dataCaixa", ">=", primeiroDia),
+    where("dataCaixa", "<=", ultimoDia)
+  );
+
+  onSnapshot(q, (snap) => {
+    const dias = {};
+    let totalAbastecimentos = 0;
+    let totalDinheiro = 0;
+
+    snap.forEach((docSnap) => {
+      const r = docSnap.data();
+      if (!r.dataCaixa) return;
+      const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
+      const dia = data.getDate();
+      if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
+      dias[dia].abastecimentos++;
+      dias[dia].valorFolha += Number(r.valorFolha || 0);
+      totalAbastecimentos++;
+      totalDinheiro += Number(r.valorFolha || 0);
+    });
+
+    const labels = [];
+    const abastecimentos = [];
+    const valores = [];
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      labels.push(d.toString().padStart(2, "0"));
+      abastecimentos.push(dias[d]?.abastecimentos || 0);
+      valores.push(dias[d]?.valorFolha || 0);
+    }
+
+    if (chartMensal) chartMensal.destroy();
+
+    chartMensal = new Chart(mensalChartCtx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Abastecimentos",
+            data: abastecimentos,
+            backgroundColor: "rgba(136,136,136,0.5)",
+            borderColor: "#444",
+            borderWidth: 2,
+            borderRadius: 8,
+            yAxisID: "y",
+          },
+          {
+            label: "Valor Folha (R$)",
+            data: valores,
+            type: "line",
+            borderColor: "#00f5ff",
+            backgroundColor: "rgba(0,245,255,0.2)",
+            borderWidth: 3,
+            tension: 0.4,
+            yAxisID: "y1",
+            pointStyle: "rectRot",
+            pointRadius: 6,
+            pointBackgroundColor: "#00f5ff",
+          },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: "#fff", font: { size: 14 } } },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            titleColor: "#00f5ff",
+            bodyColor: "#fff",
+            borderColor: "#00f5ff",
+            borderWidth: 1,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: "#888", font: { size: 12 } },
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] },
+          },
+          y1: {
+            position: "right",
+            ticks: { color: "#00f5ff", font: { size: 12 } },
+            grid: { drawOnChartArea: false },
+          },
+          x: { ticks: { color: "#fff", font: { size: 12 } }, grid: { color: "rgba(255,255,255,0.05)" } },
+        },
+      },
+    });
+
+    totalInfoEl.innerHTML = `
+      <div class="resumo">
+        <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+      </div>
+    `;
+  });
+}
+
+// --- ADMIN ---
+async function popularMatriculaSelect() {
   const select = document.getElementById("adminMatriculaSelect");
   select.innerHTML = "";
+
   const usersSnap = await getDocs(collection(db, "users"));
-  usersSnap.forEach(d => {
+  usersSnap.forEach((d) => {
     const u = d.data();
     const opt = document.createElement("option");
     opt.value = u.matricula;
     opt.textContent = `${u.matricula} - ${u.nome}`;
     select.appendChild(opt);
   });
+}
 
-  document.getElementById("btnSalvarHorario").addEventListener("click", async () => {
-    const mat = select.value;
-    const horario = document.getElementById("adminHorarioInput").value.trim();
-    if (!mat || !horario) return alert("Informe matrícula e horário.");
+async function salvarHorarioAdmin() {
+  const mat = document.getElementById("adminMatriculaSelect").value;
+  const horario = document.getElementById("adminHorarioInput").value.trim();
+  if (!mat || !horario) return alert("Informe matrícula e horário.");
 
-    const q = query(collection(db, "users"), where("matricula", "==", mat));
-    const s = await getDocs(q);
-    if (s.empty) return;
-    await setDoc(s.docs[0].ref, { horarioTrabalho: horario }, { merge: true });
+  const q = query(collection(db, "users"), where("matricula", "==", mat));
+  const s = await getDocs(q);
+  if (s.empty) return;
+  const ref = s.docs[0].ref;
+  await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
 
-    alert("Horário atualizado!");
-    if (mat === matriculaAtual) horarioEl.textContent = horario;
+  alert("Horário atualizado!");
+  if (mat === matriculaAtual) horarioEl.textContent = horario;
+}
+
+async function salvarAvisoAdmin() {
+  const mat = document.getElementById("adminMatriculaSelect").value;
+  const texto = document.getElementById("adminAvisoInput").value.trim();
+  if (!mat || !texto) return alert("Informe matrícula e aviso.");
+
+  await addDoc(collection(db, "avisos"), {
+    matricula: mat,
+    texto,
+    criadoEm: serverTimestamp(),
   });
 
-  document.getElementById("btnSalvarAviso").addEventListener("click", async () => {
-    const mat = select.value;
-    const texto = document.getElementById("adminAvisoInput").value.trim();
-    if (!mat || !texto) return alert("Informe matrícula e aviso.");
+  alert("Aviso adicionado!");
+  document.getElementById("adminAvisoInput").value = "";
 
-    await addDoc(collection(db, "avisos"), { matricula: mat, texto, criadoEm: serverTimestamp() });
-    document.getElementById("adminAvisoInput").value = "";
-    alert("Aviso salvo!");
+  if (mat === matriculaAtual) carregarAvisos(matriculaAtual);
+}
+
+async function mostrarModalAvisosAdmin() {
+  const modal = document.getElementById("modalAdminAvisos");
+  const lista = document.getElementById("adminAvisosLista");
+  lista.innerHTML = "";
+
+  const snap = await getDocs(collection(db, "avisos"));
+  snap.forEach((d) => {
+    const p = document.createElement("p");
+    const data = d.data();
+    p.textContent = `[${data.matricula}] ${data.texto}`;
+    lista.appendChild(p);
   });
 
-  document.getElementById("btnVerAvisosAdmin").addEventListener("click", async () => {
-    const lista = document.getElementById("adminAvisosLista");
-    lista.innerHTML = "";
-    const snap = await getDocs(collection(db, "avisos"));
-    snap.forEach(d => {
-      const aviso = d.data();
-      const div = document.createElement("div");
-      div.textContent = `${aviso.matricula}: ${aviso.texto}`;
-      lista.appendChild(div);
-    });
-    document.getElementById("modalAdminAvisos").showModal();
-  });
+  modal.showModal();
 }
