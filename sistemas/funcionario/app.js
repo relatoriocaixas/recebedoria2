@@ -168,7 +168,7 @@ async function carregarAvisos(matricula) {
 }
 btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// ======== GRÁFICOS ========
+// ======== GRÁFICOS ========/
 
 // --- INDIVIDUAL (abastecimentos + valor folha por dia)
 async function carregarGraficoIndividual(matricula) {
@@ -235,9 +235,7 @@ async function carregarGraficoIndividual(matricula) {
         interaction: { mode: "index", intersect: false },
         stacked: false,
         plugins: {
-          legend: {
-            labels: { color: "#fff", font: { size: 14, weight: "600" } }
-          },
+          legend: { labels: { color: "#fff", font: { size: 14, weight: "600" } } },
           title: {
             display: true,
             text: `Abastecimentos e Valores - ${agora.toLocaleString("pt-BR", { month: "long", year: "numeric" })}`,
@@ -255,7 +253,7 @@ async function carregarGraficoIndividual(matricula) {
     });
   });
 
-  carregarComparativo();
+  carregarComparativo(); // chama só se admin
 }
 
 // --- COMPARATIVO (todos funcionários — admin)

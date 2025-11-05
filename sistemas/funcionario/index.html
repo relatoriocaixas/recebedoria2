@@ -17,6 +17,7 @@
   </header>
 
   <main class="wrap">
+    <!-- Perfil + Avisos + Admin -->
     <section class="card profile-card">
       <div class="profile-left">
         <h2 id="funcNome">—</h2>
@@ -34,6 +35,7 @@
 
         <div id="adminControls" class="admin-only hidden">
           <h3>Painel do Administrador</h3>
+
           <div class="admin-row">
             <label>Matrícula:</label>
             <select id="adminMatriculaSelect"></select>
@@ -62,19 +64,24 @@
       </div>
     </section>
 
-    <section class="card charts">
-      <div class="chart-col">
-        <h3>Resumo Mensal — Caixa</h3>
-        <canvas id="mensalChart"></canvas>
-      </div>
-
-      <div class="chart-col">
-        <h3>Comparativo Mensal (por funcionário)</h3>
-        <div class="controls">
-          <label>Mês:</label>
-          <input id="mesEscolhido" type="month" />
+    <!-- Gráficos -->
+    <section class="card charts-wrapper">
+      <div class="charts">
+        <!-- Gráfico individual -->
+        <div class="chart-col">
+          <h3>Resumo Mensal — Caixa</h3>
+          <canvas id="mensalChart"></canvas>
         </div>
-        <canvas id="comparativoChart"></canvas>
+
+        <!-- Gráfico comparativo (só admins) -->
+        <div class="chart-col admin-only hidden">
+          <h3>Comparativo Mensal (por funcionário)</h3>
+          <div class="controls">
+            <label>Mês:</label>
+            <input id="mesEscolhido" type="month" />
+          </div>
+          <canvas id="comparativoChart"></canvas>
+        </div>
       </div>
     </section>
   </main>
