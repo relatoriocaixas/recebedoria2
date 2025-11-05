@@ -2,13 +2,10 @@
 import {
   collection,
   getDocs,
-  getDoc,
-  setDoc,
-  addDoc,
-  doc,
   query,
   where,
-  orderBy,
+  addDoc,
+  setDoc,
   serverTimestamp,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -39,25 +36,18 @@ const mensalChartCtx = document.getElementById("mensalChart");
 const comparativoChartCtx = document.getElementById("comparativoChart");
 
 let usuarioAtual = null;
-let chartMensal, chartComparativo;
+let chartMensal = null;
+let chartComparativo = null;
 
-// CORES
+// Mapa de cores fixo
 const CORES_FUNCIONARIOS = {
-  "4144": "#4da6ff",
-  "5831": "#ffeb3b",
-  "6994": "#b0b0b0",
-  "7794": "#ff9800",
-  "5354": "#90ee90",
-  "6266": "#00bfff",
-  "6414": "#8b4513",
-  "5271": "#ff69b4",
-  "9003": "#800080",
-  "8789": "#c8a2c8",
-  "1858": "#556b2f",
-  "70029": "#c0c0c0"
+  "4144": "#4da6ff", "5831": "#ffeb3b", "6994": "#b0b0b0",
+  "7794": "#ff9800", "5354": "#90ee90", "6266": "#00bfff",
+  "6414": "#8b4513", "5271": "#ff69b4", "9003": "#800080",
+  "8789": "#c8a2c8", "1858": "#556b2f", "70029": "#c0c0c0"
 };
 
-// LOGIN
+// --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "../../login.html";
@@ -67,12 +57,11 @@ onAuthStateChanged(auth, async (user) => {
   await carregarPerfil(user);
 });
 
-// PERFIL
+// --- PERFIL ---
 async function carregarPerfil(user) {
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
   if (snap.empty) return;
-
   const dados = snap.docs[0].data();
   nomeEl.textContent = dados.nome;
   matriculaEl.textContent = dados.matricula;
@@ -82,15 +71,16 @@ async function carregarPerfil(user) {
   if (dados.isAdmin) {
     adminControls.classList.remove("hidden");
     carregarMatriculas();
-  } else {
-    document.querySelector(".chart-col:last-child").style.display = "none";
   }
 
   carregarGraficoIndividual(dados.matricula);
+
+  if (dados.isAdmin) carregarComparativo();
+
   carregarAvisos(dados.matricula);
 }
 
-// MATRICULAS
+// --- MATRICULAS ADMIN ---
 async function carregarMatriculas() {
   const snap = await getDocs(collection(db, "users"));
   snap.forEach((d) => {
@@ -104,22 +94,20 @@ async function carregarMatriculas() {
   });
 }
 
-// SALVAR HORÁRIO
+// --- SALVAR HORÁRIO ---
 btnSalvarHorario.addEventListener("click", async () => {
   const mat = adminMatriculaSelect.value;
   const horario = adminHorarioInput.value.trim();
   if (!mat || !horario) return alert("Informe matrícula e horário.");
-
   const q = query(collection(db, "users"), where("matricula", "==", mat));
   const s = await getDocs(q);
   if (s.empty) return;
   const ref = s.docs[0].ref;
-
   await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
   alert("Horário atualizado!");
 });
 
-// SALVAR AVISO
+// --- SALVAR AVISO ---
 btnSalvarAviso.addEventListener("click", async () => {
   const mat = adminMatriculaSelect.value;
   const aviso = adminAvisoInput.value.trim();
@@ -133,44 +121,38 @@ btnSalvarAviso.addEventListener("click", async () => {
   adminAvisoInput.value = "";
 });
 
-// PESQUISAR AVISOS ADMIN
+// --- PESQUISAR AVISOS ADMIN ---
 btnPesquisarAvisos.addEventListener("click", async () => {
   const mat = adminPesquisarMatricula.value;
-  adminAvisosLista.innerHTML = "Carregando...";
   const q = query(collection(db, "avisos"), where("matricula", "==", mat), orderBy("criadoEm", "desc"));
   const snap = await getDocs(q);
   adminAvisosLista.innerHTML = "";
-  snap.forEach((d) => {
+  snap.forEach(d => {
+    const aviso = d.data();
     const div = document.createElement("div");
-    div.className = "aviso-item";
-    div.textContent = d.data().texto;
+    div.textContent = aviso.texto;
     adminAvisosLista.appendChild(div);
   });
 });
 
-// AVISOS FUNCIONÁRIO
+// --- CARREGAR AVISOS USUARIO ---
 async function carregarAvisos(matricula) {
-  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula), orderBy("criadoEm", "desc"));
   const snap = await getDocs(q);
-  if (snap.empty) {
-    btnAvisos.textContent = "Sem avisos vinculados à matrícula";
-    btnAvisos.classList.remove("blink");
-    return;
-  }
-  btnAvisos.classList.add("blink");
-  btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
-  avisosLista.innerHTML = "";
-  snap.forEach((d) => {
-    const p = document.createElement("p");
-    p.textContent = d.data().texto;
-    avisosLista.appendChild(p);
+  btnAvisos.textContent = snap.empty ? "Sem avisos vinculados à matrícula" : `Avisos (${snap.size})`;
+  btnAvisos.addEventListener("click", () => {
+    avisosLista.innerHTML = "";
+    snap.forEach(d => {
+      const aviso = d.data();
+      const p = document.createElement("p");
+      p.textContent = aviso.texto;
+      avisosLista.appendChild(p);
+    });
+    modalAvisos.showModal();
   });
 }
-btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// ======== GRÁFICOS ========/
-
-// --- INDIVIDUAL (abastecimentos + valor folha por dia)
+// --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
@@ -232,34 +214,19 @@ async function carregarGraficoIndividual(matricula) {
       options: {
         maintainAspectRatio: false,
         responsive: true,
-        interaction: { mode: "index", intersect: false },
-        stacked: false,
-        plugins: {
-          legend: { labels: { color: "#fff", font: { size: 14, weight: "600" } } },
-          title: {
-            display: true,
-            text: `Abastecimentos e Valores - ${agora.toLocaleString("pt-BR", { month: "long", year: "numeric" })}`,
-            color: "#fff",
-            font: { size: 18, weight: "700" }
-          },
-          tooltip: { titleFont: { size: 14 }, bodyFont: { size: 13 } }
-        },
+        plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
         scales: {
-          x: { ticks: { color: "#ccc", font: { size: 13 } }, grid: { color: "rgba(255,255,255,0.1)" } },
-          y: { type: "linear", beginAtZero: true, ticks: { color: "#00bfff", font: { size: 13 } }, grid: { color: "rgba(255,255,255,0.1)" } },
-          y1: { type: "linear", position: "right", ticks: { color: "#ffd700", font: { size: 13 } }, grid: { drawOnChartArea: false } }
+          y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 14 } } },
+          y1: { position: "right", ticks: { color: "#ffd700", font: { size: 14 } }, grid: { drawOnChartArea: false } },
+          x: { ticks: { color: "#ccc", font: { size: 14 } } }
         }
       }
     });
   });
-
-  carregarComparativo(); // chama só se admin
 }
 
-// --- COMPARATIVO (todos funcionários — admin)
+// --- GRÁFICO COMPARATIVO (ADMIN) ---
 async function carregarComparativo() {
-  if (!usuarioAtual || !usuarioAtual.isAdmin) return; // só admin
-
   const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
@@ -294,19 +261,10 @@ async function carregarComparativo() {
     options: {
       maintainAspectRatio: false,
       responsive: true,
-      plugins: {
-        legend: { labels: { color: "#fff", font: { size: 14, weight: "600" } } },
-        title: {
-          display: true,
-          text: `Comparativo Mensal - ${mes}`,
-          color: "#fff",
-          font: { size: 16, weight: "700" }
-        },
-        tooltip: { titleFont: { size: 14 }, bodyFont: { size: 13 } }
-      },
+      plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
       scales: {
-        x: { ticks: { color: "#ccc", font: { size: 13 } } },
-        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 13 } } }
+        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 14 } } },
+        x: { ticks: { color: "#ccc", font: { size: 14 } } }
       }
     }
   });
