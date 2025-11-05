@@ -1,5 +1,5 @@
 ﻿import { auth, db } from "./firebaseConfig_v2.js";
-import { collection, getDocs, addDoc, query, where, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, getDocs, addDoc, query, where, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 // ELEMENTOS
@@ -13,10 +13,7 @@ const modalAvisos = document.getElementById("modalAvisos");
 const avisosLista = document.getElementById("avisosLista");
 
 const adminControls = document.getElementById("adminControls");
-const toggleAdminPanel = document.createElement("button");
-toggleAdminPanel.id = "toggleAdminPanel";
-toggleAdminPanel.textContent = "📂 Abrir/Fechar Painel Admin";
-adminControls.parentNode.insertBefore(toggleAdminPanel, adminControls);
+const toggleAdminPanel = document.getElementById("toggleAdminPanel");
 
 const adminMatriculaSelect = document.getElementById("adminMatriculaSelect");
 const adminHorarioInput = document.getElementById("adminHorarioInput");
@@ -27,19 +24,20 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
+const mensalChartCtx = document.getElementById("mensalChart");
+const totalInfoEl = document.getElementById("totalInfo");
+const mesInput = document.getElementById("mesEscolhido");
+
 let usuarioAtual = null;
 let matriculaAtual = null;
 let chartMensal = null;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "../../login.html";
-    return;
-  }
+  if (!user) { window.location.href = "../../login.html"; return; }
   usuarioAtual = user;
   await carregarPerfil(user);
-  if (user.admin) adminControls.classList.remove("hidden"); // mostra painel admin
+  if (user.admin) toggleAdminPanel.classList.remove("hidden");
 });
 
 // --- PERFIL ---
@@ -50,15 +48,13 @@ async function carregarPerfil(user) {
   const dados = snap.docs[0].data();
 
   matriculaAtual = dados.matricula;
-
-  // Nome rosa ou azul
   const matriculasRosa = ["8789","9003","6414","5271"];
   nomeEl.textContent = dados.nome;
   nomeEl.classList.toggle("nome-rosa", matriculasRosa.includes(dados.matricula));
   nomeEl.classList.toggle("nome-azul", !matriculasRosa.includes(dados.matricula));
 
   matriculaEl.textContent = dados.matricula;
-  admissaoEl.textContent = new Date(dados.dataAdmissao).toLocaleDateString("pt-BR");
+  admissaoEl.textContent = dados.dataAdmissao ? new Date(dados.dataAdmissao).toLocaleDateString("pt-BR") : "—";
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
   carregarGraficoIndividual(dados.matricula);
@@ -66,37 +62,15 @@ async function carregarPerfil(user) {
 
   // mês input
   const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0,7);
-  document.getElementById("mesEscolhido").value = mesAtual;
-  document.getElementById("mesEscolhido").addEventListener("change", () => {
-    carregarGraficoIndividual(matriculaAtual, document.getElementById("mesEscolhido").value);
-  });
-}
-
-// --- GRAFICO (mantido como estava) ---
-async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
-  // Aqui você insere seu código de geração de gráfico existente
-  // Exemplo placeholder:
-  const ctx = document.getElementById("mensalChart").getContext("2d");
-  if (chartMensal) chartMensal.destroy();
-  chartMensal = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Semana 1","Semana 2","Semana 3","Semana 4"],
-      datasets: [{
-        label: "Caixa",
-        data: [1000, 1500, 1200, 1700],
-        backgroundColor: "#00cfff"
-      }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } } }
-  });
+  mesInput.value = hoje.toISOString().slice(0,7);
+  mesInput.addEventListener("change", () => carregarGraficoIndividual(matriculaAtual, mesInput.value));
 }
 
 // --- AVISOS ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
+
   if (snap.empty) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
     btnAvisos.classList.remove("blink","aviso-vermelho");
@@ -123,9 +97,7 @@ btnAvisos.addEventListener("click", () => {
 });
 
 // --- ADMIN PANEL ---
-toggleAdminPanel.addEventListener("click", () => {
-  adminControls.classList.toggle("hidden");
-});
+toggleAdminPanel.addEventListener("click", () => adminControls.classList.toggle("hidden"));
 
 // Popula select de matriculas
 async function carregarMatriculas() {
@@ -163,7 +135,7 @@ btnSalvarAviso.addEventListener("click", async () => {
   adminAvisoInput.value = "";
 });
 
-// Ver/Editar todos avisos
+// Modal Admin: listar todos avisos
 btnVerAvisosAdmin.addEventListener("click", async () => {
   modalAdminAvisos.showModal();
   adminAvisosLista.innerHTML = "";
@@ -174,27 +146,20 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
     const texto = document.createElement("span");
     texto.textContent = d.data().texto;
     const btns = document.createElement("span");
-    btns.classList.add("adminAvisoBtns");
+    btns.style.display = "flex";
+    btns.style.gap = "5px";
 
     const edit = document.createElement("button");
     edit.textContent = "Editar";
-    edit.classList.add("edit");
     edit.addEventListener("click", async () => {
       const novoTexto = prompt("Editar aviso:", texto.textContent);
-      if (novoTexto) {
-        await updateDoc(d.ref, { texto: novoTexto });
-        texto.textContent = novoTexto;
-      }
+      if (novoTexto) await updateDoc(d.ref, { texto: novoTexto }) && (texto.textContent = novoTexto);
     });
 
     const del = document.createElement("button");
     del.textContent = "Excluir";
-    del.classList.add("delete");
     del.addEventListener("click", async () => {
-      if (confirm("Deseja realmente excluir este aviso?")) {
-        await deleteDoc(d.ref);
-        p.remove();
-      }
+      if (confirm("Deseja realmente excluir este aviso?")) await deleteDoc(d.ref) && p.remove();
     });
 
     btns.appendChild(edit);
@@ -204,3 +169,39 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
     adminAvisosLista.appendChild(p);
   });
 });
+
+// --- GRAFICO INDIVIDUAL ORIGINAL ---
+async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
+  const relatoriosRef = collection(db, "relatorios");
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1])-1 : agora.getMonth();
+
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes + 1, 0);
+
+  const q = query(
+    relatoriosRef,
+    where("matricula", "==", matricula),
+    where("dataCaixa", ">=", primeiroDia),
+    where("dataCaixa", "<=", ultimoDia)
+  );
+
+  onSnapshot(q, (snap) => {
+    const labels = [];
+    const valores = [];
+    snap.forEach(docSnap => {
+      const r = docSnap.data();
+      if (!r.dataCaixa) return;
+      labels.push(new Date(r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa)).getDate());
+      valores.push(r.valor || 0);
+    });
+
+    if(chartMensal) chartMensal.destroy();
+    chartMensal = new Chart(mensalChartCtx, {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Caixa', data: valores, borderColor: '#00cfff', backgroundColor: 'rgba(0,255,255,0.2)' }]},
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  });
+}
