@@ -27,8 +27,10 @@ body {
   display: flex;
   align-items: center;
 }
-
-.topbar h1 { font-size: 1.5rem; }
+.topbar h1 {
+  font-size: 1.5rem;
+  margin-left: 0;
+}
 
 /* Cards */
 .card {
@@ -41,12 +43,19 @@ body {
 }
 
 /* Perfil */
-.profile-left h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.profile-left h2 { 
+  font-size: 1.5rem; 
+  margin-bottom: 0.5rem; 
+}
+
+/* Cores do nome */
 .nome-rosa { color: #ff00ff; }
 .nome-azul { color: #00cfff; }
+
+/* Meta informações */
 .meta div { margin-bottom: 0.25rem; }
 
-/* Botões de aviso */
+/* Botão de avisos */
 .btn-avisos {
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -58,22 +67,23 @@ body {
 .btn-cinza { background-color: #888; color: #fff; }
 .aviso-vermelho { background-color: #ff0000; color: #fff; }
 .blink { animation: blink 1s infinite; }
+@keyframes blink { 0%,50%,100% { opacity:1; } 25%,75% { opacity:0.3; } }
 
-@keyframes blink {
-  0%,50%,100% { opacity:1; }
-  25%,75% { opacity:0.3; }
-}
-
-/* Gráfico */
+/* Gráficos */
 .charts-wrapper { padding: 1rem; }
 .chart-col { margin-top: 1rem; height: 400px; }
 
 /* Resumo abaixo do gráfico */
-.resumo { margin-top: 1rem; font-size: 1rem; display: flex; justify-content: space-around; }
+.resumo { 
+  margin-top: 1rem; 
+  font-size: 1rem; 
+  display: flex; 
+  justify-content: space-around; 
+}
 .resumo .abastecimentos { color: #888; font-weight: bold; }
 .resumo .dinheiro { color: #00f5ff; font-weight: bold; }
 
-/* Input mês */
+/* Input para escolher mês */
 #mesEscolhido {
   margin-top: 1rem;
   padding: 0.25rem 0.5rem;
@@ -89,25 +99,40 @@ body {
   border: 2px solid #00cfff;
   border-radius: 12px;
   padding: 1rem;
-  margin: 1rem 0;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 #adminControls.hidden { display: none; }
 
+/* Botão abrir/minimizar painel */
+#toggleAdminPanel {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+  background-color: #00cfff;
+  transition: all 0.3s;
+}
+#toggleAdminPanel:hover { background-color: #0088aa; }
+
+/* Linhas de controle */
 .admin-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
 }
-.admin-row label { color: #00cfff; font-weight: bold; min-width: 80px; }
+.admin-row label { min-width: 100px; color: #00cfff; font-weight: bold; }
 #adminMatriculaSelect,
 #adminHorarioInput,
 #adminAvisoInput {
   flex: 1;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem;
   border-radius: 5px;
   border: 1px solid #004d4d;
   background-color: rgba(0,0,0,0.3);
@@ -116,26 +141,55 @@ body {
 #btnSalvarHorario,
 #btnSalvarAviso,
 #btnVerAvisosAdmin {
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: bold;
   color: #fff;
   background-color: #00cfff;
+  transition: all 0.3s;
 }
 #btnSalvarHorario:hover,
 #btnSalvarAviso:hover,
 #btnVerAvisosAdmin:hover { background-color: #0088aa; }
 
-/* Modal Admin */
-#modalAdminAvisos {
+/* Modal */
+.modal {
   background: rgba(0,0,0,0.95);
   border: 2px solid #00cfff;
   border-radius: 12px;
   padding: 1rem;
   max-width: 500px;
 }
-#modalAdminAvisos h3 { color: #00cfff; margin-bottom: 0.5rem; }
-#adminAvisosLista { max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 5px; }
-#adminAvisosLista p { margin: 0.25rem 0; color: #fff; }
+.modal h3 { color: #00cfff; margin-bottom: 0.5rem; }
+.modal-body { display: flex; flex-direction: column; gap: 0.5rem; }
+#avisosLista, #adminAvisosLista {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 5px;
+}
+#avisosLista p, #adminAvisosLista p {
+  margin: 0.25rem 0;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.adminAvisoBtns button {
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+.adminAvisoBtns .edit { background-color: #00cfff; color: #000; }
+.adminAvisoBtns .delete { background-color: #ff4444; color: #fff; }
+
+/* Responsividade */
+@media (max-width: 600px) {
+  .admin-row { flex-direction: column; }
+}
