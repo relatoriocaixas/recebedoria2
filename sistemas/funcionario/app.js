@@ -2,12 +2,13 @@
 import {
   collection,
   getDocs,
+  addDoc,
+  setDoc,
   query,
   where,
+  orderBy,
   onSnapshot,
-  serverTimestamp,
-  setDoc,
-  addDoc
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -22,12 +23,11 @@ const modalAvisos = document.getElementById("modalAvisos");
 const avisosLista = document.getElementById("avisosLista");
 
 const mensalChartCtx = document.getElementById("mensalChart");
-
 const totalInfoEl = document.getElementById("totalInfo");
 
 let usuarioAtual = null;
-let matriculaAtual = null;
 let chartMensal = null;
+let matriculaAtual = null;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -48,13 +48,23 @@ async function carregarPerfil(user) {
 
   matriculaAtual = dados.matricula;
 
+  // Nome rosa neon para certas matriculas
+  const matriculasRosa = ["9003","5271","6414","8789"];
   nomeEl.textContent = dados.nome;
+  if (matriculasRosa.includes(dados.matricula)) {
+    nomeEl.classList.add("nome-rosa");
+  } else {
+    nomeEl.classList.remove("nome-rosa");
+  }
+
   matriculaEl.textContent = dados.matricula;
   admissaoEl.textContent = dados.dataAdmissao || "—";
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
+  // Carregar gráfico individual
   carregarGraficoIndividual(dados.matricula);
 
+  // Carregar avisos
   carregarAvisos(dados.matricula);
 
   // Configura input de mês
@@ -68,7 +78,7 @@ async function carregarPerfil(user) {
   });
 }
 
-// --- AVISOS ---
+// --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
@@ -89,14 +99,15 @@ async function carregarAvisos(matricula) {
 
 btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
-// --- GRÁFICO INDIVIDUAL COM EFEITO NEON ---
-async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
+// --- GRÁFICO INDIVIDUAL ---
+async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
-  const anoMes = mesSelecionado || agora.toISOString().slice(0, 7);
-  const [ano, mes] = anoMes.split("-").map(Number);
-  const primeiroDia = new Date(ano, mes - 1, 1);
-  const ultimoDia = new Date(ano, mes, 0);
+  const ano = agora.getFullYear();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1])-1 : agora.getMonth();
+
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes + 1, 0);
 
   const q = query(
     relatoriosRef,
@@ -108,9 +119,9 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
   onSnapshot(q, (snap) => {
     const dias = {};
     let totalAbastecimentos = 0;
-    let totalValor = 0;
+    let totalDinheiro = 0;
 
-    snap.forEach((docSnap) => {
+    snap.forEach(docSnap => {
       const r = docSnap.data();
       if (!r.dataCaixa) return;
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
@@ -120,26 +131,17 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
       dias[dia].valorFolha += Number(r.valorFolha || 0);
 
       totalAbastecimentos++;
-      totalValor += Number(r.valorFolha || 0);
+      totalDinheiro += Number(r.valorFolha || 0);
     });
 
     const labels = [];
     const abastecimentos = [];
     const valores = [];
-
     for (let d = 1; d <= ultimoDia.getDate(); d++) {
       labels.push(d.toString().padStart(2, "0"));
       abastecimentos.push(dias[d]?.abastecimentos || 0);
       valores.push(dias[d]?.valorFolha || 0);
     }
-
-    // Exibe resumo acima do gráfico
-    totalInfoEl.innerHTML = `
-      <div class="resumo">
-        <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span> |
-        <span class="dinheiro">Recebido: R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-      </div>
-    `;
 
     if (chartMensal) chartMensal.destroy();
 
@@ -151,8 +153,8 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
           {
             label: "Abastecimentos",
             data: abastecimentos,
-            backgroundColor: "rgba(0,255,255,0.7)",
-            borderColor: "#0ff",
+            backgroundColor: "#888", // barra cinza neon
+            borderColor: "#888",
             borderWidth: 2,
             borderRadius: 8,
             yAxisID: "y"
@@ -161,14 +163,14 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
             label: "Valor Folha (R$)",
             data: valores,
             type: "line",
-            borderColor: "#ff00ff",
-            backgroundColor: "rgba(255,0,255,0.3)",
+            borderColor: "#0f0", // linha verde neon
+            backgroundColor: "rgba(0,255,0,0.2)",
             borderWidth: 3,
             tension: 0.4,
             yAxisID: "y1",
             pointStyle: "rectRot",
             pointRadius: 6,
-            pointBackgroundColor: "#ff00ff"
+            pointBackgroundColor: "#0f0"
           }
         ]
       },
@@ -183,21 +185,21 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
             mode: "index",
             intersect: false,
             backgroundColor: "rgba(0,0,0,0.9)",
-            titleColor: "#0ff",
+            titleColor: "#0f0",
             bodyColor: "#fff",
-            borderColor: "#0ff",
+            borderColor: "#0f0",
             borderWidth: 1
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: "#0ff", font: { size: 12 } },
-            grid: { color: "rgba(0,255,255,0.2)", borderDash: [4, 2] }
+            ticks: { color: "#888", font: { size: 12 } },
+            grid: { color: "rgba(136,136,136,0.2)", borderDash: [4, 2] }
           },
           y1: {
             position: "right",
-            ticks: { color: "#ff00ff", font: { size: 12 } },
+            ticks: { color: "#0f0", font: { size: 12 } },
             grid: { drawOnChartArea: false }
           },
           x: {
@@ -207,5 +209,13 @@ async function carregarGraficoIndividual(matricula, mesSelecionado = null) {
         }
       }
     });
+
+    // Adicionar resumo em dinheiro e abastecimentos
+    totalInfoEl.innerHTML = `
+      <div class="resumo">
+        <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+      </div>
+    `;
   });
 }
