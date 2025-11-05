@@ -242,18 +242,23 @@ async function carregarGraficoIndividual(matricula) {
   });
 }
 
-// --- GRÁFICO COMPARATIVO ---
+// --- GRÁFICO COMPARATIVO (ADMIN) ---
 async function carregarComparativo() {
   if (!usuarioAtual) return;
+
+  // Verifica se usuário é admin
   const userSnap = await getDocs(collection(db, "users"));
   const userData = userSnap.docs.find(d => d.data().email === usuarioAtual.email)?.data();
   if (!userData?.isAdmin) {
     comparativoChartCtx.parentElement.style.display = "none";
-    return; // só admins
+    return; // só admins veem
   }
   comparativoChartCtx.parentElement.style.display = "block";
 
+  // Mês selecionado
   const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
+
+  // Consulta todos os relatórios
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
 
@@ -269,27 +274,51 @@ async function carregarComparativo() {
     mapa[r.matricula].valorFolha += Number(r.valorFolha || 0);
   });
 
-  const labels = Object.keys(mapa);
+  // Prepara os dados do gráfico
+  const labels = Object.keys(mapa).sort(); // Ordena por matrícula
   const abastecimentos = labels.map(m => mapa[m].abastecimentos);
   const valores = labels.map(m => mapa[m].valorFolha);
   const cores = labels.map(m => CORES_FUNCIONARIOS[m] || "#888");
 
+  // Destrói gráfico anterior
   if (chartComparativo) chartComparativo.destroy();
+
+  // Cria gráfico
   chartComparativo = new Chart(comparativoChartCtx, {
     type: "bar",
     data: {
       labels,
       datasets: [
-        { label: "Abastecimentos", data: abastecimentos, backgroundColor: cores },
-        { label: "Valor Total Folha (R$)", data: valores, type: "line", borderColor: "#ffd700", backgroundColor: "rgba(255,215,0,0.3)" }
+        {
+          label: "Abastecimentos",
+          data: abastecimentos,
+          backgroundColor: cores,
+          borderColor: cores.map(c => c),
+          borderWidth: 1,
+          yAxisID: "y"
+        },
+        {
+          label: "Valor Total Folha (R$)",
+          data: valores,
+          type: "line",
+          borderColor: "#ffd700",
+          backgroundColor: "rgba(255,215,0,0.3)",
+          yAxisID: "y1"
+        }
       ]
     },
     options: {
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
+      responsive: true,
+      layout: { padding: { top: 20, bottom: 20 } },
       scales: {
-        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 12 } } },
+        y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 12 } } },
+        y1: { position: "right", ticks: { color: "#ffd700", font: { size: 12 } }, grid: { drawOnChartArea: false } },
         x: { ticks: { color: "#ccc", font: { size: 12 } } }
+      },
+      plugins: {
+        legend: { labels: { color: "#fff", font: { size: 14 } } },
+        tooltip: { mode: 'index', intersect: false }
       }
     }
   });
