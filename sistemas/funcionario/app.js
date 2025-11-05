@@ -2,12 +2,15 @@
 import {
   collection,
   getDocs,
+  getDoc,
+  setDoc,
+  addDoc,
+  doc,
   query,
   where,
-  addDoc,
-  setDoc,
-  serverTimestamp,
-  onSnapshot
+  orderBy,
+  onSnapshot,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -36,15 +39,21 @@ const mensalChartCtx = document.getElementById("mensalChart");
 const comparativoChartCtx = document.getElementById("comparativoChart");
 
 let usuarioAtual = null;
-let chartMensal = null;
-let chartComparativo = null;
+let chartMensal, chartComparativo;
 
-// Mapa de cores fixo
 const CORES_FUNCIONARIOS = {
-  "4144": "#4da6ff", "5831": "#ffeb3b", "6994": "#b0b0b0",
-  "7794": "#ff9800", "5354": "#90ee90", "6266": "#00bfff",
-  "6414": "#8b4513", "5271": "#ff69b4", "9003": "#800080",
-  "8789": "#c8a2c8", "1858": "#556b2f", "70029": "#c0c0c0"
+  "4144": "#4da6ff",
+  "5831": "#ffeb3b",
+  "6994": "#b0b0b0",
+  "7794": "#ff9800",
+  "5354": "#90ee90",
+  "6266": "#00bfff",
+  "6414": "#8b4513",
+  "5271": "#ff69b4",
+  "9003": "#800080",
+  "8789": "#c8a2c8",
+  "1858": "#556b2f",
+  "70029": "#c0c0c0"
 };
 
 // --- LOGIN STATE ---
@@ -63,6 +72,7 @@ async function carregarPerfil(user) {
   const snap = await getDocs(q);
   if (snap.empty) return;
   const dados = snap.docs[0].data();
+
   nomeEl.textContent = dados.nome;
   matriculaEl.textContent = dados.matricula;
   admissaoEl.textContent = dados.dataAdmissao || "—";
@@ -71,12 +81,10 @@ async function carregarPerfil(user) {
   if (dados.isAdmin) {
     adminControls.classList.remove("hidden");
     carregarMatriculas();
+    carregarComparativo(); // Garante que admins vejam gráfico geral
   }
 
   carregarGraficoIndividual(dados.matricula);
-
-  if (dados.isAdmin) carregarComparativo();
-
   carregarAvisos(dados.matricula);
 }
 
@@ -124,33 +132,42 @@ btnSalvarAviso.addEventListener("click", async () => {
 // --- PESQUISAR AVISOS ADMIN ---
 btnPesquisarAvisos.addEventListener("click", async () => {
   const mat = adminPesquisarMatricula.value;
-  const q = query(collection(db, "avisos"), where("matricula", "==", mat), orderBy("criadoEm", "desc"));
+  adminAvisosLista.innerHTML = "Carregando...";
+  const q = query(
+    collection(db, "avisos"),
+    where("matricula", "==", mat),
+    orderBy("criadoEm", "desc")
+  );
   const snap = await getDocs(q);
   adminAvisosLista.innerHTML = "";
-  snap.forEach(d => {
-    const aviso = d.data();
+  snap.forEach((d) => {
     const div = document.createElement("div");
-    div.textContent = aviso.texto;
+    div.className = "aviso-item";
+    div.textContent = d.data().texto;
     adminAvisosLista.appendChild(div);
   });
 });
 
-// --- CARREGAR AVISOS USUARIO ---
+// --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
-  const q = query(collection(db, "avisos"), where("matricula", "==", matricula), orderBy("criadoEm", "desc"));
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
-  btnAvisos.textContent = snap.empty ? "Sem avisos vinculados à matrícula" : `Avisos (${snap.size})`;
-  btnAvisos.addEventListener("click", () => {
-    avisosLista.innerHTML = "";
-    snap.forEach(d => {
-      const aviso = d.data();
-      const p = document.createElement("p");
-      p.textContent = aviso.texto;
-      avisosLista.appendChild(p);
-    });
-    modalAvisos.showModal();
+  if (snap.empty) {
+    btnAvisos.textContent = "Sem avisos vinculados à matrícula";
+    btnAvisos.classList.remove("blink");
+    return;
+  }
+  btnAvisos.classList.add("blink");
+  btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
+  avisosLista.innerHTML = "";
+  snap.forEach((d) => {
+    const p = document.createElement("p");
+    p.textContent = d.data().texto;
+    avisosLista.appendChild(p);
   });
 }
+
+btnAvisos.addEventListener("click", () => modalAvisos.showModal());
 
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula) {
@@ -216,17 +233,26 @@ async function carregarGraficoIndividual(matricula) {
         responsive: true,
         plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
         scales: {
-          y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 14 } } },
-          y1: { position: "right", ticks: { color: "#ffd700", font: { size: 14 } }, grid: { drawOnChartArea: false } },
-          x: { ticks: { color: "#ccc", font: { size: 14 } } }
+          y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 12 } } },
+          y1: { position: "right", ticks: { color: "#ffd700", font: { size: 12 } }, grid: { drawOnChartArea: false } },
+          x: { ticks: { color: "#ccc", font: { size: 12 } } }
         }
       }
     });
   });
 }
 
-// --- GRÁFICO COMPARATIVO (ADMIN) ---
+// --- GRÁFICO COMPARATIVO ---
 async function carregarComparativo() {
+  if (!usuarioAtual) return;
+  const userSnap = await getDocs(collection(db, "users"));
+  const userData = userSnap.docs.find(d => d.data().email === usuarioAtual.email)?.data();
+  if (!userData?.isAdmin) {
+    comparativoChartCtx.parentElement.style.display = "none";
+    return; // só admins
+  }
+  comparativoChartCtx.parentElement.style.display = "block";
+
   const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
   const snap = await getDocs(collection(db, "relatorios"));
   const mapa = {};
@@ -260,11 +286,10 @@ async function carregarComparativo() {
     },
     options: {
       maintainAspectRatio: false,
-      responsive: true,
       plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } } },
       scales: {
-        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 14 } } },
-        x: { ticks: { color: "#ccc", font: { size: 14 } } }
+        y: { beginAtZero: true, ticks: { color: "#fff", font: { size: 12 } } },
+        x: { ticks: { color: "#ccc", font: { size: 12 } } }
       }
     }
   });
