@@ -18,12 +18,14 @@
   <main class="container">
     <section id="appSection">
       <div class="grid">
+
         <!-- ESQUERDA: RESUMO (ADMIN) -->
         <aside class="card admin-only">
           <div class="flex-between">
             <h3>Resumo do Recebedor</h3>
             <button id="btnToggleResumo" class="btn outline">Esconder/Exibir</button>
           </div>
+
           <div id="resumoWrap" class="collapsed">
             <div class="row">
               <label>Matrícula</label>
@@ -54,33 +56,46 @@
         <!-- DIREITA: GERAR RELATÓRIO (ADMIN) -->
         <aside class="card">
           <h3>Gerar Relatório</h3>
+
           <div id="gerarRelatorioForm" class="admin-only" hidden>
             <div class="row">
               <label>Matrícula do Caixa</label>
               <select id="matriculaForm"></select>
             </div>
+
             <div class="row">
               <label>Data do Caixa</label>
               <input id="dataCaixa" type="date"/>
             </div>
+
             <div class="row">
               <label>Valor Folha (R$)</label>
               <input id="valorFolha" type="number" step="0.01" />
             </div>
+
             <div class="row">
               <label>Valor em Dinheiro (R$)</label>
               <input id="valorDinheiro" type="number" step="0.01" />
             </div>
+
             <div class="row">
               <label>Sobra/Falta (R$)</label>
               <input id="sobraFalta" type="text" disabled />
             </div>
+
+            <div class="row">
+              <label>Abastecimento (Qtd. Documentos)</label>
+              <input id="abastecimento" type="number" min="0" step="1" />
+            </div>
+
             <div class="row">
               <label>Observação</label>
               <textarea id="observacao" rows="2"></textarea>
             </div>
+
             <button id="btnSalvarRelatorio" class="btn primary">Salvar</button>
           </div>
+
           <div class="user-only" id="infoUserOnly" hidden>
             <p>Os relatórios são criados pelos administradores e vinculados à sua matrícula.</p>
           </div>
@@ -95,6 +110,7 @@
             <select id="filtroMatricula"></select>
             <button id="btnAplicarFiltroMatricula" class="btn outline">Abrir</button>
           </div>
+
           <div class="row">
             <label>Filtrar por Data</label>
             <input id="filtroDataGlobal" type="date" />
@@ -112,7 +128,6 @@
   </main>
 
   <footer class="footer">
-    (desenvolvido por Lucas L Custodio, versão 1.0)
   </footer>
 
   <!-- Modal Pós Conferência -->

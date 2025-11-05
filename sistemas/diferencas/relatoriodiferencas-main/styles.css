@@ -261,3 +261,21 @@ textarea{resize:vertical;}
 .btn.danger:hover {
   background-color: #ff0000;
 }
+
+.input-prefix {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.prefix {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: bold;
+}
+.input-prefix input {
+  flex: 1;
+}
+
