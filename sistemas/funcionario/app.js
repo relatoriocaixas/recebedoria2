@@ -26,6 +26,18 @@ const avisosLista = document.getElementById("avisosLista");
 const mensalChartCtx = document.getElementById("mensalChart");
 const totalInfoEl = document.getElementById("totalInfo");
 
+const mesInput = document.getElementById("mesEscolhido");
+
+const adminControls = document.getElementById("adminControls");
+const adminMatriculaSelect = document.getElementById("adminMatriculaSelect");
+const adminHorarioInput = document.getElementById("adminHorarioInput");
+const btnSalvarHorario = document.getElementById("btnSalvarHorario");
+const adminAvisoInput = document.getElementById("adminAvisoInput");
+const btnSalvarAviso = document.getElementById("btnSalvarAviso");
+const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
+const modalAdminAvisos = document.getElementById("modalAdminAvisos");
+const adminAvisosLista = document.getElementById("adminAvisosLista");
+
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
@@ -71,23 +83,24 @@ async function carregarPerfil(user) {
   carregarAvisos(dados.matricula);
 
   // Configura input de mês
-  const mesInput = document.getElementById("mesEscolhido");
-  const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0, 7);
   if (mesInput) {
+    const hoje = new Date();
+    const mesAtual = hoje.toISOString().slice(0, 7);
     mesInput.value = mesAtual;
     mesInput.addEventListener("change", () => {
       carregarGraficoIndividual(matriculaAtual, mesInput.value);
     });
   }
 
-  // Se for admin, adicionar painel de edição
+  // Admin controls
   if (dados.isAdmin) {
-    adicionarPainelAdmin();
+    adminControls.classList.remove("hidden");
+    await popularSelectAdmin();
+    ligarEventosAdmin();
   }
 }
 
-// --- AVISOS ---
+// --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula), orderBy("criadoEm", "desc"));
   const snap = await getDocs(q);
@@ -168,7 +181,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             label: "Abastecimentos",
             data: abastecimentos,
             backgroundColor: "rgba(136,136,136,0.6)",
-            borderColor: "#004d4d", // azul petróleo
+            borderColor: "#004d4d",
             borderWidth: 2,
             borderRadius: 8,
             yAxisID: "y",
@@ -177,7 +190,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             label: "Valor Folha (R$)",
             data: valores,
             type: "line",
-            borderColor: "#00CED1", // azul turquesa
+            borderColor: "#00CED1",
             backgroundColor: "rgba(0,206,209,0.2)",
             borderWidth: 3,
             tension: 0.4,
@@ -233,36 +246,23 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   });
 }
 
-// --- PAINEL ADMIN ---
-async function adicionarPainelAdmin() {
-  const container = document.createElement("div");
-  container.className = "admin-panel";
-
-  // Matricula select
-  const selectMatricula = document.createElement("select");
-  selectMatricula.id = "adminMatriculaSelect";
+// --- FUNÇÕES ADMIN ---
+async function popularSelectAdmin() {
+  adminMatriculaSelect.innerHTML = "";
   const usersSnap = await getDocs(collection(db, "users"));
   usersSnap.forEach((d) => {
     const u = d.data();
     const opt = document.createElement("option");
     opt.value = u.matricula;
     opt.textContent = `${u.matricula} - ${u.nome}`;
-    selectMatricula.appendChild(opt);
+    adminMatriculaSelect.appendChild(opt);
   });
-  container.appendChild(selectMatricula);
+}
 
-  // Horário input
-  const horarioInput = document.createElement("input");
-  horarioInput.id = "adminHorarioInput";
-  horarioInput.placeholder = "07:00 - 17:00";
-  container.appendChild(horarioInput);
-
-  const btnSalvarHorario = document.createElement("button");
-  btnSalvarHorario.textContent = "Salvar Horário";
-  btnSalvarHorario.className = "btn";
+function ligarEventosAdmin() {
   btnSalvarHorario.addEventListener("click", async () => {
-    const mat = selectMatricula.value;
-    const horario = horarioInput.value.trim();
+    const mat = adminMatriculaSelect.value;
+    const horario = adminHorarioInput.value.trim();
     if (!mat || !horario) return alert("Informe matrícula e horário.");
     const q = query(collection(db, "users"), where("matricula", "==", mat));
     const s = await getDocs(q);
@@ -272,30 +272,38 @@ async function adicionarPainelAdmin() {
     alert("Horário atualizado!");
     if (mat === matriculaAtual) horarioEl.textContent = horario;
   });
-  container.appendChild(btnSalvarHorario);
 
-  // Aviso input
-  const avisoInput = document.createElement("input");
-  avisoInput.id = "adminAvisoInput";
-  avisoInput.placeholder = "Aviso para funcionário...";
-  container.appendChild(avisoInput);
-
-  const btnSalvarAviso = document.createElement("button");
-  btnSalvarAviso.textContent = "Salvar Aviso";
-  btnSalvarAviso.className = "btn";
   btnSalvarAviso.addEventListener("click", async () => {
-    const mat = selectMatricula.value;
-    const texto = avisoInput.value.trim();
+    const mat = adminMatriculaSelect.value;
+    const texto = adminAvisoInput.value.trim();
     if (!mat || !texto) return alert("Informe matrícula e aviso.");
     await addDoc(collection(db, "avisos"), {
       matricula: mat,
       texto,
       criadoEm: serverTimestamp(),
     });
-    avisoInput.value = "";
+    adminAvisoInput.value = "";
     alert("Aviso salvo!");
   });
-  container.appendChild(btnSalvarAviso);
 
-  document.body.appendChild(container);
+  btnVerAvisosAdmin.addEventListener("click", async () => {
+    modalAdminAvisos.showModal();
+    adminAvisosLista.innerHTML = "";
+    const snap = await getDocs(collection(db, "avisos"));
+    snap.forEach((d) => {
+      const aviso = d.data();
+      const div = document.createElement("div");
+      div.className = "admin-aviso";
+      div.innerHTML = `
+        <span>${aviso.matricula}: ${aviso.texto}</span>
+        <button class="btn small red">Excluir</button>
+      `;
+      const btnExcluir = div.querySelector("button");
+      btnExcluir.addEventListener("click", async () => {
+        await setDoc(d.ref, {}, { merge: true }); // Ou deleteDoc(d.ref)
+        div.remove();
+      });
+      adminAvisosLista.appendChild(div);
+    });
+  });
 }
