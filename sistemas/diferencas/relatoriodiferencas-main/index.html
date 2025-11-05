@@ -6,6 +6,24 @@
   <title>Relatório de Diferenças</title>
   <link rel="stylesheet" href="styles.css"/>
   <script type="module" src="app.js" defer></script>
+  <style>
+    /* Apenas um ajuste rápido para o símbolo R$ */
+    .input-money {
+      position: relative;
+    }
+    .input-money span {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #555;
+      font-weight: bold;
+      pointer-events: none;
+    }
+    .input-money input {
+      padding-left: 28px; /* espaçamento para o símbolo */
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -68,13 +86,15 @@
               <input id="dataCaixa" type="date"/>
             </div>
 
-            <div class="row">
-              <label>Valor Folha (R$)</label>
+            <div class="row input-money">
+              <label>Valor Folha</label>
+              <span>R$</span>
               <input id="valorFolha" type="number" step="0.01" />
             </div>
 
-            <div class="row">
-              <label>Valor em Dinheiro (R$)</label>
+            <div class="row input-money">
+              <label>Valor em Dinheiro</label>
+              <span>R$</span>
               <input id="valorDinheiro" type="number" step="0.01" />
             </div>
 
@@ -127,8 +147,7 @@
     </section>
   </main>
 
-  <footer class="footer">
-  </footer>
+  <footer class="footer"></footer>
 
   <!-- Modal Pós Conferência -->
   <dialog id="posModal" class="modal">
