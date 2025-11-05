@@ -14,8 +14,8 @@
 
     <!-- Login -->
     <div id="loginForm">
-      <input type="text" id="loginMatricula" placeholder="?? Matrícula" required />
-      <input type="password" id="loginSenha" placeholder="?? Senha" required />
+      <input type="text" id="loginMatricula" placeholder="ðŸ†” Matricula" required />
+      <input type="password" id="loginSenha" placeholder="ðŸ” Senha" required />
       <button id="btnLogin">Entrar</button>
       <div class="toggle-link" id="showRegister">Criar uma conta</div>
     </div>
@@ -23,12 +23,12 @@
     <!-- Registro -->
     <div id="registerForm">
       <input type="text" id="regNome" placeholder="Nome completo" required />
-      <input type="text" id="regMatricula" placeholder="Matrícula" required />
-      <input type="date" id="regDataAdmissao" placeholder="Data de Admissão" required />
+      <input type="text" id="regMatricula" placeholder="Matricula" required />
+      <input type="date" id="regDataAdmissao" placeholder="Data de Admissao" required />
       <input type="password" id="regSenha" placeholder="Senha" required />
       <input type="password" id="regConfirmaSenha" placeholder="Confirmar senha" required />
       <button id="btnRegistrar">Registrar</button>
-      <div class="toggle-link" id="showLogin">Já tenho conta</div>
+      <div class="toggle-link" id="showLogin">Ja tenho conta</div>
     </div>
   </div>
 
@@ -101,16 +101,16 @@
         return alert("Preencha todos os campos.");
 
       if (senha !== confirmaSenha)
-        return alert("As senhas não conferem.");
+        return alert("As senhas nï¿½o conferem.");
 
       try {
-        // Cria o usuário no Auth
+        // Cria o usuï¿½rio no Auth
         const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
 
         // Define o displayName (nome)
         await updateProfile(cred.user, { displayName: nome });
 
-        // Salva na coleção USERS (apenas ela)
+        // Salva na coleï¿½ï¿½o USERS (apenas ela)
         await setDoc(doc(db, "users", cred.user.uid), {
           uid: cred.user.uid,
           nome,
@@ -121,7 +121,7 @@
           admin: false
         });
 
-        alert("Usuário registrado com sucesso!");
+        alert("Usuï¿½rio registrado com sucesso!");
         registerForm.style.display = "none";
         loginForm.style.display = "block";
         formTitle.textContent = "Login";

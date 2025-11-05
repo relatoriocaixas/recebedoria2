@@ -11,7 +11,7 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <h1>Funcionário</h1>
+      <h1 id="funcTitle">Funcionário</h1>
     </div>
   </header>
 
@@ -28,21 +28,41 @@
 
       <div class="profile-right">
         <div id="avisosContainer">
-          <button id="btnAvisos" class="btn-avisos">Sem avisos vinculados à matrícula</button>
+          <button id="btnAvisos" class="btn-avisos btn-cinza">Sem avisos vinculados à matrícula</button>
+        </div>
+
+        <!-- Painel Admin -->
+        <div id="adminControls" class="admin-only hidden">
+          <h3>Painel do Administrador</h3>
+          <div class="admin-row">
+            <label>Matrícula:</label>
+            <select id="adminMatriculaSelect"></select>
+          </div>
+
+          <div class="admin-row">
+            <label>Horário:</label>
+            <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
+            <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
+          </div>
+
+          <div class="admin-row">
+            <label>Aviso:</label>
+            <input id="adminAvisoInput" placeholder="Texto do aviso..." />
+            <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
+          </div>
+
+          <div class="admin-row">
+            <button id="btnVerAvisosAdmin" class="btn small">Ver/Editar Todos os Avisos</button>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- Escolher mês -->
     <section class="card charts">
       <div class="chart-col">
         <h3>Resumo Mensal — Caixa</h3>
-
-        <!-- Seletor de mês -->
-        <div class="controls">
-          <label for="mesEscolhido">Mês:</label>
-          <input id="mesEscolhido" type="month" />
-        </div>
-
+        <input id="mesEscolhido" type="month" />
         <canvas id="mensalChart"></canvas>
       </div>
     </section>
@@ -55,6 +75,15 @@
     <form method="dialog" class="modal-body">
       <h3>Avisos</h3>
       <div id="avisosLista"></div>
+      <button type="submit" class="btn">Fechar</button>
+    </form>
+  </dialog>
+
+  <!-- Modal Admin Avisos -->
+  <dialog id="modalAdminAvisos" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Todos os Avisos</h3>
+      <div id="adminAvisosLista"></div>
       <button type="submit" class="btn">Fechar</button>
     </form>
   </dialog>
