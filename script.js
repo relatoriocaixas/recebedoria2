@@ -87,6 +87,16 @@ escalaLi.innerHTML = "📅 <span class='label'>Escala</span>";
 sidebar.querySelector('ul').appendChild(escalaLi);
 escalaLi.addEventListener('click', () => openRoute('escala'));
 
+// 🔹 Adiciona rota Funcionário
+ROUTES.funcionario = "sistemas/funcionario/index.html";
+
+const funcionarioLi = document.createElement('li');
+funcionarioLi.dataset.target = 'funcionario';
+funcionarioLi.innerHTML = "👤 <span class='label'>Funcionário</span>";
+sidebar.querySelector('ul').appendChild(funcionarioLi);
+
+funcionarioLi.addEventListener('click', () => openRoute('funcionario'));
+
 // 🔹 Sidebar navigation
 document.querySelectorAll('.sidebar li').forEach(li => {
   li.addEventListener('click', () => {

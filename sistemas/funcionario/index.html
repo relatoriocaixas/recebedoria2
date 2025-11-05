@@ -1,0 +1,91 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Funcionário — Recebedoria</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="emoji">🧑‍💼</span>
+      <h1>Funcionário</h1>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card profile-card">
+      <div class="profile-left">
+        <h2 id="funcNome">—</h2>
+        <div class="meta">
+          <div><strong>Matrícula:</strong> <span id="funcMatricula">—</span></div>
+          <div><strong>Admissão:</strong> <span id="funcAdmissao">—</span></div>
+          <div><strong>Horário:</strong> <span id="funcHorario">—</span></div>
+        </div>
+      </div>
+
+      <div class="profile-right">
+        <div id="avisosContainer">
+          <button id="btnAvisos" class="btn-avisos">Sem avisos vinculados à matrícula</button>
+        </div>
+
+        <div id="adminControls" class="admin-only hidden">
+          <h3>Painel do Administrador</h3>
+          <div class="admin-row">
+            <label>Matrícula:</label>
+            <select id="adminMatriculaSelect"></select>
+          </div>
+
+          <div class="admin-row">
+            <label>Horário:</label>
+            <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
+            <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
+          </div>
+
+          <div class="admin-row">
+            <label>Aviso:</label>
+            <input id="adminAvisoInput" placeholder="Texto do aviso..." />
+            <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
+          </div>
+
+          <div class="admin-row">
+            <label>Pesquisar avisos por matrícula:</label>
+            <select id="adminPesquisarMatricula"></select>
+            <button id="btnPesquisarAvisos" class="btn small">Pesquisar</button>
+          </div>
+
+          <div id="adminAvisosLista" class="admin-avisos-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card charts">
+      <div class="chart-col">
+        <h3>Resumo Mensal — Caixa</h3>
+        <canvas id="mensalChart"></canvas>
+      </div>
+
+      <div class="chart-col">
+        <h3>Comparativo Mensal (por funcionário)</h3>
+        <div class="controls">
+          <label>Mês:</label>
+          <input id="mesEscolhido" type="month" />
+        </div>
+        <canvas id="comparativoChart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de Avisos -->
+  <dialog id="modalAvisos" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Avisos</h3>
+      <div id="avisosLista"></div>
+      <button type="submit" class="btn">Fechar</button>
+    </form>
+  </dialog>
+</body>
+</html>
