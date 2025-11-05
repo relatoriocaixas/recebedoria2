@@ -8,6 +8,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: radial-gradient(circle at top, #1e1e2f, #0d0d12 80%);
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -17,6 +18,9 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .brand {
@@ -32,19 +36,27 @@ body {
 h1 {
   font-size: 20px;
   font-weight: 600;
+  margin: 0;
 }
 
 .wrap {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
+/* ======= CARD ======= */
 .card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+.card:hover {
+  transform: scale(1.01);
 }
 
 .profile-card {
@@ -52,10 +64,12 @@ h1 {
   justify-content: space-between;
   flex-wrap: wrap;
   align-items: flex-start;
+  gap: 15px;
 }
 
 .profile-left h2 {
   margin-top: 0;
+  font-size: 1.2rem;
 }
 
 .meta div {
@@ -63,7 +77,9 @@ h1 {
   opacity: 0.8;
 }
 
-.btn, .btn-avisos {
+/* ======= BOTÕES ======= */
+.btn,
+.btn-avisos {
   background: #00bfff;
   border: none;
   padding: 8px 14px;
@@ -74,7 +90,8 @@ h1 {
   transition: all 0.3s;
 }
 
-.btn:hover, .btn-avisos:hover {
+.btn:hover,
+.btn-avisos:hover {
   background: #0090cc;
 }
 
@@ -91,21 +108,44 @@ h1 {
   display: none;
 }
 
+/* ======= ADMIN ======= */
 .admin-row {
   margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.admin-row input,
+.admin-row select {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }
 
+/* ======= GRÁFICOS ======= */
 .charts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 20px;
 }
 
 canvas {
-  width: 100%;
-  height: 280px;
+  width: 100% !important;
+  height: 320px !important;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 10px;
 }
 
+/* Evita corte inferior dos gráficos */
+.chart-col {
+  min-height: 350px;
+}
+
+/* ======= ANIMAÇÕES ======= */
 .blink {
   animation: blink 1s infinite;
 }
@@ -113,22 +153,41 @@ canvas {
   50% { opacity: 0.4; }
 }
 
+/* ======= MODAL ======= */
 .modal {
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 10px;
   padding: 0;
 }
-
 .modal-body {
   background: #181818;
   border-radius: 10px;
   padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
+/* ======= AVISOS ======= */
 #avisosLista p {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   padding: 10px;
   margin: 6px 0;
   border-radius: 8px;
+}
+
+/* ======= RESPONSIVO ======= */
+@media (max-width: 768px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+
+  canvas {
+    height: 260px !important;
+  }
+
+  .profile-card {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
