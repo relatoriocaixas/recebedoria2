@@ -15,7 +15,7 @@ body {
 
 .topbar {
   padding: 12px 20px;
-  border-bottom: 2px solid #006666; /* azul petróleo */
+  border-bottom: 2px solid #006666;
   display: flex;
   align-items: center;
   background-color: #000;
@@ -35,7 +35,7 @@ body {
 /* Cards */
 .card {
   background-color: #111;
-  border: 2px solid #006666; /* azul petróleo */
+  border: 2px solid #006666;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
@@ -49,9 +49,10 @@ body {
 }
 
 /* Nome colorido */
-.nome-rosa { color: #ff69b4; } /* rosa neon */
-.nome-azul { color: #00bfff; } /* azul claro neon */
+.nome-rosa { color: #ff69b4; }
+.nome-azul { color: #00bfff; }
 
+/* Meta info */
 .meta div {
   margin-bottom: 6px;
 }
@@ -91,11 +92,39 @@ body {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap; /* Garante responsividade */
 }
-.admin-row label { width: 80px; }
-.admin-row input, .admin-row select { flex: 1; padding: 6px 8px; margin-right: 6px; border-radius: 6px; border: 1px solid #006666; background-color: #222; color: #fff; }
-.admin-row button { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-.admin-row button.primary { background-color: #00bfff; color: #000; }
+
+.admin-row label {
+  width: 80px;
+  margin-right: 6px;
+}
+
+.admin-row input,
+.admin-row select {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 8px;
+  margin-right: 6px;
+  border-radius: 6px;
+  border: 1px solid #006666;
+  background-color: #222;
+  color: #fff;
+}
+
+.admin-row button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 4px; /* Pequeno espaçamento em telas pequenas */
+}
+
+.admin-row button.primary {
+  background-color: #00bfff;
+  color: #000;
+}
 
 /* Charts */
 .charts canvas {
@@ -120,20 +149,31 @@ body {
 .modal::backdrop {
   background: rgba(0,0,0,0.7);
 }
+
 .modal-body {
   background: #111;
   border: 2px solid #006666;
   border-radius: 12px;
   padding: 20px;
   width: 400px;
+  max-width: 90%; /* Para telas pequenas */
 }
-.modal-body h3 { margin-bottom: 10px; }
-.modal-body p { margin-bottom: 6px; }
+
+.modal-body h3 {
+  margin-bottom: 10px;
+}
+
+.modal-body p {
+  margin-bottom: 6px;
+}
+
 .modal-body .admin-aviso-item {
   display: flex;
   align-items: center;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
+
 .modal-body .admin-aviso-item input {
   flex: 1;
   margin: 0 6px;
@@ -143,6 +183,7 @@ body {
   background-color: #222;
   color: #fff;
 }
+
 .modal-body .admin-aviso-item button {
   padding: 4px 8px;
   margin-left: 4px;
@@ -151,6 +192,7 @@ body {
   cursor: pointer;
   font-size: 0.85rem;
 }
+
 .btn-editar { background-color: #00bfff; color: #000; }
 .btn-excluir { background-color: red; color: #fff; }
 
@@ -162,4 +204,19 @@ body {
   border: 1px solid #006666;
   background-color: #222;
   color: #fff;
+}
+
+/* Ajustes de responsividade para painel admin */
+@media (max-width: 600px) {
+  .admin-row label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .admin-row input,
+  .admin-row select,
+  .admin-row button {
+    width: 100%;
+    margin-right: 0;
+  }
 }

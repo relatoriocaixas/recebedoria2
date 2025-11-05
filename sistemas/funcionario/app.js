@@ -29,6 +29,7 @@ const totalInfoEl = document.getElementById("totalInfo");
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
+let isAdmin = false;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -48,6 +49,7 @@ async function carregarPerfil(user) {
   const dados = snap.docs[0].data();
 
   matriculaAtual = dados.matricula;
+  isAdmin = !!dados.isAdmin;
 
   // Nome com cor conforme matrícula
   const matriculasRosa = ["9003", "5271", "6414", "8789"];
@@ -81,11 +83,9 @@ async function carregarPerfil(user) {
     });
   }
 
-  // Se for admin, mostrar painel e configurar botões
-  if (dados.isAdmin) {
-    const adminPanel = document.getElementById("adminControls");
-    adminPanel.classList.remove("hidden");
-
+  // Mostrar painel admin se for admin
+  if (isAdmin) {
+    document.getElementById("adminControls").classList.remove("hidden");
     await popularMatriculaSelect();
 
     document.getElementById("btnSalvarHorario").addEventListener("click", salvarHorarioAdmin);
@@ -101,14 +101,13 @@ async function carregarAvisos(matricula) {
 
   if (snap.empty) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
+    btnAvisos.classList.remove("aviso-vermelho");
     btnAvisos.style.backgroundColor = "#888";
-    btnAvisos.style.animation = "none";
     return;
   }
 
   btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
-  btnAvisos.style.backgroundColor = "red";
-  btnAvisos.style.animation = "brilhoPulse 1.5s infinite";
+  btnAvisos.classList.add("aviso-vermelho");
 
   avisosLista.innerHTML = "";
   snap.forEach((d) => {
@@ -118,7 +117,9 @@ async function carregarAvisos(matricula) {
   });
 }
 
-btnAvisos.addEventListener("click", () => modalAvisos.showModal());
+btnAvisos.addEventListener("click", () => {
+  modalAvisos.showModal();
+});
 
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
@@ -240,7 +241,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   });
 }
 
-// --- PAINEL ADMIN ---
+// --- ADMIN FUNCTIONS ---
 async function popularMatriculaSelect() {
   const select = document.getElementById("adminMatriculaSelect");
   select.innerHTML = "";
@@ -291,6 +292,7 @@ async function mostrarModalAvisosAdmin() {
   snap.forEach((d) => {
     const aviso = d.data();
     const div = document.createElement("div");
+    div.classList.add("admin-aviso-item");
     div.textContent = `${aviso.matricula}: ${aviso.texto}`;
     lista.appendChild(div);
   });
