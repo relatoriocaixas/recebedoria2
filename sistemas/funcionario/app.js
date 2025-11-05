@@ -8,6 +8,7 @@ import {
   onSnapshot,
   updateDoc,
   doc,
+  deleteDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -36,9 +37,16 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
+// NOVO: botão expandir/minimizar painel admin
+const btnToggleAdmin = document.createElement("button");
+btnToggleAdmin.textContent = "Admin";
+btnToggleAdmin.classList.add("btn-toggle-admin");
+adminControls.parentElement.prepend(btnToggleAdmin);
+
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
+let adminPanelExpanded = true;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -48,12 +56,11 @@ onAuthStateChanged(auth, async (user) => {
   }
   usuarioAtual = user;
 
-  // Pega dados do Firestore
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
   if (snap.empty) return;
   const dados = snap.docs[0].data();
-  usuarioAtual.dados = dados; // salvar dados do Firestore
+  usuarioAtual.dados = dados;
   matriculaAtual = dados.matricula;
 
   await carregarPerfil(dados);
@@ -67,7 +74,6 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- PERFIL ---
 async function carregarPerfil(dados) {
-  // Nome rosa ou azul
   const matriculasRosa = ["8789","9003","6414","5271"];
   nomeEl.textContent = dados.nome;
   if (matriculasRosa.includes(dados.matricula)) {
@@ -80,7 +86,6 @@ async function carregarPerfil(dados) {
 
   matriculaEl.textContent = dados.matricula;
 
-  // Corrigir data BR
   if (dados.dataAdmissao) {
     const data = new Date(dados.dataAdmissao);
     data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
@@ -91,16 +96,11 @@ async function carregarPerfil(dados) {
 
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
-  // Carregar gráfico individual
   carregarGraficoIndividual(dados.matricula);
-
-  // Carregar avisos
   carregarAvisos(dados.matricula);
 
-  // Configura input de mês
   const hoje = new Date();
-  const mesAtual = hoje.toISOString().slice(0, 7);
-  mesInput.value = mesAtual;
+  mesInput.value = hoje.toISOString().slice(0, 7);
 
   mesInput.addEventListener("change", () => {
     carregarGraficoIndividual(matriculaAtual, mesInput.value);
@@ -129,7 +129,10 @@ async function carregarAvisos(matricula) {
   });
 }
 
-btnAvisos.addEventListener("click", () => modalAvisos.showModal());
+btnAvisos.addEventListener("click", () => {
+  modalAvisos.showModal();
+  btnAvisos.classList.remove("blink", "aviso-vermelho");
+});
 
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
@@ -137,7 +140,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const agora = new Date();
   const ano = agora.getFullYear();
   const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
-
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
 
@@ -242,7 +244,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       }
     });
 
-    // Resumo abaixo do gráfico
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
@@ -292,14 +293,48 @@ btnSalvarAviso.addEventListener("click", async () => {
   alert("Aviso salvo com sucesso!");
 });
 
+// --- ADMIN MODAL COM EDIT/DELETE ---
 btnVerAvisosAdmin.addEventListener("click", async () => {
   modalAdminAvisos.showModal();
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
+
   snap.forEach(docSnap => {
     const d = docSnap.data();
     const p = document.createElement("p");
-    p.textContent = `${d.matricula}: ${d.texto}`;
+    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
+    // Botões
+    const btnEditar = document.createElement("button");
+    btnEditar.textContent = "Editar";
+    btnEditar.classList.add("btn-small");
+    btnEditar.addEventListener("click", async () => {
+      const novoTexto = prompt("Editar aviso:", d.texto);
+      if (novoTexto !== null && novoTexto.trim() !== "") {
+        await updateDoc(doc(db, "avisos", docSnap.id), { texto: novoTexto });
+        btnVerAvisosAdmin.click(); // atualizar lista
+      }
+    });
+    const btnExcluir = document.createElement("button");
+    btnExcluir.textContent = "Excluir";
+    btnExcluir.classList.add("btn-small");
+    btnExcluir.addEventListener("click", async () => {
+      if (confirm("Deseja realmente excluir este aviso?")) {
+        await deleteDoc(doc(db, "avisos", docSnap.id));
+        btnVerAvisosAdmin.click(); // atualizar lista
+      }
+    });
+    p.appendChild(btnEditar);
+    p.appendChild(btnExcluir);
     adminAvisosLista.appendChild(p);
   });
+});
+
+// --- TOGGLE PAINEL ADMIN ---
+btnToggleAdmin.addEventListener("click", () => {
+  adminPanelExpanded = !adminPanelExpanded;
+  if (adminPanelExpanded) {
+    adminControls.style.display = "flex";
+  } else {
+    adminControls.style.display = "none";
+  }
 });
