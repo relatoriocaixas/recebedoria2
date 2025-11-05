@@ -2,19 +2,12 @@
 import {
   collection,
   getDocs,
-  getDoc,
-  setDoc,
-  addDoc,
-  doc,
   query,
   where,
-  orderBy,
-  onSnapshot,
-  serverTimestamp
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// ELEMENTOS
 const nomeEl = document.getElementById("funcNome");
 const matriculaEl = document.getElementById("funcMatricula");
 const admissaoEl = document.getElementById("funcAdmissao");
@@ -24,37 +17,8 @@ const btnAvisos = document.getElementById("btnAvisos");
 const modalAvisos = document.getElementById("modalAvisos");
 const avisosLista = document.getElementById("avisosLista");
 
-const adminControls = document.getElementById("adminControls");
-const adminMatriculaSelect = document.getElementById("adminMatriculaSelect");
-const adminPesquisarMatricula = document.getElementById("adminPesquisarMatricula");
-const adminHorarioInput = document.getElementById("adminHorarioInput");
-const adminAvisoInput = document.getElementById("adminAvisoInput");
-const adminAvisosLista = document.getElementById("adminAvisosLista");
-
-const btnSalvarHorario = document.getElementById("btnSalvarHorario");
-const btnSalvarAviso = document.getElementById("btnSalvarAviso");
-const btnPesquisarAvisos = document.getElementById("btnPesquisarAvisos");
-
 const mensalChartCtx = document.getElementById("mensalChart");
-const comparativoChartCtx = document.getElementById("comparativoChart");
-
-let usuarioAtual = null;
-let chartMensal, chartComparativo;
-
-const CORES_FUNCIONARIOS = {
-  "4144": "#4da6ff",
-  "5831": "#ffeb3b",
-  "6994": "#b0b0b0",
-  "7794": "#ff9800",
-  "5354": "#90ee90",
-  "6266": "#00bfff",
-  "6414": "#8b4513",
-  "5271": "#ff69b4",
-  "9003": "#800080",
-  "8789": "#c8a2c8",
-  "1858": "#556b2f",
-  "70029": "#c0c0c0"
-};
+let chartMensal = null;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -62,7 +26,6 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "../../login.html";
     return;
   }
-  usuarioAtual = user;
   await carregarPerfil(user);
 });
 
@@ -78,75 +41,9 @@ async function carregarPerfil(user) {
   admissaoEl.textContent = dados.dataAdmissao || "—";
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
-  if (dados.isAdmin) {
-    adminControls.classList.remove("hidden");
-    carregarMatriculas();
-    carregarComparativo(); // Garante que admins vejam gráfico geral
-  }
-
   carregarGraficoIndividual(dados.matricula);
   carregarAvisos(dados.matricula);
 }
-
-// --- MATRICULAS ADMIN ---
-async function carregarMatriculas() {
-  const snap = await getDocs(collection(db, "users"));
-  snap.forEach((d) => {
-    const { matricula, nome } = d.data();
-    [adminMatriculaSelect, adminPesquisarMatricula].forEach(sel => {
-      const opt = document.createElement("option");
-      opt.value = matricula;
-      opt.textContent = `${matricula} - ${nome}`;
-      sel.appendChild(opt);
-    });
-  });
-}
-
-// --- SALVAR HORÁRIO ---
-btnSalvarHorario.addEventListener("click", async () => {
-  const mat = adminMatriculaSelect.value;
-  const horario = adminHorarioInput.value.trim();
-  if (!mat || !horario) return alert("Informe matrícula e horário.");
-  const q = query(collection(db, "users"), where("matricula", "==", mat));
-  const s = await getDocs(q);
-  if (s.empty) return;
-  const ref = s.docs[0].ref;
-  await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
-  alert("Horário atualizado!");
-});
-
-// --- SALVAR AVISO ---
-btnSalvarAviso.addEventListener("click", async () => {
-  const mat = adminMatriculaSelect.value;
-  const aviso = adminAvisoInput.value.trim();
-  if (!mat || !aviso) return alert("Preencha aviso e matrícula.");
-  await addDoc(collection(db, "avisos"), {
-    matricula: mat,
-    texto: aviso,
-    criadoEm: serverTimestamp()
-  });
-  alert("Aviso salvo!");
-  adminAvisoInput.value = "";
-});
-
-// --- PESQUISAR AVISOS ADMIN ---
-btnPesquisarAvisos.addEventListener("click", async () => {
-  const mat = adminPesquisarMatricula.value;
-  adminAvisosLista.innerHTML = "Carregando...";
-  const q = query(
-    collection(db, "avisos"),
-    where("matricula", "==", mat),
-    orderBy("criadoEm", "desc")
-  );
-  const snap = await getDocs(q);
-  adminAvisosLista.innerHTML = "";
-  snap.forEach((d) => {
-    const div = document.createElement("div");
-    div.className = "aviso-item";
-    div.textContent = d.data().texto;
-    adminAvisosLista.appendChild(div);
-  });
-});
 
 // --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
@@ -241,87 +138,3 @@ async function carregarGraficoIndividual(matricula) {
     });
   });
 }
-
-// --- GRÁFICO COMPARATIVO (ADMIN) ---
-async function carregarComparativo() {
-  if (!usuarioAtual) return;
-
-  // Verifica se usuário é admin
-  const userSnap = await getDocs(collection(db, "users"));
-  const userData = userSnap.docs.find(d => d.data().email === usuarioAtual.email)?.data();
-  if (!userData?.isAdmin) {
-    comparativoChartCtx.parentElement.style.display = "none";
-    return; // só admins veem
-  }
-  comparativoChartCtx.parentElement.style.display = "block";
-
-  // Mês selecionado
-  const mes = document.getElementById("mesEscolhido").value || new Date().toISOString().slice(0, 7);
-
-  // Consulta todos os relatórios
-  const snap = await getDocs(collection(db, "relatorios"));
-  const mapa = {};
-
-  snap.forEach((d) => {
-    const r = d.data();
-    if (!r.dataCaixa) return;
-    const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
-    const mesRegistro = data.toISOString().slice(0, 7);
-    if (mesRegistro !== mes) return;
-
-    if (!mapa[r.matricula]) mapa[r.matricula] = { abastecimentos: 0, valorFolha: 0 };
-    mapa[r.matricula].abastecimentos++;
-    mapa[r.matricula].valorFolha += Number(r.valorFolha || 0);
-  });
-
-  // Prepara os dados do gráfico
-  const labels = Object.keys(mapa).sort(); // Ordena por matrícula
-  const abastecimentos = labels.map(m => mapa[m].abastecimentos);
-  const valores = labels.map(m => mapa[m].valorFolha);
-  const cores = labels.map(m => CORES_FUNCIONARIOS[m] || "#888");
-
-  // Destrói gráfico anterior
-  if (chartComparativo) chartComparativo.destroy();
-
-  // Cria gráfico
-  chartComparativo = new Chart(comparativoChartCtx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Abastecimentos",
-          data: abastecimentos,
-          backgroundColor: cores,
-          borderColor: cores.map(c => c),
-          borderWidth: 1,
-          yAxisID: "y"
-        },
-        {
-          label: "Valor Total Folha (R$)",
-          data: valores,
-          type: "line",
-          borderColor: "#ffd700",
-          backgroundColor: "rgba(255,215,0,0.3)",
-          yAxisID: "y1"
-        }
-      ]
-    },
-    options: {
-      maintainAspectRatio: false,
-      responsive: true,
-      layout: { padding: { top: 20, bottom: 20 } },
-      scales: {
-        y: { beginAtZero: true, ticks: { color: "#00bfff", font: { size: 12 } } },
-        y1: { position: "right", ticks: { color: "#ffd700", font: { size: 12 } }, grid: { drawOnChartArea: false } },
-        x: { ticks: { color: "#ccc", font: { size: 12 } } }
-      },
-      plugins: {
-        legend: { labels: { color: "#fff", font: { size: 14 } } },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
-}
-
-document.getElementById("mesEscolhido").addEventListener("change", carregarComparativo);

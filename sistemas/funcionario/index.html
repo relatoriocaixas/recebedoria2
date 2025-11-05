@@ -31,34 +31,6 @@
         <div id="avisosContainer">
           <button id="btnAvisos" class="btn-avisos">Sem avisos vinculados à matrícula</button>
         </div>
-
-        <div id="adminControls" class="admin-only hidden">
-          <h3>Painel do Administrador</h3>
-          <div class="admin-row">
-            <label>Matrícula:</label>
-            <select id="adminMatriculaSelect"></select>
-          </div>
-
-          <div class="admin-row">
-            <label>Horário:</label>
-            <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
-            <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
-          </div>
-
-          <div class="admin-row">
-            <label>Aviso:</label>
-            <input id="adminAvisoInput" placeholder="Texto do aviso..." />
-            <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
-          </div>
-
-          <div class="admin-row">
-            <label>Pesquisar avisos por matrícula:</label>
-            <select id="adminPesquisarMatricula"></select>
-            <button id="btnPesquisarAvisos" class="btn small">Pesquisar</button>
-          </div>
-
-          <div id="adminAvisosLista" class="admin-avisos-list"></div>
-        </div>
       </div>
     </section>
 
@@ -67,20 +39,12 @@
         <h3>Resumo Mensal — Caixa</h3>
         <canvas id="mensalChart"></canvas>
       </div>
-
-      <div class="chart-col admin-only">
-        <h3>Comparativo Mensal (Todos Funcionários)</h3>
-        <div class="controls">
-          <label>Mês:</label>
-          <input id="mesEscolhido" type="month" />
-        </div>
-        <canvas id="comparativoChart"></canvas>
-      </div>
     </section>
 
     <div id="totalInfo" class="total-info"></div>
   </main>
 
+  <!-- Modal de Avisos -->
   <dialog id="modalAvisos" class="modal">
     <form method="dialog" class="modal-body">
       <h3>Avisos</h3>
