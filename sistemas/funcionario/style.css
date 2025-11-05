@@ -3,162 +3,119 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
+/* Fundo radial animado */
 body {
-  font-family: "Arial", sans-serif;
-  background: radial-gradient(circle at center, #000 0%, #111 100%);
-  color: #fff;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: radial-gradient(circle at center, #000000, #111111, #000000);
+  animation: pulse 10s infinite alternate;
+  color: #fff;
 }
 
+@keyframes pulse {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 50% 50%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* Topbar */
 .topbar {
-  background-color: #000;
-  padding: 10px 20px;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #004d4d; /* azul petróleo */
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #888; /* neon cinza */
 }
 
-.topbar .brand h1 {
-  color: #0f0; /* verde neon padrão */
-  text-shadow: 0 0 5px #0f0, 0 0 10px #0f0, 0 0 20px #0f0;
+.topbar h1 {
+  font-size: 1.5rem;
+  margin-left: 0;
 }
 
-/* Nomes com matriculas especiais em rosa neon */
-.nome-rosa {
-  color: #ff69b4;
-  text-shadow: 0 0 5px #ff69b4, 0 0 10px #ff69b4, 0 0 20px #ff69b4;
-}
-
-.wrap {
-  flex: 1;
-  padding: 20px;
-}
-
+/* Cards */
 .card {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 20px;
-  margin-bottom: 20px;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid #004d4d; /* azul petróleo */
   border-radius: 12px;
-  box-shadow: 0 0 10px #888, 0 0 20px #0f0 inset; /* borda neon cinza e verde */
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 900px;
 }
 
-.profile-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+/* Perfil */
+.profile-left h2 { 
+  font-size: 1.5rem; 
+  margin-bottom: 0.5rem; 
 }
 
-.profile-left h2 {
-  color: #0f0; /* verde neon */
-  text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
-}
+/* Cores do nome */
+.nome-rosa { color: #ff00ff; }
+.nome-azul { color: #00cfff; }
 
-.meta div {
-  margin: 4px 0;
-}
+/* Meta informações */
+.meta div { margin-bottom: 0.25rem; }
 
-.profile-right .admin-only {
-  margin-top: 10px;
-}
-
+/* Botão de avisos */
 .btn-avisos {
-  padding: 8px 12px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
-  background: #888; /* barra cinza neon */
-  color: #000;
+  cursor: pointer;
   font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 0 5px #888, 0 0 10px #888;
-  transition: transform 0.2s;
+  transition: all 0.3s;
 }
 
-.btn-avisos.blink {
-  animation: blink 1.5s infinite;
+.btn-cinza { 
+  background-color: #888; 
+  color: #fff; 
 }
 
-@keyframes blink {
-  0%, 50%, 100% { opacity: 1; }
-  25%, 75% { opacity: 0.3; }
+.aviso-vermelho { 
+  background-color: #ff0000; 
+  color: #fff; 
 }
 
-.admin-row {
-  margin: 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.blink { 
+  animation: blink 1s infinite; 
 }
 
-.admin-row input,
-.admin-row select {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #0f0;
-  background: #111;
-  color: #0f0;
+@keyframes blink { 
+  0%,50%,100% { opacity:1; } 
+  25%,75% { opacity:0.3; } 
 }
 
-.admin-row button {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  background: #0f0; /* verde neon */
-  color: #000;
-  cursor: pointer;
+/* Gráficos */
+.charts-wrapper { padding: 1rem; }
+.chart-col { 
+  margin-top: 1rem; 
+  height: 400px; 
 }
 
-.charts-wrapper .chart-col {
-  margin-top: 20px;
-  position: relative;
-  height: 400px;
-  border: 2px solid #888; /* borda cinza neon */
-  border-radius: 12px;
-  padding: 10px;
+/* Resumo abaixo do gráfico */
+.resumo { 
+  margin-top: 1rem; 
+  font-size: 1rem; 
+  display: flex; 
+  justify-content: space-around; 
 }
 
-#totalInfo {
-  margin-top: 10px;
-  font-size: 16px;
-  text-align: center;
+.resumo .abastecimentos { 
+  color: #888; 
+  font-weight: bold; 
 }
 
-#totalInfo .resumo span {
-  display: inline-block;
-  padding: 4px 8px;
-  margin: 0 4px;
-  border-radius: 6px;
-  font-weight: bold;
+.resumo .dinheiro { 
+  color: #00f5ff; 
+  font-weight: bold; 
 }
 
-#totalInfo .resumo .abastecimentos {
-  color: #888; /* cinza neon */
-  text-shadow: 0 0 5px #888;
-}
-
-#totalInfo .resumo .dinheiro {
-  color: #0f0; /* verde neon */
-  text-shadow: 0 0 5px #0f0;
-}
-
-/* Modal de avisos */
-.modal {
-  border: none;
-  border-radius: 12px;
-  background: #111;
-  padding: 20px;
-  box-shadow: 0 0 20px #0f0;
-}
-
-.modal button {
-  margin-top: 10px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: none;
-  background: #0f0;
-  color: #000;
-  cursor: pointer;
+/* Input para escolher mês */
+#mesEscolhido {
+  margin-top: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #004d4d;
+  background-color: rgba(0,0,0,0.3);
+  color: #fff;
 }
