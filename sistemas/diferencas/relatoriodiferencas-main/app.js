@@ -1,34 +1,13 @@
-// Importações diretas do Firebase (sem precisar de módulos locais)
 import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import {
-  getFirestore,
+  auth,
+  db,
   collection,
   addDoc,
   getDocs,
   query,
   orderBy,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import {
-  getAuth
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-
-// === CONFIGURAÇÃO FIREBASE ===
-const firebaseConfig = {
-  apiKey: "AIzaSyDbv2jGEJbA_0J0w9rEwflhYpKaqhe_RgU",
-  authDomain: "unificado-441cd.firebaseapp.com",
-  projectId: "unificado-441cd",
-  storageBucket: "unificado-441cd.appspot.com",
-  messagingSenderId: "932372316846",
-  appId: "1:932372316846:web:4b1906cb0b3ff405b021d0"
-};
-
-// Inicialização
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+} from "../firebaseConfig_v2.js";
 
 // ELEMENTOS
 const btnSalvarRelatorio = document.getElementById("btnSalvarRelatorio");
@@ -58,12 +37,14 @@ valorDinheiroInput.addEventListener("input", atualizarSobraFalta);
 // CARREGA LISTA DE USUÁRIOS
 async function carregarUsuarios() {
   try {
-    const usersCol = collection(db, "users");
-    const snapshot = await getDocs(usersCol);
-    snapshot.forEach((doc) => {
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+    matriculaForm.innerHTML = '<option value="">Selecione</option>';
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
       const opt = document.createElement("option");
-      opt.value = doc.data().matricula;
-      opt.textContent = `${doc.data().matricula} - ${doc.data().nome}`;
+      opt.value = data.matricula;
+      opt.textContent = `${data.matricula} - ${data.nome}`;
       matriculaForm.appendChild(opt);
     });
   } catch (err) {
@@ -88,7 +69,9 @@ btnSalvarRelatorio.addEventListener("click", async () => {
   }
 
   try {
-    await addDoc(collection(db, "relatorios"), {
+    const relatoriosRef = collection(db, "relatorios");
+
+    await addDoc(relatoriosRef, {
       matricula,
       dataCaixa,
       valorFolha,
@@ -101,18 +84,15 @@ btnSalvarRelatorio.addEventListener("click", async () => {
 
     alert("Relatório salvo com sucesso!");
     limparCamposFormulario();
-
-    // 🔄 Atualiza automaticamente
-    listaRelatorios.innerHTML = "";
-    await carregarRelatorios();
+    await carregarRelatorios(); // Atualiza automaticamente após salvar
 
   } catch (error) {
     console.error("Erro ao salvar relatório:", error);
-    alert("Erro ao salvar relatório. Veja o console.");
+    alert("Erro ao salvar relatório. Verifique o console.");
   }
 });
 
-// LIMPA OS CAMPOS
+// LIMPA OS CAMPOS DO FORMULÁRIO
 function limparCamposFormulario() {
   dataCaixaInput.value = "";
   valorFolhaInput.value = "";
@@ -128,19 +108,21 @@ async function carregarRelatorios() {
   listaRelatorios.innerHTML = "<p>Carregando...</p>";
 
   try {
-    const q = query(collection(db, "relatorios"), orderBy("criadoEm", "desc"));
+    const relatoriosRef = collection(db, "relatorios");
+    const q = query(relatoriosRef, orderBy("criadoEm", "desc"));
     const snapshot = await getDocs(q);
 
     listaRelatorios.innerHTML = "";
-    snapshot.forEach((doc) => {
-      const r = doc.data();
+
+    snapshot.forEach((docSnap) => {
+      const r = docSnap.data();
       const item = document.createElement("div");
       item.classList.add("item");
       item.innerHTML = `
         <p><strong>${r.matricula}</strong> — ${r.dataCaixa}</p>
         <p>Folha: R$ ${r.valorFolha.toFixed(2)} | Dinheiro: R$ ${r.valorDinheiro.toFixed(2)}</p>
         <p>Sobra/Falta: R$ ${r.sobraFalta.toFixed(2)}</p>
-        <p>Abastecimento: ${r.abastecimento || 0}</p>
+        <p>Abastecimento: ${r.abastecimento || 0} documentos</p>
         <p>${r.observacao || ""}</p>
       `;
       listaRelatorios.appendChild(item);
@@ -151,5 +133,5 @@ async function carregarRelatorios() {
   }
 }
 
-// 🔄 Carregar ao abrir
+// 🔄 Atualiza lista ao abrir
 carregarRelatorios();
