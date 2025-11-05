@@ -1,13 +1,13 @@
-﻿/* RESET BÁSICO */
+﻿/* Reset básico */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  background: radial-gradient(circle at top left, #111 0%, #000 100%);
+  font-family: "Arial", sans-serif;
+  background: radial-gradient(circle at center, #000 0%, #111 100%);
   color: #fff;
   min-height: 100vh;
   display: flex;
@@ -15,136 +15,142 @@ body {
 }
 
 .topbar {
-  background-color: rgba(20,20,20,0.9);
-  padding: 12px 20px;
+  background-color: #000;
+  padding: 10px 20px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #0ff;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand h1 {
-  font-size: 1.4rem;
-  color: #00bfff;
-}
-
-.emoji {
-  font-size: 1.8rem;
+.topbar .brand h1 {
+  margin-left: 10px;
+  color: #0ff;
+  text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
 }
 
 .wrap {
   flex: 1;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .card {
-  background-color: rgba(30,30,30,0.9);
+  background: rgba(0, 0, 0, 0.6);
   padding: 20px;
+  margin-bottom: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 0 10px #0ff, 0 0 20px #ff00ff inset;
 }
 
 .profile-card {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .profile-left h2 {
-  color: #00bfff;
-  margin-bottom: 10px;
+  color: #0ff;
+  text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
 }
 
 .meta div {
-  margin-bottom: 6px;
+  margin: 4px 0;
+}
+
+.profile-right .admin-only {
+  margin-top: 10px;
 }
 
 .btn-avisos {
-  background-color: #222;
-  border: 1px solid #00bfff;
-  color: #00bfff;
-  padding: 6px 12px;
+  padding: 8px 12px;
+  border: none;
   border-radius: 6px;
+  background: #0ff;
+  color: #000;
+  font-weight: bold;
   cursor: pointer;
-  font-size: 0.9rem;
+  box-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+  transition: transform 0.2s;
 }
 
 .btn-avisos.blink {
-  animation: blink 1.2s infinite alternate;
+  animation: blink 1.5s infinite;
 }
 
 @keyframes blink {
-  from { opacity: 1; }
-  to { opacity: 0.5; }
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
 }
 
-.charts {
+.admin-row {
+  margin: 8px 0;
   display: flex;
-  flex-direction: column;
-  gap: 30px;
+  align-items: center;
+  gap: 8px;
 }
 
-.chart-col {
-  width: 100%;
-}
-
-canvas {
-  width: 100% !important;
-  height: 350px !important;
-}
-
-.modal {
-  background: rgba(0,0,0,0.9);
-  border: 2px solid #00bfff;
-  border-radius: 10px;
-  color: #fff;
-}
-
-.modal-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.modal-body h3 {
-  color: #ffd700;
-}
-
-button.btn {
-  background-color: #222;
-  color: #00bfff;
-  border: 1px solid #00bfff;
-  padding: 8px 14px;
+.admin-row input,
+.admin-row select {
+  padding: 6px 8px;
   border-radius: 6px;
+  border: 1px solid #0ff;
+  background: #111;
+  color: #0ff;
+}
+
+.admin-row button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #0ff;
+  color: #000;
   cursor: pointer;
 }
 
-button.btn:hover {
-  background-color: #00bfff;
-  color: #000;
+.charts-wrapper .chart-col {
+  margin-top: 20px;
+  position: relative;
+  height: 400px;
 }
 
-.total-info {
+#totalInfo {
   margin-top: 10px;
-  font-size: 0.9rem;
-  color: #ccc;
+  font-size: 16px;
+  text-align: center;
 }
 
-/* RESPONSIVO */
-@media (max-width: 768px) {
-  .profile-card {
-    flex-direction: column;
-  }
-  .charts {
-    gap: 20px;
-  }
+#totalInfo .resumo span {
+  display: inline-block;
+  padding: 4px 8px;
+  margin: 0 4px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+#totalInfo .resumo .abastecimentos {
+  color: #0ff;
+  text-shadow: 0 0 5px #0ff;
+}
+
+#totalInfo .resumo .dinheiro {
+  color: #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
+}
+
+/* Modal de avisos */
+.modal {
+  border: none;
+  border-radius: 12px;
+  background: #111;
+  padding: 20px;
+  box-shadow: 0 0 20px #0ff;
+}
+
+.modal button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #0ff;
+  color: #000;
+  cursor: pointer;
 }
