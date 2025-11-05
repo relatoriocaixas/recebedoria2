@@ -5,10 +5,10 @@ import {
   query,
   where,
   onSnapshot,
-  serverTimestamp,
-  setDoc,
   addDoc,
-  orderBy
+  setDoc,
+  orderBy,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -17,6 +17,7 @@ const nomeEl = document.getElementById("funcNome");
 const matriculaEl = document.getElementById("funcMatricula");
 const admissaoEl = document.getElementById("funcAdmissao");
 const horarioEl = document.getElementById("funcHorario");
+
 const btnAvisos = document.getElementById("btnAvisos");
 const modalAvisos = document.getElementById("modalAvisos");
 const avisosLista = document.getElementById("avisosLista");
@@ -34,6 +35,7 @@ const btnPesquisarAvisos = document.getElementById("btnPesquisarAvisos");
 
 const mensalChartCtx = document.getElementById("mensalChart");
 const comparativoChartCtx = document.getElementById("comparativoChart");
+const mesEscolhidoInput = document.getElementById("mesEscolhido");
 
 let usuarioAtual = null;
 let chartMensal, chartComparativo;
@@ -52,6 +54,10 @@ const CORES_FUNCIONARIOS = {
   "1858": "#556b2f",
   "70029": "#c0c0c0"
 };
+
+// Define mês atual no input
+const agora = new Date();
+mesEscolhidoInput.value = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -78,7 +84,7 @@ async function carregarPerfil(user) {
   if (dados.isAdmin) {
     adminControls.classList.remove("hidden");
     await carregarMatriculas();
-    carregarComparativo();
+    carregarComparativo(); // já carrega o gráfico comparativo do mês atual
   }
 
   carregarGraficoIndividual(dados.matricula);
@@ -99,10 +105,76 @@ async function carregarMatriculas() {
   });
 }
 
+// --- SALVAR HORÁRIO ---
+btnSalvarHorario.addEventListener("click", async () => {
+  const mat = adminMatriculaSelect.value;
+  const horario = adminHorarioInput.value.trim();
+  if (!mat || !horario) return alert("Informe matrícula e horário.");
+  const q = query(collection(db, "users"), where("matricula", "==", mat));
+  const s = await getDocs(q);
+  if (s.empty) return;
+  const ref = s.docs[0].ref;
+  await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
+  alert("Horário atualizado!");
+});
+
+// --- SALVAR AVISO ---
+btnSalvarAviso.addEventListener("click", async () => {
+  const mat = adminMatriculaSelect.value;
+  const aviso = adminAvisoInput.value.trim();
+  if (!mat || !aviso) return alert("Preencha aviso e matrícula.");
+  await addDoc(collection(db, "avisos"), {
+    matricula: mat,
+    texto: aviso,
+    criadoEm: serverTimestamp()
+  });
+  alert("Aviso salvo!");
+  adminAvisoInput.value = "";
+});
+
+// --- PESQUISAR AVISOS ADMIN ---
+btnPesquisarAvisos.addEventListener("click", async () => {
+  const mat = adminPesquisarMatricula.value;
+  adminAvisosLista.innerHTML = "Carregando...";
+  const q = query(
+    collection(db, "avisos"),
+    where("matricula", "==", mat),
+    orderBy("criadoEm", "desc")
+  );
+  const snap = await getDocs(q);
+  adminAvisosLista.innerHTML = "";
+  snap.forEach((d) => {
+    const div = document.createElement("div");
+    div.className = "aviso-item";
+    div.textContent = d.data().texto;
+    adminAvisosLista.appendChild(div);
+  });
+});
+
+// --- AVISOS FUNCIONÁRIO ---
+async function carregarAvisos(matricula) {
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
+  if (snap.empty) {
+    btnAvisos.textContent = "Sem avisos vinculados à matrícula";
+    btnAvisos.classList.remove("blink");
+    return;
+  }
+  btnAvisos.classList.add("blink");
+  btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
+  avisosLista.innerHTML = "";
+  snap.forEach((d) => {
+    const p = document.createElement("p");
+    p.textContent = d.data().texto;
+    avisosLista.appendChild(p);
+  });
+}
+
+btnAvisos.addEventListener("click", () => modalAvisos.showModal());
+
 // --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula) {
   const relatoriosRef = collection(db, "relatorios");
-  const agora = new Date();
   const primeiroDia = new Date(agora.getFullYear(), agora.getMonth(), 1);
   const ultimoDia = new Date(agora.getFullYear(), agora.getMonth() + 1, 0);
 
@@ -172,10 +244,11 @@ async function carregarGraficoIndividual(matricula) {
   });
 }
 
-// --- GRÁFICO COMPARATIVO ---
+// --- GRÁFICO COMPARATIVO (ADMIN) ---
 async function carregarComparativo() {
   if (!usuarioAtual) return;
 
+  // Verifica se usuário é admin
   const userSnap = await getDocs(collection(db, "users"));
   const userData = userSnap.docs.find(d => d.data().email === usuarioAtual.email)?.data();
   if (!userData?.isAdmin) {
@@ -193,9 +266,7 @@ async function carregarComparativo() {
     const r = d.data();
     if (!r.dataCaixa) return;
     const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
-    
-    // FILTRO CORRIGIDO: usa mês local
-    const mesRegistro = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2,'0')}`;
+    const mesRegistro = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
     if (mesRegistro !== mes) return;
 
     if (!mapa[r.matricula]) mapa[r.matricula] = { abastecimentos: 0, valorFolha: 0 };
@@ -215,8 +286,22 @@ async function carregarComparativo() {
     data: {
       labels,
       datasets: [
-        { label: "Abastecimentos", data: abastecimentos, backgroundColor: cores, borderColor: cores, borderWidth: 1, yAxisID: "y" },
-        { label: "Valor Total Folha (R$)", data: valores, type: "line", borderColor: "#ffd700", backgroundColor: "rgba(255,215,0,0.3)", yAxisID: "y1" }
+        {
+          label: "Abastecimentos",
+          data: abastecimentos,
+          backgroundColor: cores,
+          borderColor: cores,
+          borderWidth: 1,
+          yAxisID: "y"
+        },
+        {
+          label: "Valor Total Folha (R$)",
+          data: valores,
+          type: "line",
+          borderColor: "#ffd700",
+          backgroundColor: "rgba(255,215,0,0.3)",
+          yAxisID: "y1"
+        }
       ]
     },
     options: {
@@ -228,67 +313,13 @@ async function carregarComparativo() {
         y1: { position: "right", ticks: { color: "#ffd700", font: { size: 12 } }, grid: { drawOnChartArea: false } },
         x: { ticks: { color: "#ccc", font: { size: 12 } } }
       },
-      plugins: { legend: { labels: { color: "#fff", font: { size: 14 } } }, tooltip: { mode: 'index', intersect: false } }
+      plugins: {
+        legend: { labels: { color: "#fff", font: { size: 14 } } },
+        tooltip: { mode: 'index', intersect: false }
+      }
     }
   });
 }
-document.getElementById("mesEscolhido").addEventListener("change", carregarComparativo);
 
-// --- AVISOS ---
-async function carregarAvisos(matricula) {
-  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
-  const snap = await getDocs(q);
-  if (snap.empty) {
-    btnAvisos.textContent = "Sem avisos vinculados à matrícula";
-    btnAvisos.classList.remove("blink");
-    return;
-  }
-  btnAvisos.classList.add("blink");
-  btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
-  avisosLista.innerHTML = "";
-  snap.forEach((d) => {
-    const p = document.createElement("p");
-    p.textContent = d.data().texto;
-    avisosLista.appendChild(p);
-  });
-}
-
-btnAvisos.addEventListener("click", () => modalAvisos.showModal());
-
-// --- SALVAR HORÁRIO ---
-btnSalvarHorario.addEventListener("click", async () => {
-  const mat = adminMatriculaSelect.value;
-  const horario = adminHorarioInput.value.trim();
-  if (!mat || !horario) return alert("Informe matrícula e horário.");
-  const q = query(collection(db, "users"), where("matricula", "==", mat));
-  const s = await getDocs(q);
-  if (s.empty) return;
-  const ref = s.docs[0].ref;
-  await setDoc(ref, { horarioTrabalho: horario }, { merge: true });
-  alert("Horário atualizado!");
-});
-
-// --- SALVAR AVISO ---
-btnSalvarAviso.addEventListener("click", async () => {
-  const mat = adminMatriculaSelect.value;
-  const aviso = adminAvisoInput.value.trim();
-  if (!mat || !aviso) return alert("Preencha aviso e matrícula.");
-  await addDoc(collection(db, "avisos"), { matricula: mat, texto: aviso, criadoEm: serverTimestamp() });
-  alert("Aviso salvo!");
-  adminAvisoInput.value = "";
-});
-
-// --- PESQUISAR AVISOS ADMIN ---
-btnPesquisarAvisos.addEventListener("click", async () => {
-  const mat = adminPesquisarMatricula.value;
-  adminAvisosLista.innerHTML = "Carregando...";
-  const q = query(collection(db, "avisos"), where("matricula", "==", mat), orderBy("criadoEm", "desc"));
-  const snap = await getDocs(q);
-  adminAvisosLista.innerHTML = "";
-  snap.forEach((d) => {
-    const div = document.createElement("div");
-    div.className = "aviso-item";
-    div.textContent = d.data().texto;
-    adminAvisosLista.appendChild(div);
-  });
-});
+// Atualiza gráfico ao mudar mês
+mesEscolhidoInput.addEventListener("change", carregarComparativo);
