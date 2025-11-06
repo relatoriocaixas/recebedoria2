@@ -1,5 +1,16 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
+    // ✅ Firebase do PORTAL (somente leitura)
+    const portalConfig = {
+        apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
+        authDomain: "unificado-441cd.firebaseapp.com",
+        projectId: "unificado-441cd"
+    };
+
+    const portalApp = firebase.initializeApp(portalConfig, "portalApp");
+    const portalDB = portalApp.firestore();
+    const portalAuth = portalApp.auth();
+
     // ✅ PREENCHE AUTOMATICAMENTE "matriculaEmpresto" COM O USUÁRIO LOGADO
     const campoMatEmp = document.getElementById("matriculaEmpresto");
 
@@ -12,20 +23,22 @@
         if (!user) return;
 
         try {
-            const snap = await db.collection("users")
+            // ✅ busca na coleção USERS do PORTAL
+            const snap = await portalDB
+                .collection("users")
                 .where("email", "==", user.email)
                 .get();
 
             if (!snap.empty) {
                 const dados = snap.docs[0].data();
-
                 campoMatEmp.value = dados.matricula || "";
+            } else {
+                console.warn("Usuário não encontrado na coleção USERS do portal.");
             }
         } catch (e) {
-            console.error("Erro ao buscar matrícula do usuário logado:", e);
+            console.error("Erro ao buscar matrícula no portal:", e);
         }
     });
-
 
     // === DAQUI PARA BAIXO É EXATAMENTE O SEU CÓDIGO ORIGINAL ===
 
@@ -86,7 +99,7 @@
             header.classList.add("cardHeader");
             header.innerHTML = `
                 <h3>${tipo === "digicon" ? "Bordo Digicon" :
-                    tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
+                        tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
                 <span class="chev">▸</span>
             `;
 
