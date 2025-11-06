@@ -9,8 +9,8 @@
 body {
   background-color: #121212;
   color: #e0e0e0;
-  font-size: 16px;
   line-height: 1.5;
+  font-size: 16px;
   padding: 20px;
 }
 
@@ -24,90 +24,74 @@ body {
 /* Cards */
 .card {
   background-color: #1f1f1f;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
 }
 
-/* Card Sugestões */
+/* Card sugestões com rolagem */
 .sugestoes-card {
   flex: 1 1 60%;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
-  max-height: 80vh;
 }
 
 /* Tipo de solicitação */
-.tipo-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
 .tipo-solicitacao {
-  padding: 8px 12px;
+  background-color: #f9f1a5;
   border-radius: 6px;
   border: 1px solid #888;
-  background-color: #333;
-  color: #fff;
+  padding: 6px;
   font-weight: bold;
+  cursor: pointer;
+  color: #121212;
 }
 
-/* Textarea */
+/* Texto área */
 textarea {
   width: 100%;
-  min-height: 100px;
-  padding: 12px;
-  margin-bottom: 12px;
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #333;
   border-radius: 6px;
-  border: 1px solid #444;
-  background-color: #222;
-  color: #fff;
-  resize: vertical;
+  padding: 12px;
   font-size: 1rem;
+  margin-bottom: 12px;
+  resize: vertical;
+  min-height: 100px;
 }
 
-/* Botão salvar */
+/* Botão Salvar / Report */
 button {
   padding: 10px 20px;
-  border: 2px solid #aaa;
+  border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  background: linear-gradient(145deg,#555,#222);
-  color: #fff;
-  box-shadow: inset -1px -1px 5px rgba(255,255,255,0.1),
-              inset 1px 1px 5px rgba(0,0,0,0.5);
-  margin-bottom: 12px;
   transition: all 0.2s ease;
-}
-button:hover {
-  transform: scale(1.05);
-  box-shadow: inset -2px -2px 6px rgba(255,255,255,0.2),
-              inset 2px 2px 6px rgba(0,0,0,0.6);
+  margin-bottom: 12px;
+  min-width: 120px;
 }
 
-/* Lista de sugestões/reports */
+/* Lista de sugestões */
 .sugestoes-list {
-  flex: 1;
   overflow-y: auto;
+  flex: 1;
   padding-right: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
-/* Card individual */
 .suggestion-card {
-  background-color: #222;
+  background-color: #1f1f1f;
   border-left: 4px solid #9c27b0;
+  padding: 15px;
+  margin-bottom: 12px;
   border-radius: 8px;
-  padding: 12px;
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -116,45 +100,59 @@ button:hover {
   box-shadow: 0 6px 15px rgba(0,0,0,0.6);
 }
 
-/* Status badges cromados */
+/* Status badges */
 .status-badge {
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: bold;
   font-size: 0.85rem;
   display: inline-block;
-  border: 2px solid #aaa;
-  margin-right: 6px;
 }
-.aprovado, .solucionado { background-color: #4caf50; color: #fff; }
-.reprovado { background-color: #f44336; color: #fff; }
-.analise, .correcao-iniciada { background-color: #ff9800; color: #121212; }
+
+.aprovado, .solucionado { background: #4caf50; color: #fff; }
+.reprovado, .excluir { background: #f44336; color: #fff; }
+.analise, .correcao-iniciada { background: #ff9800; color: #121212; }
 
 /* Admin actions */
 .admin-actions {
+  margin-top: 10px;
   display: flex;
   gap: 6px;
-  margin-top: 8px;
-}
-.admin-actions button {
-  padding: 4px 8px;
-  border: 2px solid #aaa;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  background: linear-gradient(145deg,#555,#222);
-  color: #fff;
-  transition: all 0.2s ease;
-}
-.admin-actions button:hover {
-  transform: scale(1.05);
 }
 
-/* Excluir */
-.excluir-btn {
-  background-color: #f44336;
+/* Botões cromados metalizados */
+.admin-actions button {
+  padding: 6px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 2px solid #888; /* borda cromada cinza */
   color: #fff;
-  border-color: #aaa;
+  background: linear-gradient(145deg, #3a3a3a, #1f1f1f);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.admin-actions button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Cores específicas para status */
+.btn-aprovado, .btn-solucionado {
+  background: linear-gradient(145deg, #4caf50, #388e3c);
+  border-color: #b0b0b0;
+}
+
+.btn-reprovado, .btn-excluir {
+  background: linear-gradient(145deg, #f44336, #d32f2f);
+  border-color: #b0b0b0;
+}
+
+.btn-analise, .btn-correcao-iniciada {
+  background: linear-gradient(145deg, #ff9800, #f57c00);
+  border-color: #b0b0b0;
 }
 
 /* Card contato desenvolvedor */
@@ -164,8 +162,10 @@ button:hover {
   display: flex;
   flex-direction: column;
 }
+
 .card-footer {
   font-size: 0.9rem;
   color: #b0b0b0;
   margin-top: 12px;
+  line-height: 1.4;
 }
