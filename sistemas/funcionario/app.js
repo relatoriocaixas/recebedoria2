@@ -37,27 +37,22 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
-// Estado
+// ✅ Nome vira botão do painel admin
+const btnToggleAdmin = nomeEl;
+
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
-let painelAberto = false;
+let adminPanelExpanded = false;
 
-// BOTÃO ADMIN = O PRÓPRIO NOME
-nomeEl.style.cursor = "pointer";
-nomeEl.addEventListener("click", () => {
-  painelAberto = !painelAberto;
-  adminControls.style.display = painelAberto ? "flex" : "none";
-});
-
-// LOGIN
+// --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "../../login.html";
     return;
   }
-
   usuarioAtual = user;
+
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
   if (snap.empty) return;
@@ -74,13 +69,18 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// PERFIL
+// --- PERFIL ---
 async function carregarPerfil(dados) {
   const matriculasRosa = ["8789", "9003", "6414", "5271"];
-
   nomeEl.textContent = dados.nome;
-  nomeEl.classList.toggle("nome-rosa", matriculasRosa.includes(dados.matricula));
-  nomeEl.classList.toggle("nome-azul", !matriculasRosa.includes(dados.matricula));
+
+  if (matriculasRosa.includes(dados.matricula)) {
+    nomeEl.classList.add("nome-rosa");
+    nomeEl.classList.remove("nome-azul");
+  } else {
+    nomeEl.classList.add("nome-azul");
+    nomeEl.classList.remove("nome-rosa");
+  }
 
   matriculaEl.textContent = dados.matricula;
 
@@ -88,20 +88,24 @@ async function carregarPerfil(dados) {
     const data = new Date(dados.dataAdmissao);
     data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
     admissaoEl.textContent = data.toLocaleDateString("pt-BR");
-  } else admissaoEl.textContent = "—";
+  } else {
+    admissaoEl.textContent = "—";
+  }
 
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
   carregarGraficoIndividual(dados.matricula);
   carregarAvisos(dados.matricula);
 
-  mesInput.value = new Date().toISOString().slice(0, 7);
+  const hoje = new Date();
+  mesInput.value = hoje.toISOString().slice(0, 7);
+
   mesInput.addEventListener("change", () => {
     carregarGraficoIndividual(matriculaAtual, mesInput.value);
   });
 }
 
-// AVISOS FUNCIONÁRIO
+// --- AVISOS FUNCIONÁRIO ---
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
@@ -118,10 +122,10 @@ async function carregarAvisos(matricula) {
   btnAvisos.classList.remove("btn-cinza");
 
   avisosLista.innerHTML = "";
-  snap.forEach(d => {
+  snap.forEach((d) => {
     const p = document.createElement("p");
-    p.style.color = "white";
     p.textContent = d.data().texto;
+    p.style.color = "#fff"; // ✅ texto branco
     avisosLista.appendChild(p);
   });
 }
@@ -131,12 +135,12 @@ btnAvisos.addEventListener("click", () => {
   btnAvisos.classList.remove("blink", "aviso-vermelho");
 });
 
-// GRÁFICO
+// --- GRÁFICO INDIVIDUAL ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : hoje.getMonth();
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
 
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
@@ -156,7 +160,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     snap.forEach(docSnap => {
       const r = docSnap.data();
       if (!r.dataCaixa) return;
-
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
       const dia = data.getDate();
 
@@ -171,7 +174,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     const labels = [];
     const abastecimentos = [];
     const valores = [];
-
     for (let d = 1; d <= ultimoDia.getDate(); d++) {
       labels.push(d.toString().padStart(2, "0"));
       abastecimentos.push(dias[d]?.abastecimentos || 0);
@@ -213,7 +215,9 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
         maintainAspectRatio: false,
         responsive: true,
         plugins: {
-          legend: { labels: { color: "#fff", font: { size: 14 } } },
+          legend: {
+            labels: { color: "#fff", font: { size: 14 } }
+          },
           tooltip: {
             mode: "index",
             intersect: false,
@@ -227,16 +231,16 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: "#888", font: { size: 12 } },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4,2] }
+            ticks: { color: "#888" },
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] }
           },
           y1: {
             position: "right",
-            ticks: { color: "#00f5ff", font: { size: 12 } },
+            ticks: { color: "#00f5ff" },
             grid: { drawOnChartArea: false }
           },
           x: {
-            ticks: { color: "#fff", font: { size: 12 } },
+            ticks: { color: "#fff" },
             grid: { color: "rgba(255,255,255,0.05)" }
           }
         }
@@ -246,17 +250,19 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
-        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString(
+          "pt-BR",
+          { minimumFractionDigits: 2 }
+        )}</span>
       </div>
     `;
   });
 }
 
-// ADMIN
+// --- ADMIN ---
 async function carregarMatriculasAdmin() {
   const q = query(collection(db, "users"));
   const snap = await getDocs(q);
-
   adminMatriculaSelect.innerHTML = "";
   snap.forEach(docSnap => {
     const d = docSnap.data();
@@ -276,70 +282,88 @@ btnSalvarHorario.addEventListener("click", async () => {
   const snap = await getDocs(q);
 
   if (!snap.empty) {
-    await updateDoc(snap.docs[0].ref, { horarioTrabalho: horario });
-    alert("Horário salvo!");
-    carregarPerfil(usuarioAtual.dados);
+    const userDoc = snap.docs[0];
+    await updateDoc(userDoc.ref, { horarioTrabalho: horario });
+
+    // ✅ Atualiza instantaneamente
+    if (matriculaAtual === matricula) horarioEl.textContent = horario;
+
+    alert("Horário salvo com sucesso!");
   }
 });
 
 btnSalvarAviso.addEventListener("click", async () => {
   const matricula = adminMatriculaSelect.value;
   const texto = adminAvisoInput.value.trim();
-  if (!texto) return alert("Informe um aviso.");
+  if (!texto) return alert("Informe um texto para o aviso.");
 
   await addDoc(collection(db, "avisos"), {
     matricula,
     texto,
     criadoEm: serverTimestamp()
   });
+
   adminAvisoInput.value = "";
-  carregarAvisos(matriculaAtual);
+
+  // ✅ Atualiza avisos imediatamente
+  if (matriculaAtual === matricula) carregarAvisos(matriculaAtual);
+
+  alert("Aviso salvo com sucesso!");
 });
 
-// ADMIN → LISTA EDITÁVEL
+// --- ADMIN MODAL COM EDIT/DELETE ---
 btnVerAvisosAdmin.addEventListener("click", async () => {
   modalAdminAvisos.showModal();
   const snap = await getDocs(collection(db, "avisos"));
-
   adminAvisosLista.innerHTML = "";
 
   snap.forEach(docSnap => {
     const d = docSnap.data();
+    const p = document.createElement("p");
+    p.style.color = "#fff";
 
-    const item = document.createElement("p");
-    item.style.display = "flex";
-    item.style.justifyContent = "space-between";
-    item.style.alignItems = "center";
+    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
 
-    item.innerHTML = `<span style="color:white"><strong>${d.matricula}:</strong> ${d.texto}</span>`;
-
-    const btns = document.createElement("div");
-
-    const btnEdit = document.createElement("button");
-    btnEdit.textContent = "Editar";
-    btnEdit.classList.add("btn-small");
-    btnEdit.onclick = async () => {
-      const novo = prompt("Editar aviso", d.texto);
-      if (novo) {
-        await updateDoc(doc(db, "avisos", docSnap.id), { texto: novo });
+    const btnEditar = document.createElement("button");
+    btnEditar.textContent = "Editar";
+    btnEditar.classList.add("btn-small");
+    btnEditar.addEventListener("click", async () => {
+      const novoTexto = prompt("Editar aviso:", d.texto);
+      if (novoTexto !== null && novoTexto.trim() !== "") {
+        await updateDoc(doc(db, "avisos", docSnap.id), { texto: novoTexto });
         btnVerAvisosAdmin.click();
       }
-    };
+    });
 
-    const btnDel = document.createElement("button");
-    btnDel.textContent = "Excluir";
-    btnDel.classList.add("btn-small");
-    btnDel.onclick = async () => {
-      if (confirm("Excluir aviso?")) {
+    const btnExcluir = document.createElement("button");
+    btnExcluir.textContent = "Excluir";
+    btnExcluir.classList.add("btn-small");
+    btnExcluir.addEventListener("click", async () => {
+      if (confirm("Deseja realmente excluir este aviso?")) {
         await deleteDoc(doc(db, "avisos", docSnap.id));
         btnVerAvisosAdmin.click();
       }
-    };
+    });
 
-    btns.appendChild(btnEdit);
-    btns.appendChild(btnDel);
-
-    item.appendChild(btns);
-    adminAvisosLista.appendChild(item);
+    p.appendChild(btnEditar);
+    p.appendChild(btnExcluir);
+    adminAvisosLista.appendChild(p);
   });
+});
+
+// --- TOGGLE PAINEL ADMIN ---
+btnToggleAdmin.addEventListener("click", () => {
+  adminPanelExpanded = !adminPanelExpanded;
+  adminControls.style.display = adminPanelExpanded ? "flex" : "none";
+});
+
+// --- RESPOSTA À BARRA LATERAL DO PORTAL ---
+window.addEventListener("message", (event) => {
+  if (event.data === "sidebarOpened") {
+    document.body.classList.add("sidebar-open");
+  }
+
+  if (event.data === "sidebarClosed") {
+    document.body.classList.remove("sidebar-open");
+  }
 });
