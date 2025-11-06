@@ -13,6 +13,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
+    <!-- ✅ ADICIONADO (necessário para usar firebase.auth()) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -91,7 +94,8 @@
 
         <div class="form-group">
             <label>Matrícula de quem está emprestando:</label>
-            <input type="text" id="matriculaEmpresto" required>
+            <!-- ✅ BLOQUEADO (readonly) -->
+            <input type="text" id="matriculaEmpresto" required readonly>
         </div>
 
         <div class="form-group">
