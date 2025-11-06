@@ -1,61 +1,41 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
-    // ✅ Firebase do PORTAL (Somente leitura)
-    const portalConfig = {
-        apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
-        authDomain: "unificado-441cd.firebaseapp.com",
-        projectId: "unificado-441cd"
-    };
-
-    // ✅ Inicia o Firebase do portal em um APP separado
-    let portalApp;
-    if (!firebase.apps.some(a => a.name === "portalApp")) {
-        portalApp = firebase.initializeApp(portalConfig, "portalApp");
-    } else {
-        portalApp = firebase.app("portalApp");
-    }
-
-    const portalDB = portalApp.firestore();
-    const portalAuth = portalApp.auth();
+    // ================================================================
+    // ✅ PEGAR MATRÍCULA DO USUÁRIO LOGADO NO PORTAL (Firebase Unificado)
+    // ================================================================
+    console.log("🔍 Buscando dados do portal no localStorage...");
 
     const campoMatEmp = document.getElementById("matriculaEmpresto");
 
+    // Bloqueia o campo
     campoMatEmp.readOnly = true;
     campoMatEmp.style.background = "#1b1b1b";
     campoMatEmp.style.cursor = "not-allowed";
 
-    // ✅ Agora sim: ouvindo o usuário logado do PORTAL
-    portalAuth.onAuthStateChanged(async (usuarioPortal) => {
+    try {
+        const portalDataStr = localStorage.getItem("usuarioLogado");
 
-        console.log("🔥 Portal Auth Detected:", usuarioPortal);
+        if (!portalDataStr) {
+            console.warn("⚠ Nenhum usuário encontrado no portal (localStorage vazio).");
+        } else {
+            const portalData = JSON.parse(portalDataStr);
 
-        if (!usuarioPortal) {
-            console.warn("Nenhum usuário logado no PORTAL.");
-            return;
-        }
+            console.log("✅ Dados encontrados no portal:", portalData);
 
-        try {
-            const snap = await portalDB
-                .collection("users")
-                .where("email", "==", usuarioPortal.email)
-                .get();
-
-            if (!snap.empty) {
-                const dados = snap.docs[0].data();
-
-                console.log("✅ Achou matrícula:", dados.matricula);
-
-                campoMatEmp.value = dados.matricula;
+            if (portalData.matricula) {
+                campoMatEmp.value = portalData.matricula;
+                console.log("✅ Matrícula aplicada:", portalData.matricula);
             } else {
-                console.warn("Usuário não encontrado na coleção USERS do portal.");
+                console.warn("⚠ O portal retornou usuário, mas sem matrícula.");
             }
-
-        } catch (e) {
-            console.error("Erro ao buscar matrícula no portal:", e);
         }
-    });
+    } catch (err) {
+        console.error("❌ Erro ao ler matrícula do portal:", err);
+    }
 
-    // === DAQUI PARA BAIXO É EXATAMENTE O SEU CÓDIGO ORIGINAL ===
+    // ================================================================
+    // ✅ DAQUI PARA BAIXO — SEU CÓDIGO ORIGINAL, SEM ALTERAR NADA
+    // ================================================================
 
     const tipoCartao = document.getElementById("tipoCartao");
     const digiconField = document.getElementById("digiconField");
@@ -114,7 +94,7 @@
             header.classList.add("cardHeader");
             header.innerHTML = `
                 <h3>${tipo === "digicon" ? "Bordo Digicon" :
-                    tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
+                        tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
                 <span class="chev">▸</span>
             `;
 
@@ -224,7 +204,7 @@
             numBordoProdata: prodata,
             numMeiaViagem: meia,
             motivo: document.getElementById("motivo").value,
-            matriculaEmpresto: document.getElementById("matriculaEmpresto").value.trim(),
+            matriculaEmpresto: campoMatEmp.value,
             dataRetirada: dataRetirada.value,
             prazoDevolucao: calcularPrazo(document.getElementById("motivo").value),
             status: "em aberto",
