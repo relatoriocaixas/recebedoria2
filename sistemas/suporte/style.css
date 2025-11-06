@@ -1,4 +1,6 @@
-﻿/* Reset básico */
+﻿/* ================================
+   Reset e básico
+================================ */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -7,134 +9,210 @@
 }
 
 body {
-  background-color: #121212;
+  background: #121212;
   color: #e0e0e0;
-  line-height: 1.5;
-  font-size: 16px;
-  padding: 20px;
-}
-
-/* Container flexível */
-.container-suporte {
+  font-size: 14px;
+  min-height: 100vh;
   display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-/* Cards */
-.card {
-  background-color: #1f1f1f;
-  border-radius: 10px;
+  justify-content: center;
+  align-items: flex-start;
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
 }
 
-/* Card sugestões com rolagem */
-.sugestoes-card {
-  flex: 1 1 60%;
-  max-height: 80vh;
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+/* ================================
+   Layout Suporte
+================================ */
+.suporte-container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  gap: 20px;
+}
+
+.card-contato, .card-sugestoes {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-contato:hover, .card-sugestoes:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+}
+
+.card-contato {
+  flex: 0 0 35%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-sugestoes {
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
-textarea {
-  width: 100%;
-  background-color: #1f1f1f;
-  color: #e0e0e0;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 1rem;
-  margin-bottom: 12px;
-  resize: vertical;
-  min-height: 100px;
-}
-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  background-color: #00bcd4;
-  color: #121212;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 12px;
-}
-button:hover {
-  background-color: #0097a7;
-  transform: scale(1.05);
-}
 
-/* Lista de sugestões */
-.sugestoes-list {
-  overflow-y: auto;
+.card-sugestoes-content {
   flex: 1;
-  padding-right: 4px;
-}
-.suggestion-card {
-  background-color: #1f1f1f;
-  border-left: 4px solid #9c27b0;
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.suggestion-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 10px;
 }
 
-/* Status badges */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
+/* ================================
+   Contato Desenvolvedor
+================================ */
+.card-contato h3 {
+  margin-bottom: 10px;
+  color: #00bcd4;
+}
+
+.card-contato p {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.card-contato small {
+  font-size: 0.85rem;
+  color: #bbbbbb;
+}
+
+/* ================================
+   Campo de Sugestões
+================================ */
+textarea#sugestaoInput {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background: #1b1b1b;
+  color: #e0e0e0;
+  padding: 10px;
+  resize: vertical;
+  font-size: 0.95rem;
+  transition: border 0.3s ease;
+}
+
+textarea#sugestaoInput:focus {
+  border-color: #00bcd4;
+  outline: none;
+}
+
+/* ================================
+   Select Tipo
+================================ */
+select#tipoSugestao {
+  width: 180px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 2px solid #555;
+  background: #1b1b1b;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+/* ================================
+   Botões cromados estilo vetor
+================================ */
+button.sugestao, button.report {
+  padding: 10px 22px;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255,255,255,0.15), 0 0 6px rgba(255,255,255,0.2) inset;
+  transition: all 0.3s ease;
+  margin-top: 6px;
+}
+
+button.sugestao:hover {
+  border-color: #00bcd4;
+  box-shadow: 0 4px 12px rgba(0,188,212,0.5), 0 0 6px rgba(0,188,212,0.25) inset;
+  transform: translateY(-2px);
+}
+
+button.report:hover {
+  border-color: #f44336;
+  box-shadow: 0 4px 12px rgba(244,67,54,0.5), 0 0 6px rgba(244,67,54,0.25) inset;
+  transform: translateY(-2px);
+}
+
+/* ================================
+   Cards das sugestões individuais
+================================ */
+.sugestao-card {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sugestao-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+}
+
+.sugestao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sugestao-header span.matricula {
+  color: #00bcd4;
   font-weight: bold;
   font-size: 0.85rem;
-  display: inline-block;
 }
-.aprovado { background: #4caf50; color: #fff; }
-.reprovado { background: #f44336; color: #fff; }
-.analise { background: #ff9800; color: #121212; }
 
-/* Admin actions */
 .admin-actions {
-  margin-top: 10px;
   display: flex;
   gap: 6px;
 }
-.admin-actions button {
-  padding: 4px 8px;
-  font-weight: bold;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-.admin-actions button:hover {
-  opacity: 0.85;
-  transform: scale(1.05);
-}
+
+/* Status Buttons */
+button.aprovado { border-color:#4caf50; color:#4caf50; }
+button.reprovado { border-color:#f44336; color:#f44336; }
+button.analise { border-color:#ff9800; color:#ff9800; }
+button.solucionado { border-color:#4caf50; color:#4caf50; }
+button.emaberto { border-color:#ff9800; color:#ff9800; }
 
 /* Botão excluir */
-.excluir-btn {
-  background-color: #f44336;
-  color: #fff;
+button.excluir-btn {
+  border-color:#f44336;
+  color:#f44336;
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+}
+button.excluir-btn:hover {
+  box-shadow: 0 4px 12px rgba(244,67,54,0.5), 0 0 6px rgba(244,67,54,0.25) inset;
+  transform: translateY(-2px);
 }
 
-/* Card contato desenvolvedor */
-.contato-card {
-  flex: 1 1 35%;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-.card-footer {
-  font-size: 0.9rem;
-  color: #b0b0b0;
-  margin-top: 12px;
+/* ================================
+   Responsividade básica
+================================ */
+@media(max-width: 900px){
+  .suporte-container {
+    flex-direction: column;
+  }
+  .card-contato, .card-sugestoes {
+    flex: 1 1 100%;
+  }
 }
