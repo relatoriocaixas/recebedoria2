@@ -19,7 +19,8 @@
     campoMatEmp.style.background = "#1b1b1b";
     campoMatEmp.style.cursor = "not-allowed";
 
-    firebase.auth().onAuthStateChanged(async (user) => {
+    // ✅ AGORA OUVINDO O AUTH DO PORTAL CORRETAMENTE
+    portalAuth.onAuthStateChanged(async (user) => {
         if (!user) return;
 
         try {
@@ -99,7 +100,7 @@
             header.classList.add("cardHeader");
             header.innerHTML = `
                 <h3>${tipo === "digicon" ? "Bordo Digicon" :
-                        tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
+                    tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
                 <span class="chev">▸</span>
             `;
 
