@@ -4,69 +4,99 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Funcionário — Recebedoria</title>
+
   <link rel="stylesheet" href="style.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <script type="module" src="app.js" defer></script>
 </head>
+
 <body>
+
   <header class="topbar">
     <div class="brand">
       <h1>Funcionário</h1>
     </div>
   </header>
 
-  <main class="wrap charts-wrapper">
-    <div class="dashboard">
-      <!-- PERFIL -->
+  <!-- ✅ LAYOUT LADO-A-LADO -->
+  <main class="wrap">
+
+    <!-- ESQUERDA — PERFIL -->
+    <div class="col-esquerda">
       <section class="card profile-card">
         <div class="profile-left">
-          <h2 id="funcNome" class="btn-toggle-admin">—</h2>
+
+          <!-- ✅ NOME funciona como botão para abrir admin -->
+          <h2 id="funcNome" class="func-nome-btn">—</h2>
+
           <div class="meta">
             <div><strong>Matrícula:</strong> <span id="funcMatricula">—</span></div>
             <div><strong>Admissão:</strong> <span id="funcAdmissao">—</span></div>
             <div><strong>Horário:</strong> <span id="funcHorario">—</span></div>
           </div>
+        </div>
 
+        <div class="profile-right">
           <div id="avisosContainer">
-            <button id="btnAvisos" class="btn-avisos btn-cinza">Sem avisos vinculados à matrícula</button>
+            <button id="btnAvisos" class="btn-avisos btn-cinza">
+              Sem avisos vinculados à matrícula
+            </button>
           </div>
 
-          <!-- Painel Admin -->
+          <!-- ✅ PAINEL ADMIN (abre dentro do card) -->
           <div id="adminControls" class="admin-only hidden">
+
+            <h3>Painel do Administrador</h3>
+
             <div class="admin-row">
               <label>Matrícula:</label>
               <select id="adminMatriculaSelect"></select>
             </div>
+
             <div class="admin-row">
               <label>Horário:</label>
               <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
               <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
             </div>
+
             <div class="admin-row">
               <label>Aviso:</label>
               <input id="adminAvisoInput" placeholder="Texto do aviso..." />
               <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
             </div>
+
             <div class="admin-row">
-              <button id="btnVerAvisosAdmin" class="btn small">Ver/Editar Todos os Avisos</button>
+              <button id="btnVerAvisosAdmin" class="btn small">
+                Ver/Editar Todos os Avisos
+              </button>
             </div>
+
           </div>
         </div>
       </section>
+    </div>
 
-      <!-- GRÁFICO MENSAL -->
+    <!-- DIREITA — GRÁFICO -->
+    <div class="col-direita">
       <section class="card charts">
         <div class="chart-col">
+
           <h3>Resumo Mensal — Caixa</h3>
+
           <div class="controls">
             <label for="mesEscolhido">Mês:</label>
             <input id="mesEscolhido" type="month" />
           </div>
+
           <canvas id="mensalChart"></canvas>
-          <div id="totalInfo" class="total-info"></div>
         </div>
       </section>
+
+      <div id="totalInfo" class="total-info"></div>
     </div>
+
   </main>
 
   <!-- MODAL DE AVISOS -->
@@ -78,7 +108,7 @@
     </form>
   </dialog>
 
-  <!-- MODAL ADMIN AVISOS -->
+  <!-- MODAL ADMIN — EDIÇÃO DE AVISOS -->
   <dialog id="modalAdminAvisos" class="modal">
     <form method="dialog" class="modal-body">
       <h3>Todos os Avisos</h3>
@@ -86,5 +116,6 @@
       <button type="submit" class="btn">Fechar</button>
     </form>
   </dialog>
+
 </body>
 </html>

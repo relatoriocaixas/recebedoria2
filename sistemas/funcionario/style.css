@@ -1,4 +1,4 @@
-﻿/* Reset básico */
+﻿/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +6,7 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* Fundo radial animado */
+/* FUNDO */
 body {
   min-height: 100vh;
   background: radial-gradient(circle at center, #000000, #111111, #000000);
@@ -20,7 +20,7 @@ body {
   100% { background-position: 100% 100%; }
 }
 
-/* Topbar */
+/* TOPBAR */
 .topbar {
   padding: 1rem 2rem;
   border-bottom: 2px solid #004d4d;
@@ -28,28 +28,55 @@ body {
   align-items: center;
 }
 
-.topbar h1 { font-size: 1.5rem; }
+.topbar h1 {
+  font-size: 1.5rem;
+}
 
-/* Cards */
+/* LAYOUT PRINCIPAL — LADO A LADO */
+.wrap {
+  display: flex;
+  gap: 20px;
+  padding: 1rem;
+}
+
+.col-esquerda {
+  flex: 1;
+  min-width: 300px;
+}
+
+.col-direita {
+  flex: 1.5;
+}
+
+/* CARDS */
 .card {
   background: rgba(0,0,0,0.5);
   border: 2px solid #004d4d;
   border-radius: 12px;
   padding: 1rem;
-  margin: 1rem auto;
-  max-width: 900px;
+  margin-bottom: 1rem;
 }
 
-/* Perfil */
+/* PERFIL */
 .profile-left h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+  cursor: pointer; /* nome vira botão */
+  transition: 0.2s;
 }
+
+.profile-left h2:hover {
+  color: #00cfff;
+  transform: scale(1.03);
+}
+
+/* Cores do nome */
 .nome-rosa { color: #ff00ff; }
 .nome-azul { color: #00cfff; }
+
 .meta div { margin-bottom: 0.25rem; }
 
-/* Botões de aviso */
+/* BOTÃO AVISOS */
 .btn-avisos {
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -58,16 +85,20 @@ body {
   font-weight: bold;
   transition: all 0.3s;
 }
+
 .btn-cinza { background-color: #888; color: #fff; }
 .aviso-vermelho { background-color: #ff0000; color: #fff; }
-.blink { animation: blink 1s infinite; }
 
-@keyframes blink {
-  0%,50%,100% { opacity:1; }
-  25%,75% { opacity:0.3; }
+.blink {
+  animation: blink 1s infinite;
 }
 
-/* Gráfico */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+/* GRÁFICO */
 .charts-wrapper { padding: 1rem; }
 
 .chart-col {
@@ -75,17 +106,25 @@ body {
   height: 400px;
 }
 
-/* Resumo abaixo do gráfico */
+/* RESUMO ABAIXO DO GRÁFICO */
 .resumo {
   margin-top: 1rem;
   font-size: 1rem;
   display: flex;
   justify-content: space-around;
 }
-.resumo .abastecimentos { color: #888; font-weight: bold; }
-.resumo .dinheiro { color: #00f5ff; font-weight: bold; }
 
-/* Input mês */
+.resumo .abastecimentos {
+  color: #888;
+  font-weight: bold;
+}
+
+.resumo .dinheiro {
+  color: #00f5ff;
+  font-weight: bold;
+}
+
+/* INPUT MÊS */
 #mesEscolhido {
   margin-top: 1rem;
   padding: 0.25rem 0.5rem;
@@ -95,18 +134,21 @@ body {
   color: #fff;
 }
 
-/* Painel Admin */
+/* PAINEL ADMIN (dentro do card) */
 #adminControls {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   border: 2px solid #00cfff;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 1rem;
-  margin: 1rem 0;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.7rem;
 }
-#adminControls.hidden { display: none; }
+
+#adminControls.hidden {
+  display: none;
+}
 
 .admin-row {
   display: flex;
@@ -114,136 +156,118 @@ body {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
 .admin-row label {
+  min-width: 90px;
   color: #00cfff;
   font-weight: bold;
-  min-width: 80px;
 }
+
 #adminMatriculaSelect,
 #adminHorarioInput,
 #adminAvisoInput {
   flex: 1;
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 5px;
   border: 1px solid #004d4d;
-  background-color: rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.35);
   color: #fff;
 }
-#btnSalvarHorario,
-#btnSalvarAviso,
-#btnVerAvisosAdmin {
-  padding: 0.25rem 0.5rem;
-  border-radius: 5px;
+
+.btn.small {
+  padding: 0.35rem 0.7rem;
+  background-color: #00cfff;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
-  color: #fff;
-  background-color: #00cfff;
+  transition: 0.2s;
 }
-#btnSalvarHorario:hover,
-#btnSalvarAviso:hover,
-#btnVerAvisosAdmin:hover {
+
+.btn.small:hover {
   background-color: #0088aa;
 }
 
-/* Modal Admin */
-#modalAdminAvisos {
-  background: rgba(0,0,0,0.95);
+.btn.primary {
+  background-color: #00f5ff;
+}
+
+/* MODAIS (AVISO + ADMIN) */
+.modal {
   border: 2px solid #00cfff;
+  background: rgba(0,0,0,0.95);
   border-radius: 12px;
+  padding: 0;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal-body {
   padding: 1rem;
-  max-width: 600px;
 }
-#modalAdminAvisos h3 {
-  color: #00cfff;
-  margin-bottom: 0.5rem;
-}
+
+/* LISTAS */
+#avisosLista,
 #adminAvisosLista {
   max-height: 250px;
   overflow-y: auto;
+  background: rgba(255,255,255,0.06);
   padding: 0.5rem;
-  background: rgba(255,255,255,0.05);
-  border-radius: 5px;
-}
-#adminAvisosLista p {
-  margin: 0.5rem 0;
-  padding: 0.5rem;
-  background: rgba(255,255,255,0.08);
   border-radius: 6px;
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-/* Botão dentro dos avisos admin */
+#avisosLista p,
+#adminAvisosLista p {
+  margin: 0.4rem 0;
+  color: #fff !important;
+  font-size: 1rem;
+}
+
+/* Botões de editar/excluir */
 .btn-small {
-  padding: 3px 6px;
-  margin-left: 6px;
-  font-size: 12px;
-  background: #00cfff;
-  color: #000;
-  border: none;
+  margin-left: 10px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
   border-radius: 4px;
+  border: none;
   cursor: pointer;
 }
+
 .btn-small:hover {
-  background: #0099bb;
+  opacity: .8;
 }
 
-/* BOTÃO PARA EXPANDIR ADMIN (via nome) */
-.btn-toggle-admin {
-  display: none; /* substituído pelo clique no nome */
-}
+.btn-small:nth-child(1) { background: #0099ff; color: #fff; }
+.btn-small:nth-child(2) { background: #ff3333; color: #fff; }
 
-/* O NOME vira botão */
-#funcNome {
-  cursor: pointer;
-  transition: 0.2s;
-}
-#funcNome:hover {
-  opacity: 0.7;
-}
-
-/* --- LAYOUT LADO A LADO (CARD + GRÁFICO) --- */
-.wrap {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  align-items: flex-start;
-  justify-content: center;
+/* ✅ BOTÃO FECHAR (NOVO - APAIXONANTE) */
+.modal-body button.btn {
   width: 100%;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 0.6rem;
+  background: linear-gradient(135deg, #0066aa, #0088cc);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+  letter-spacing: 0.5px;
 }
 
-/* Card à ESQUERDA */
-.profile-card {
-  flex: 0 0 380px;
+.modal-body button.btn:hover {
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  transform: scale(1.03);
 }
 
-/* Gráfico à DIREITA */
-.charts {
-  flex: 1;
-  min-width: 450px;
-}
-
-/* Ajuste para o gráfico não quebrar */
-.chart-col {
-  height: 450px;
-}
-
-/* Responsivo */
+/* RESPONSIVO */
 @media (max-width: 900px) {
   .wrap {
     flex-direction: column;
-    align-items: center;
   }
 
-  .charts {
-    width: 100%;
-  }
-
-  .profile-card {
+  .col-esquerda,
+  .col-direita {
     width: 100%;
   }
 }
