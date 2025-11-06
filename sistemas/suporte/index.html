@@ -3,33 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Recebedoria - Suporte</title>
+  <title>Suporte - Portal Recebedoria</title>
   <link rel="stylesheet" href="style.css">
+  <script type="module" src="suporte.js" defer></script>
 </head>
 <body>
+  <h1 style="margin-bottom: 20px;">Suporte</h1>
+
   <div class="container-suporte">
 
-    <!-- Card entrada sugestões/reports -->
+    <!-- Card sugestões/reports -->
     <div class="card sugestoes-card">
-      <h2>💡 Enviar</h2>
-      <label for="tipoEntrada">Tipo:</label>
-      <select id="tipoEntrada">
-        <option value="sugestao">Sugestão</option>
-        <option value="report">Report</option>
-      </select>
-      <textarea id="sugestaoInput" placeholder="Escreva sua sugestão (até 1000 caracteres)" maxlength="1000"></textarea>
-      <button id="salvarSugestaoBtn">Salvar Sugestão</button>
-
-      <div class="filtros">
-        <label for="filtroTipo">Filtrar por:</label>
-        <select id="filtroTipo">
-          <option value="all">Todos</option>
-          <option value="sugestao">Sugestões</option>
-          <option value="report">Reports</option>
+      <div style="margin-bottom: 12px;">
+        <label for="tipoInput" style="font-weight:bold;">Tipo:</label>
+        <select id="tipoInput" style="width: 200px; padding:6px; border-radius:4px; background-color:#1f1f1f; color:#e0e0e0; border:1px solid #333;">
+          <option value="sugestao">Sugestão</option>
+          <option value="report">Report</option>
         </select>
       </div>
 
-      <div id="sugestoesList" class="sugestoes-list"></div>
+      <textarea id="descricaoInput" maxlength="1000" placeholder="Escreva sua sugestão..."></textarea>
+      <button id="salvarBtn">Salvar Sugestão</button>
+
+      <div class="sugestoes-list" id="sugestoesList">
+        <!-- Sugestões e reports carregados via JS -->
+      </div>
     </div>
 
     <!-- Card contato desenvolvedor -->
@@ -37,11 +35,11 @@
       <h2>Contato Desenvolvedor</h2>
       <p>Telefone 📞: (11) 9 8988-1903</p>
       <p>E-mail 📧: lucas.custodio83@gmail.com</p>
-      <p class="card-footer">Em caso de falhas, bugs ou erros, anote detalhadamente o problema e, se possível, tire print ou fotos.</p>
+      <div class="card-footer">
+        Em caso de falhas, bugs ou erros, anote detalhadamente o problema e se possível tire print ou fotos.
+      </div>
     </div>
 
   </div>
-
-  <script type="module" src="suporte.js"></script>
 </body>
 </html>

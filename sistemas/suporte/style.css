@@ -1,114 +1,161 @@
-﻿body {
+﻿/* Reset básico */
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: #121212;
-  color: #f5f5f5;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.suporte-container {
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 16px;
+  padding: 20px;
+}
+
+/* Container flexível */
+.container-suporte {
   display: flex;
   gap: 20px;
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex-wrap: wrap;
 }
 
-/* Card sugestões */
-.card-sugestoes {
-  flex: 1;
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-}
-
-.card-sugestoes-content {
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 10px;
-  padding-right: 10px;
-}
-
-/* Card contato */
-.card-contato {
-  flex: 0 0 35%;
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-/* Inputs */
-textarea, select {
-  width: 100%;
-  border-radius: 8px;
-  padding: 8px;
-  background: #121212;
-  color: #f5f5f5;
-  border: 1px solid #333;
-  resize: vertical;
-}
-
-/* Botões */
-button {
-  padding: 6px 12px;
-  margin: 4px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid #888;
-  background: transparent;
-  color: #f5f5f5;
-  transition: all 0.2s;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 6px rgba(255,255,255,0.3);
-}
-
-/* Status buttons */
-.btn-status.aprovado { border-color:#4caf50; color:#4caf50; }
-.btn-status.reprovado { border-color:#f44336; color:#f44336; }
-.btn-status.em-analise { border-color:#ff9800; color:#ff9800; }
-.btn-status.excluir { border-color:#f44336; color:#f44336; }
-
-/* Cards de entrada */
-.card-entrada {
-  background: #2c2c2c;
-  margin-bottom: 12px;
+/* Cards */
+.card {
+  background-color: #1f1f1f;
   border-radius: 10px;
-  padding: 10px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
 }
 
-.card-header {
+/* Card sugestões com rolagem */
+.sugestoes-card {
+  flex: 1 1 60%;
+  max-height: 80vh;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  flex-direction: column;
 }
 
-.card-header .status {
-  padding: 2px 6px;
+textarea {
+  width: 100%;
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #333;
   border-radius: 6px;
-  border: 1px solid #888;
+  padding: 12px;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  resize: vertical;
+  min-height: 100px;
 }
 
-/* Scroll interno */
-.card-sugestoes-content::-webkit-scrollbar {
+/* Botões com efeito vetorial e moldura cromada */
+button {
+  padding: 10px 20px;
+  border: 2px solid #00bcd4;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
+  color: #00bcd4;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-shadow: 0 0 2px #00bcd4;
+}
+button:hover {
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4 inset;
+}
+
+/* Lista de sugestões */
+.sugestoes-list {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.suggestion-card {
+  background-color: #1f1f1f;
+  border-left: 4px solid #9c27b0;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+.aprovado { background: #4caf50; color: #fff; }
+.reprovado { background: #f44336; color: #fff; }
+.analise { background: #ff9800; color: #121212; }
+
+/* Admin actions */
+.admin-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+}
+.admin-actions button {
+  padding: 6px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid #00bcd4;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
+  color: #00bcd4;
+  text-shadow: 0 0 2px #00bcd4;
+  transition: all 0.25s ease;
+}
+.admin-actions button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4 inset;
+}
+
+/* Botão excluir */
+.excluir-btn {
+  border-color: #f44336;
+  color: #f44336;
+  text-shadow: 0 0 2px #f44336;
+}
+.excluir-btn:hover {
+  box-shadow: 0 0 10px #f44336, 0 0 20px #f44336 inset;
+}
+
+/* Card contato desenvolvedor */
+.contato-card {
+  flex: 1 1 35%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.card-footer {
+  font-size: 0.9rem;
+  color: #b0b0b0;
+  margin-top: 12px;
+}
+
+/* Scroll interno das sugestões */
+.sugestoes-list::-webkit-scrollbar {
   width: 8px;
 }
-.card-sugestoes-content::-webkit-scrollbar-thumb {
-  background-color: #888;
+.sugestoes-list::-webkit-scrollbar-thumb {
+  background-color: #00bcd4;
   border-radius: 4px;
-}
-
-/* Resposta */
-.resposta {
-  margin-top: 6px;
-  font-style: italic;
-  color: #bbb;
 }
