@@ -1,149 +1,181 @@
+/* =========================
+   Variáveis e cores
+========================= */
 :root {
-  --green: #00c853;
-  --bg: #0b0c0e;
-  --card: #16181d;
-  --muted: #9aa0a6;
-  --text: #f2f2f2;
-  --warn: #ffd54f;
-  --danger: #ef5350;
-  --outline: #3a3d44;
-  --scrollbar-bg: #1a1c21;
-  --scrollbar-thumb: #2f343d;
+    --green: #00c853;
+    --bg: #0b0c0e;
+    --card: #16181d;
+    --muted: #c9c9c9;
+    --text: #f2f2f2;
+    --warn: #ffd54f;
+    --danger: #ef5350;
+    --outline: #3a3d44;
 }
 
-/* Reset básico */
-* { box-sizing: border-box; margin:0; padding:0; }
+/* =========================
+   Reset básico
+========================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 body {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: var(--text);
-  background:
-    radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-    radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-    linear-gradient(#0f1013, #111316 40%, var(--bg));
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    background: radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
+                radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
+                linear-gradient(#0f1013, #111316 40%, #0b0c0e);
+    color: var(--text);
+    line-height: 1.5;
 }
 
-/* Scrollbars customizadas */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-bg); border-radius: 8px; }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 8px; }
-
-/* Topbar */
+/* =========================
+   Topbar
+========================= */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--outline);
-  background: rgba(20, 22, 28, 0.9);
-  backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--green);
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.logo { height: 44px; filter: drop-shadow(0 0 6px rgba(0,200,83,.25)); }
-h1 { margin: 0; color: var(--green); text-shadow: 0 0 10px rgba(0,200,83,.2); }
+.logo {
+    height: 44px;
+    filter: drop-shadow(0 0 6px rgba(0,200,83,.25));
+}
+h1 {
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,200,83,.2);
+}
 
-/* Botões */
+/* =========================
+   Layout principal
+========================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px;
+}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+}
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+label {
+    min-width: 170px;
+    color: var(--muted);
+}
+input, textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--green);
+    background: #f2f2f2;
+    color: #000;
+    outline: none;
+}
+textarea { resize: vertical; }
+
+/* =========================
+   Botões
+========================= */
 .btn {
-  padding: 8px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: .2s;
-  border: 1px solid var(--outline);
-  font-weight: 500;
-}
-.btn.primary {
-  background: linear-gradient(180deg,#2fba6b,#1d8d4e);
-  color: #fff;
-  border-color: #0b5;
-}
-.btn.outline {
-  background: transparent;
-  border: 1px solid var(--outline);
-  color: #fff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--outline);
+    background: #23262b;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.2s;
 }
 .btn:hover { transform: translateY(-1px); }
+.btn.primary {
+    background: linear-gradient(180deg, #2fba6b, #1d8d4e);
+    border-color: #0b5;
+}
+.btn.outline { background: transparent; border: 1px solid var(--outline); }
+.btn.danger {
+    background: linear-gradient(180deg, #ef5350, #b71c1c);
+    border-color: #a33;
+}
 
-/* Container e grid */
-.container { padding: 18px; max-width: 1200px; margin: 0 auto; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-
-/* Cards */
+/* =========================
+   Cards
+========================= */
 .card {
-  background: var(--card);
-  border: 1px solid #0f1115;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-  margin: 16px 0;
+    background: linear-gradient(180deg,#1b1e24,#12151a);
+    border: 1px solid #0f1115;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    margin: 16px 0;
 }
 
-/* Forms dentro do card */
-.card .row { display: flex; flex-direction: column; margin-bottom: 12px; }
-.card .row label { font-size: 14px; margin-bottom: 4px; color: var(--muted); }
-.card .row input, .card .row select, .card .row textarea {
-  background: #1b1e24;
-  border: 1px solid var(--outline);
-  border-radius: 8px;
-  color: #fff;
-  padding: 6px 10px;
-  font-size: 14px;
+/* =========================
+   Lista de relatórios
+========================= */
+.lista, .resumo-lista {
+    margin-top: 12px;
 }
-.card .row input:disabled { background: #111316; color: #9aa0a6; }
-
-/* Modals */
-.modal {
-  border: none;
-  border-radius: 16px;
-  padding: 0;
-  background: transparent;
+.relatorio-item {
+    background: linear-gradient(180deg,#1b1e24,#12151a);
+    border-left: 4px solid var(--green);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.35);
 }
-.modal::backdrop { background: rgba(0,0,0,.7); }
-
-.modal-content {
-  background: #12151a;
-  border: 1px solid #30333a;
-  padding: 24px;
-  border-radius: 16px;
-  width: min(800px,95vw);
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 15px 40px rgba(0,0,0,.55);
+.relatorio-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
 }
-.modal-content h3 { margin-top: 0; color: var(--green); font-size: 1.4rem; }
-.modal-footer { margin-top: 16px; text-align: right; }
-
-/* Resumo do Recebedor */
-.resumo-container { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.resumo-container div {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #1b1e24;
-  box-shadow: 0 4px 8px rgba(0,0,0,.3);
-}
-.resumo-container strong { color: #fff; }
-.resumo-lista { margin-top: 10px; }
-
-/* Lista de Relatórios */
-.lista .relatorio-item {
-  background: #16181d;
-  border-left: 4px solid var(--green);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.35);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.lista .relatorio-item:hover { transform: translateY(-2px); }
-.item-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; }
-.item-body { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #2a2d33; }
 .item-body.hidden { display: none; }
-.relatorio-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.relatorio-table td { padding: 8px 12px; border-bottom: 1px solid #2a2d33; }
+.relatorio-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.relatorio-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2d33;
+}
+.relatorio-table td:first-child {
+    font-weight: 600;
+    color: var(--muted);
+}
 .positivo { color: var(--green); font-weight: bold; }
 .negativo { color: var(--danger); font-weight: bold; }
+.relatorio-item .actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+.btnEdit, .btnPos { padding: 6px 10px; font-size: 13px; border-radius: 10px; }
+
+/* =========================
+   Modal
+========================= */
+.modal {
+    border: none;
