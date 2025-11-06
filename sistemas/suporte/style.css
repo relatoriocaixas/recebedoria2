@@ -19,6 +19,7 @@ body {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 /* Cards */
@@ -34,19 +35,19 @@ body {
   box-shadow: 0 10px 20px rgba(0,0,0,0.7);
 }
 
-/* Card sugestões com rolagem */
+/* Card sugestões/reports */
 .sugestoes-card {
   flex: 1 1 60%;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
-
 textarea {
   width: 100%;
-  background-color: #1f1f1f;
+  background-color: #333300;
   color: #e0e0e0;
-  border: 1px solid #333;
+  border: 1px solid #555;
   border-radius: 6px;
   padding: 12px;
   font-size: 1rem;
@@ -55,34 +56,51 @@ textarea {
   min-height: 100px;
 }
 
-/* Botões com efeito vetorial e moldura cromada */
-button {
-  padding: 10px 20px;
-  border: 2px solid #00bcd4;
+/* Select tipo de solicitação */
+.tipo-solicitacao {
+  width: 220px;
+  padding: 8px 10px;
   border-radius: 6px;
-  background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
-  color: #00bcd4;
+  border: 1px solid #555;
+  background-color: #1f1f1f;
+  color: #e0e0e0;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.25s ease;
-  text-shadow: 0 0 2px #00bcd4;
+  transition: all 0.2s ease;
 }
-button:hover {
-  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
-  transform: scale(1.05);
-  box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4 inset;
+.tipo-solicitacao:hover, .tipo-solicitacao:focus {
+  border-color: #00bcd4;
+  box-shadow: 0 0 5px #00bcd4;
+  outline: none;
 }
 
-/* Lista de sugestões */
+/* Botões cromados */
+button {
+  padding: 10px 20px;
+  border: 2px solid #888;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+  background-color: #333;
+  color: #fff;
+  box-shadow: 0 0 5px #aaa inset;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #bbb inset;
+}
+
+/* Lista de sugestões/reports */
 .sugestoes-list {
   overflow-y: auto;
   flex: 1;
   padding-right: 4px;
 }
-
 .suggestion-card {
-  background-color: #1f1f1f;
-  border-left: 4px solid #9c27b0;
+  background-color: #444400;
+  border-left: 4px solid #fdd835;
   padding: 15px;
   margin-bottom: 12px;
   border-radius: 8px;
@@ -101,10 +119,12 @@ button:hover {
   font-weight: bold;
   font-size: 0.85rem;
   display: inline-block;
+  border: 2px solid #888;
+  box-shadow: 0 0 3px #aaa inset;
 }
-.aprovado { background: #4caf50; color: #fff; }
+.aprovado, .solucionado { background: #4caf50; color: #fff; }
 .reprovado { background: #f44336; color: #fff; }
-.analise { background: #ff9800; color: #121212; }
+.analise, .correcao-iniciada { background: #ff9800; color: #121212; }
 
 /* Admin actions */
 .admin-actions {
@@ -113,29 +133,23 @@ button:hover {
   gap: 6px;
 }
 .admin-actions button {
-  padding: 6px 12px;
+  padding: 4px 8px;
   font-weight: bold;
   cursor: pointer;
-  border: 2px solid #00bcd4;
-  border-radius: 6px;
-  background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
-  color: #00bcd4;
-  text-shadow: 0 0 2px #00bcd4;
-  transition: all 0.25s ease;
+  border: 2px solid #888;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 .admin-actions button:hover {
+  opacity: 0.85;
   transform: scale(1.05);
-  box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4 inset;
 }
 
 /* Botão excluir */
 .excluir-btn {
-  border-color: #f44336;
-  color: #f44336;
-  text-shadow: 0 0 2px #f44336;
-}
-.excluir-btn:hover {
-  box-shadow: 0 0 10px #f44336, 0 0 20px #f44336 inset;
+  background-color: #f44336;
+  color: #fff;
+  border: 2px solid #888;
 }
 
 /* Card contato desenvolvedor */
@@ -144,6 +158,7 @@ button:hover {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 .card-footer {
   font-size: 0.9rem;
@@ -151,11 +166,33 @@ button:hover {
   margin-top: 12px;
 }
 
-/* Scroll interno das sugestões */
+/* Ícones e cores específicas para tipos */
+.sugestao { background-color: #fdd835; color: #000; }
+.report { background-color: #ffc107; color: #000; }
+
+/* Scrollbar customizada */
 .sugestoes-list::-webkit-scrollbar {
   width: 8px;
 }
 .sugestoes-list::-webkit-scrollbar-thumb {
-  background-color: #00bcd4;
+  background-color: #888;
   border-radius: 4px;
+}
+.sugestoes-list::-webkit-scrollbar-track {
+  background-color: #1f1f1f;
+}
+
+/* Hover cards */
+.suggestion-card:hover {
+  background-color: #555500;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .container-suporte {
+    flex-direction: column;
+  }
+  .sugestoes-card, .contato-card {
+    flex: 1 1 100%;
+  }
 }

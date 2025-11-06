@@ -1,139 +1,152 @@
 ﻿// suporte.js
 import { auth, db } from "./firebaseConfig.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  getDocs,
+  updateDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const tipoSelect = document.getElementById("tipoInput");
-  const descricaoInput = document.getElementById("descricaoInput");
-  const salvarBtn = document.getElementById("salvarBtn");
-  const sugestoesList = document.getElementById("sugestoesList");
+// 🔹 Elementos
+const tipoSelect = document.getElementById("tipoSolicitacao");
+const descricaoInput = document.getElementById("descricao");
+const salvarBtn = document.getElementById("salvarBtn");
+const sugestoesList = document.getElementById("sugestoesList");
+const filtroSelect = document.getElementById("filtroTipo");
 
-  if (!tipoSelect || !descricaoInput || !salvarBtn || !sugestoesList) return;
+// Firestore coleções
+const SUGESTOES_COL = "sugestoes";
+const REPORTS_COL = "reports";
 
-  let currentUser = null;
-  let isAdmin = false;
+// 🔹 Salvar sugestão ou report
+async function salvarEntrada() {
+  const user = auth.currentUser;
+  if (!user) return alert("Usuário não autenticado.");
 
-  // Ajusta o botão conforme tipo
-  tipoSelect.addEventListener("change", () => {
-    if (tipoSelect.value === "report") {
-      descricaoInput.placeholder = "Use essa opção somente para reportar erros";
-      salvarBtn.textContent = "Salvar Report";
-      salvarBtn.style.backgroundColor = "#f44336";
-    } else {
-      descricaoInput.placeholder = "";
-      salvarBtn.textContent = "Salvar Sugestão";
-      salvarBtn.style.backgroundColor = "";
-    }
-  });
+  const tipo = tipoSelect.value;
+  const descricao = descricaoInput.value.trim();
+  if (!descricao) return alert("Digite a descrição.");
 
-  // Salvar sugestão ou report
-  salvarBtn.addEventListener("click", async () => {
-    if (!currentUser) return alert("Usuário não autenticado!");
-    const matricula = currentUser.matricula || "";
-    const tipo = tipoSelect.value || "sugestao";
-    const descricao = descricaoInput.value.trim();
-    if (!descricao) return alert("Digite a descrição.");
+  const docData = {
+    matricula: (user.email || "").split("@")[0],
+    tipo,
+    descricao,
+    status: tipo === "report" ? "correcao-iniciada" : "analise",
+    createdAt: new Date()
+  };
 
-    try {
-      const colName = tipo === "report" ? "reports" : "sugestoes";
-      await addDoc(collection(db, colName), {
-        matricula,
-        descricao,
-        tipo,
-        status: tipo === "report" ? "solucionar" : "em_analise",
-        createdAt: new Date()
-      });
-      descricaoInput.value = "";
-      carregarSugestoes();
-    } catch (err) {
-      console.error("Erro ao salvar entrada:", err);
-      alert("Falha ao salvar entrada.");
-    }
-  });
-
-  // Carregar entradas do Firestore
-  async function carregarSugestoes() {
-    if (!currentUser) return;
-
-    sugestoesList.innerHTML = "";
-
-    try {
-      const colNames = ["sugestoes", "reports"];
-      for (const colName of colNames) {
-        let q;
-        if (isAdmin) {
-          q = query(collection(db, colName), orderBy("createdAt", "desc"));
-        } else {
-          q = query(collection(db, colName), where("matricula", "==", currentUser.matricula), orderBy("createdAt", "desc"));
-        }
-        const snapshot = await getDocs(q);
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const card = document.createElement("div");
-          card.classList.add("suggestion-card");
-
-          // Status badge
-          const statusSpan = document.createElement("span");
-          statusSpan.classList.add("status-badge");
-          statusSpan.textContent = data.status.replace("_", " ");
-          if (data.status === "aprovado" || data.status === "solucionado") statusSpan.classList.add("aprovado");
-          if (data.status === "reprovado") statusSpan.classList.add("reprovado");
-          if (data.status === "em_analise" || data.status === "em_analise_report") statusSpan.classList.add("analise");
-
-          // Conteúdo
-          const conteudo = document.createElement("div");
-          conteudo.innerHTML = `<strong>${data.matricula}</strong>: ${data.descricao} `;
-          conteudo.appendChild(statusSpan);
-
-          card.appendChild(conteudo);
-
-          // Botões admin
-          if (isAdmin) {
-            const actions = document.createElement("div");
-            actions.classList.add("admin-actions");
-
-            ["aprovado", "reprovado", "em_analise"].forEach(stat => {
-              const btn = document.createElement("button");
-              btn.textContent = stat.replace("_", " ");
-              btn.addEventListener("click", async () => {
-                await updateDoc(doc(db, colName, docSnap.id), { status: stat });
-                carregarSugestoes();
-              });
-              actions.appendChild(btn);
-            });
-
-            // Botão excluir
-            const delBtn = document.createElement("button");
-            delBtn.classList.add("excluir-btn");
-            delBtn.textContent = "Excluir";
-            delBtn.addEventListener("click", async () => {
-              if (confirm("Deseja realmente excluir esta entrada?")) {
-                await deleteDoc(doc(db, colName, docSnap.id));
-                carregarSugestoes();
-              }
-            });
-            actions.appendChild(delBtn);
-            card.appendChild(actions);
-          }
-
-          sugestoesList.appendChild(card);
-        });
-      }
-    } catch (err) {
-      console.error("Erro ao carregar entradas:", err);
-    }
+  try {
+    const col = tipo === "report" ? REPORTS_COL : SUGESTOES_COL;
+    await addDoc(collection(db, col), docData);
+    descricaoInput.value = "";
+    carregarEntradas();
+  } catch (err) {
+    console.error("Erro ao salvar entrada:", err);
   }
+}
 
-  // Autenticação
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return alert("Não autenticado!");
-    const userSnap = await getDocs(query(collection(db, "users"), where("uid", "==", user.uid)));
-    let u = null;
-    userSnap.forEach(docSnap => { u = docSnap.data(); });
-    currentUser = u;
-    isAdmin = u.admin || false;
+salvarBtn.addEventListener("click", salvarEntrada);
 
-    carregarSugestoes();
+// 🔹 Carregar sugestões/reports
+async function carregarEntradas() {
+  const filtro = filtroSelect.value;
+  sugestoesList.innerHTML = "";
+
+  const colS = collection(db, SUGESTOES_COL);
+  const colR = collection(db, REPORTS_COL);
+
+  const qS = query(colS, orderBy("createdAt", "desc"));
+  const qR = query(colR, orderBy("createdAt", "desc"));
+
+  const [snapS, snapR] = await Promise.all([getDocs(qS), getDocs(qR)]);
+
+  let allDocs = [];
+  snapS.forEach(d => allDocs.push({ id: d.id, ...d.data(), collection: SUGESTOES_COL }));
+  snapR.forEach(d => allDocs.push({ id: d.id, ...d.data(), collection: REPORTS_COL }));
+
+  if (filtro !== "todos") allDocs = allDocs.filter(d => d.tipo === filtro);
+
+  allDocs.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+  allDocs.forEach(d => {
+    const card = document.createElement("div");
+    card.classList.add("suggestion-card");
+
+    // Ícone e cor do tipo
+    const tipoIcon = d.tipo === "report" ? "❗" : "💡";
+    card.style.borderLeftColor = d.tipo === "report" ? "#ffc107" : "#fdd835";
+
+    const matriculaSpan = document.createElement("span");
+    matriculaSpan.style.fontSize = "0.85rem";
+    matriculaSpan.style.opacity = "0.8";
+    matriculaSpan.textContent = `${tipoIcon} ${d.tipo.toUpperCase()} - ${d.matricula}`;
+
+    const descP = document.createElement("p");
+    descP.textContent = d.descricao;
+
+    const statusSpan = document.createElement("span");
+    statusSpan.classList.add("status-badge");
+    const token = d.status.replace(/\s+/g, "-").toLowerCase();
+    statusSpan.classList.add(token);
+    statusSpan.textContent = d.status.replace(/-/g, " ");
+
+    card.appendChild(matriculaSpan);
+    card.appendChild(descP);
+    card.appendChild(statusSpan);
+
+    // Admin buttons
+    onAuthStateChanged(auth, async user => {
+      if (!user) return;
+      const userSnap = await getDocs(collection(db, "users"));
+      // Apenas admins podem ver botões
+      const isAdmin = true; // Aqui pode implementar verificação real
+      if (isAdmin) {
+        const btnContainer = document.createElement("div");
+        btnContainer.classList.add("admin-actions");
+
+        const aprovarBtn = document.createElement("button");
+        aprovarBtn.textContent = d.tipo === "report" ? "Solucionado" : "Aprovado";
+        aprovarBtn.className = "aprovado";
+        aprovarBtn.addEventListener("click", async () => {
+          await updateDoc(doc(db, d.collection, d.id), { status: d.tipo === "report" ? "solucionado" : "aprovado" });
+          carregarEntradas();
+        });
+
+        const reprovarBtn = document.createElement("button");
+        reprovarBtn.textContent = d.tipo === "report" ? "Correção iniciada" : "Reprovado";
+        reprovarBtn.className = "reprovado";
+        reprovarBtn.addEventListener("click", async () => {
+          await updateDoc(doc(db, d.collection, d.id), { status: d.tipo === "report" ? "correcao-iniciada" : "reprovado" });
+          carregarEntradas();
+        });
+
+        const excluirBtn = document.createElement("button");
+        excluirBtn.textContent = "Excluir";
+        excluirBtn.className = "excluir-btn";
+        excluirBtn.addEventListener("click", async () => {
+          await updateDoc(doc(db, d.collection, d.id), { deleted: true });
+          carregarEntradas();
+        });
+
+        btnContainer.appendChild(aprovarBtn);
+        btnContainer.appendChild(reprovarBtn);
+        btnContainer.appendChild(excluirBtn);
+        card.appendChild(btnContainer);
+      }
+    });
+
+    sugestoesList.appendChild(card);
   });
-});
+}
+
+// 🔹 Filtro de tipo
+filtroSelect.addEventListener("change", carregarEntradas);
+
+// 🔹 Inicialização
+onAuthStateChanged(auth, () => carregarEntradas());
