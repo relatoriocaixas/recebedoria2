@@ -3,51 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suporte</title>
-<link rel="stylesheet" href="style.css">
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
+<title>Suporte - Portal Recebedoria</title>
+<link rel="stylesheet" href="../style.css">
+<script type="module" src="suporte.js"></script>
 </head>
 <body>
+<div class="container">
+  <h1>Suporte</h1>
 
-<header>
-    <img src="logo.png" alt="Logo" class="logo">
-    <h1>Suporte</h1>
-</header>
+  <div class="card card-contact">
+    <h3>Contato Desenvolvedor</h3>
+    <p>Telefone 📞: (11) 9 8988-1903</p>
+    <p>E-mail 📧 : lucas.custodio83@gmail.com</p>
+    <div class="card-footer">
+      Em caso de falhas, bugs ou erros, anote detalhadamente o problema e se possível tire print ou fotos.
+    </div>
+  </div>
 
-<main>
-    <section id="cardDesenvolvedor">
-        <h2>Contato Desenvolvedor</h2>
-        <p>Telefone 📞: (11) 9 8988-1903</p>
-        <p>E-mail 📧 : lucas.custodio83@gmail.com</p>
-        <p class="rodape-card">Em caso de falhas, bugs ou erros, anote detalhadamente o problema e se possível tire print ou fotos.</p>
-    </section>
+  <div class="card">
+    <h3>Enviar sugestão</h3>
+    <textarea id="sugestao" maxlength="1000" placeholder="Escreva sua sugestão ou relato de bug aqui..."></textarea>
+    <br>
+    <button id="btnSalvarSugestao">Salvar sugestão</button>
+  </div>
 
-    <section id="campoSugestao">
-        <h2>Enviar Sugestão</h2>
-        <textarea id="sugestaoInput" maxlength="1000" placeholder="Escreva sua sugestão aqui (até 1000 caracteres)"></textarea>
-        <button id="btnEnviarSugestao">Enviar</button>
-    </section>
-
-    <section id="listaSugestoes">
-        <h2>Minhas Sugestões</h2>
-        <div id="cardsSugestoes">
-            <!-- Sugestões serão carregadas aqui -->
-        </div>
-    </section>
-</main>
-
-<footer class="footer">
-    Developed by Lucas L Custodio
-</footer>
-
-<script src="suporte.js"></script>
-
+  <div id="listaSugestoes"></div>
+</div>
 </body>
 </html>
