@@ -319,3 +319,84 @@ textarea{resize:vertical;}
 .positivo { color: var(--green); font-weight: bold; }
 .negativo { color: var(--danger); font-weight: bold; }
 
+/* Modal flutuante profissional */
+.modal {
+  border: none;
+  border-radius: 18px;
+  padding: 0;
+  background: transparent;
+}
+
+.modal::backdrop {
+  background: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+  background: linear-gradient(180deg,#1b1e24,#12151a);
+  border: 1px solid #0f0;
+  border-radius: 18px;
+  padding: 20px;
+  width: min(900px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.relatorios-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.relatorio-item {
+  background: linear-gradient(180deg,#1b1e24,#12151a);
+  border-left: 4px solid var(--green);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+
+.relatorio-item .item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.item-body.hidden {
+  display: none;
+}
+
+.relatorio-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.relatorio-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #2a2d33;
+}
+
+.relatorio-table td:first-child {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.positivo { color: var(--green); font-weight: bold; }
+.negativo { color: var(--danger); font-weight: bold; }
+
+.btnToggle {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* Palavra relatórios clicável */
+.clickable-relatorios:hover {
+  text-decoration: underline;
+  color: var(--green);
+  cursor: pointer;
+}
+
