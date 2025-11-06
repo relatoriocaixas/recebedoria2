@@ -1,99 +1,340 @@
-﻿<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Funcionário — Recebedoria</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script type="module" src="app.js" defer></script>
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <h1>Funcionário</h1>
-    </div>
-  </header>
+﻿import { auth, db } from "./firebaseConfig_v2.js";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  updateDoc,
+  doc,
+  deleteDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-  <main class="wrap charts-wrapper">
-    <!-- PERFIL -->
-    <section class="card profile-card">
-      <div class="profile-left">
-        <h2 id="funcNome">—</h2>
-        <div class="meta">
-          <div><strong>Matrícula:</strong> <span id="funcMatricula">—</span></div>
-          <div><strong>Admissão:</strong> <span id="funcAdmissao">—</span></div>
-          <div><strong>Horário:</strong> <span id="funcHorario">—</span></div>
-        </div>
+// ELEMENTOS
+const nomeEl = document.getElementById("funcNome");
+const matriculaEl = document.getElementById("funcMatricula");
+const admissaoEl = document.getElementById("funcAdmissao");
+const horarioEl = document.getElementById("funcHorario");
+
+const btnAvisos = document.getElementById("btnAvisos");
+const modalAvisos = document.getElementById("modalAvisos");
+const avisosLista = document.getElementById("avisosLista");
+
+const mensalChartCtx = document.getElementById("mensalChart");
+const totalInfoEl = document.getElementById("totalInfo");
+const mesInput = document.getElementById("mesEscolhido");
+
+const adminControls = document.getElementById("adminControls");
+const adminMatriculaSelect = document.getElementById("adminMatriculaSelect");
+const adminHorarioInput = document.getElementById("adminHorarioInput");
+const adminAvisoInput = document.getElementById("adminAvisoInput");
+const btnSalvarHorario = document.getElementById("btnSalvarHorario");
+const btnSalvarAviso = document.getElementById("btnSalvarAviso");
+const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
+const modalAdminAvisos = document.getElementById("modalAdminAvisos");
+const adminAvisosLista = document.getElementById("adminAvisosLista");
+
+// NOVO: botão expandir/minimizar painel admin
+const btnToggleAdmin = document.createElement("button");
+btnToggleAdmin.textContent = "Admin";
+btnToggleAdmin.classList.add("btn-toggle-admin");
+adminControls.parentElement.prepend(btnToggleAdmin);
+
+let usuarioAtual = null;
+let chartMensal = null;
+let matriculaAtual = null;
+let adminPanelExpanded = true;
+
+// --- LOGIN STATE ---
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "../../login.html";
+    return;
+  }
+  usuarioAtual = user;
+
+  const q = query(collection(db, "users"), where("email", "==", user.email));
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+  const dados = snap.docs[0].data();
+  usuarioAtual.dados = dados;
+  matriculaAtual = dados.matricula;
+
+  await carregarPerfil(dados);
+
+  // Exibir painel admin se usuário for admin
+  if (dados.admin) {
+    adminControls.classList.remove("hidden");
+    carregarMatriculasAdmin();
+  }
+});
+
+// --- PERFIL ---
+async function carregarPerfil(dados) {
+  const matriculasRosa = ["8789","9003","6414","5271"];
+  nomeEl.textContent = dados.nome;
+  if (matriculasRosa.includes(dados.matricula)) {
+    nomeEl.classList.add("nome-rosa");
+    nomeEl.classList.remove("nome-azul");
+  } else {
+    nomeEl.classList.add("nome-azul");
+    nomeEl.classList.remove("nome-rosa");
+  }
+
+  matriculaEl.textContent = dados.matricula;
+
+  if (dados.dataAdmissao) {
+    const data = new Date(dados.dataAdmissao);
+    data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
+    admissaoEl.textContent = data.toLocaleDateString("pt-BR");
+  } else {
+    admissaoEl.textContent = "—";
+  }
+
+  horarioEl.textContent = dados.horarioTrabalho || "—";
+
+  carregarGraficoIndividual(dados.matricula);
+  carregarAvisos(dados.matricula);
+
+  const hoje = new Date();
+  mesInput.value = hoje.toISOString().slice(0, 7);
+
+  mesInput.addEventListener("change", () => {
+    carregarGraficoIndividual(matriculaAtual, mesInput.value);
+  });
+}
+
+// --- AVISOS FUNCIONÁRIO ---
+async function carregarAvisos(matricula) {
+  const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
+  if (snap.empty) {
+    btnAvisos.textContent = "Sem avisos vinculados à matrícula";
+    btnAvisos.classList.remove("blink", "aviso-vermelho");
+    btnAvisos.classList.add("btn-cinza");
+    return;
+  }
+  btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
+  btnAvisos.classList.add("blink", "aviso-vermelho");
+  btnAvisos.classList.remove("btn-cinza");
+
+  avisosLista.innerHTML = "";
+  snap.forEach((d) => {
+    const p = document.createElement("p");
+    p.textContent = d.data().texto;
+    avisosLista.appendChild(p);
+  });
+}
+
+btnAvisos.addEventListener("click", () => {
+  modalAvisos.showModal();
+  btnAvisos.classList.remove("blink", "aviso-vermelho");
+});
+
+// --- GRÁFICO INDIVIDUAL ---
+async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
+  const relatoriosRef = collection(db, "relatorios");
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes + 1, 0);
+
+  const q = query(
+    relatoriosRef,
+    where("matricula", "==", matricula),
+    where("dataCaixa", ">=", primeiroDia),
+    where("dataCaixa", "<=", ultimoDia)
+  );
+
+  onSnapshot(q, (snap) => {
+    const dias = {};
+    let totalAbastecimentos = 0;
+    let totalDinheiro = 0;
+
+    snap.forEach(docSnap => {
+      const r = docSnap.data();
+      if (!r.dataCaixa) return;
+      const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
+      const dia = data.getDate();
+      if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
+      dias[dia].abastecimentos++;
+      dias[dia].valorFolha += Number(r.valorFolha || 0);
+
+      totalAbastecimentos++;
+      totalDinheiro += Number(r.valorFolha || 0);
+    });
+
+    const labels = [];
+    const abastecimentos = [];
+    const valores = [];
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      labels.push(d.toString().padStart(2, "0"));
+      abastecimentos.push(dias[d]?.abastecimentos || 0);
+      valores.push(dias[d]?.valorFolha || 0);
+    }
+
+    if (chartMensal) chartMensal.destroy();
+
+    chartMensal = new Chart(mensalChartCtx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Abastecimentos",
+            data: abastecimentos,
+            backgroundColor: "rgba(136,136,136,0.5)",
+            borderColor: "#444",
+            borderWidth: 2,
+            borderRadius: 8,
+            yAxisID: "y"
+          },
+          {
+            label: "Valor Folha (R$)",
+            data: valores,
+            type: "line",
+            borderColor: "#00f5ff",
+            backgroundColor: "rgba(0,245,255,0.2)",
+            borderWidth: 3,
+            tension: 0.4,
+            yAxisID: "y1",
+            pointStyle: "rectRot",
+            pointRadius: 6,
+            pointBackgroundColor: "#00f5ff"
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: { color: "#fff", font: { size: 14 } }
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            titleColor: "#00f5ff",
+            bodyColor: "#fff",
+            borderColor: "#00f5ff",
+            borderWidth: 1
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: "#888", font: { size: 12 } },
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4,2] }
+          },
+          y1: {
+            position: "right",
+            ticks: { color: "#00f5ff", font: { size: 12 } },
+            grid: { drawOnChartArea: false }
+          },
+          x: {
+            ticks: { color: "#fff", font: { size: 12 } },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          }
+        }
+      }
+    });
+
+    totalInfoEl.innerHTML = `
+      <div class="resumo">
+        <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
       </div>
+    `;
+  });
+}
 
-      <div class="profile-right">
-        <div id="avisosContainer">
-          <button id="btnAvisos" class="btn-avisos btn-cinza">Sem avisos vinculados à matrícula</button>
-        </div>
+// --- ADMIN ---
+async function carregarMatriculasAdmin() {
+  const q = query(collection(db, "users"));
+  const snap = await getDocs(q);
+  adminMatriculaSelect.innerHTML = "";
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const option = document.createElement("option");
+    option.value = d.matricula;
+    option.textContent = `${d.matricula} - ${d.nome}`;
+    adminMatriculaSelect.appendChild(option);
+  });
+}
 
-        <!-- Painel Admin -->
-        <div id="adminControls" class="admin-only hidden">
-          <h3>Painel do Administrador</h3>
+btnSalvarHorario.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const horario = adminHorarioInput.value.trim();
+  if (!horario) return alert("Informe um horário válido.");
+  const q = query(collection(db, "users"), where("matricula", "==", matricula));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const userDoc = snap.docs[0];
+    await updateDoc(userDoc.ref, { horarioTrabalho: horario });
+    alert("Horário salvo com sucesso!");
+  }
+});
 
-          <div class="admin-row">
-            <label>Matrícula:</label>
-            <select id="adminMatriculaSelect"></select>
-          </div>
+btnSalvarAviso.addEventListener("click", async () => {
+  const matricula = adminMatriculaSelect.value;
+  const texto = adminAvisoInput.value.trim();
+  if (!texto) return alert("Informe um texto para o aviso.");
+  await addDoc(collection(db, "avisos"), {
+    matricula,
+    texto,
+    criadoEm: serverTimestamp()
+  });
+  adminAvisoInput.value = "";
+  alert("Aviso salvo com sucesso!");
+});
 
-          <div class="admin-row">
-            <label>Horário:</label>
-            <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
-            <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
-          </div>
+// --- ADMIN MODAL COM EDIT/DELETE ---
+btnVerAvisosAdmin.addEventListener("click", async () => {
+  modalAdminAvisos.showModal();
+  const snap = await getDocs(collection(db, "avisos"));
+  adminAvisosLista.innerHTML = "";
 
-          <div class="admin-row">
-            <label>Aviso:</label>
-            <input id="adminAvisoInput" placeholder="Texto do aviso..." />
-            <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
-          </div>
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const p = document.createElement("p");
+    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
+    // Botões
+    const btnEditar = document.createElement("button");
+    btnEditar.textContent = "Editar";
+    btnEditar.classList.add("btn-small");
+    btnEditar.addEventListener("click", async () => {
+      const novoTexto = prompt("Editar aviso:", d.texto);
+      if (novoTexto !== null && novoTexto.trim() !== "") {
+        await updateDoc(doc(db, "avisos", docSnap.id), { texto: novoTexto });
+        btnVerAvisosAdmin.click(); // atualizar lista
+      }
+    });
+    const btnExcluir = document.createElement("button");
+    btnExcluir.textContent = "Excluir";
+    btnExcluir.classList.add("btn-small");
+    btnExcluir.addEventListener("click", async () => {
+      if (confirm("Deseja realmente excluir este aviso?")) {
+        await deleteDoc(doc(db, "avisos", docSnap.id));
+        btnVerAvisosAdmin.click(); // atualizar lista
+      }
+    });
+    p.appendChild(btnEditar);
+    p.appendChild(btnExcluir);
+    adminAvisosLista.appendChild(p);
+  });
+});
 
-          <div class="admin-row">
-            <button id="btnVerAvisosAdmin" class="btn small">Ver/Editar Todos os Avisos</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- GRÁFICO MENSAL -->
-    <section class="card charts">
-      <div class="chart-col">
-        <h3>Resumo Mensal — Caixa</h3>
-
-        <div class="controls">
-          <label for="mesEscolhido">Mês:</label>
-          <input id="mesEscolhido" type="month" />
-        </div>
-
-        <canvas id="mensalChart"></canvas>
-      </div>
-    </section>
-
-    <!-- RESUMO ABAIXO DO GRÁFICO -->
-    <div id="totalInfo" class="total-info"></div>
-  </main>
-
-  <!-- MODAL DE AVISOS -->
-  <dialog id="modalAvisos" class="modal">
-    <form method="dialog" class="modal-body">
-      <h3>Avisos</h3>
-      <div id="avisosLista"></div>
-      <button type="submit" class="btn">Fechar</button>
-    </form>
-  </dialog>
-
-  <!-- MODAL ADMIN AVISOS -->
-  <dialog id="modalAdminAvisos" class="modal">
-    <form method="dialog" class="modal-body">
-      <h3>Todos os Avisos</h3>
-      <div id="adminAvisosLista"></div>
-      <button type="submit" class="btn">Fechar</button>
-    </form>
-  </dialog>
-</body>
-</html>
+// --- TOGGLE PAINEL ADMIN ---
+btnToggleAdmin.addEventListener("click", () => {
+  adminPanelExpanded = !adminPanelExpanded;
+  if (adminPanelExpanded) {
+    adminControls.style.display = "flex";
+  } else {
+    adminControls.style.display = "none";
+  }
+});
