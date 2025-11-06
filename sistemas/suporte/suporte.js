@@ -1,6 +1,6 @@
 ﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const sugestaoInput = document.getElementById('sugestaoInput');
 const salvarBtn = document.getElementById('salvarSugestaoBtn');
@@ -60,6 +60,7 @@ async function carregarSugestoes() {
       if (isAdmin) {
         const actions = document.createElement("div");
         actions.classList.add("admin-actions");
+
         ["aprovado","reprovado","analise"].forEach(st => {
           const btn = document.createElement("button");
           btn.textContent = st.toUpperCase();
@@ -70,6 +71,19 @@ async function carregarSugestoes() {
           });
           actions.appendChild(btn);
         });
+
+        // Botão excluir
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "EXCLUIR";
+        delBtn.classList.add("excluir-btn");
+        delBtn.addEventListener('click', async () => {
+          if (confirm("Deseja realmente excluir esta sugestão?")) {
+            await deleteDoc(doc(db, "sugestoes", docSnap.id));
+            carregarSugestoes();
+          }
+        });
+        actions.appendChild(delBtn);
+
         card.appendChild(actions);
       }
 
