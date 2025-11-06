@@ -1,33 +1,35 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suporte - Portal Recebedoria</title>
-<link rel="stylesheet" href="../style.css">
-<script type="module" src="suporte.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Recebedoria - Suporte</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <h1>Suporte</h1>
+  <div class="main-content">
+    <h1>📌 Suporte</h1>
 
-  <div class="card card-contact">
-    <h3>Contato Desenvolvedor</h3>
-    <p>Telefone 📞: (11) 9 8988-1903</p>
-    <p>E-mail 📧 : lucas.custodio83@gmail.com</p>
-    <div class="card-footer">
-      Em caso de falhas, bugs ou erros, anote detalhadamente o problema e se possível tire print ou fotos.
+    <div class="card">
+      <h3>Contato Desenvolvedor</h3>
+      <p>Telefone 📞: (11) 9 8988-1903</p>
+      <p>E-mail 📧: lucas.custodio83@gmail.com</p>
+      <div class="card-footer">
+        Em caso de falhas, bugs ou erros, anote detalhadamente o problema e, se possível, tire print ou fotos.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>💡 Sugestões</h3>
+      <textarea id="sugestaoInput" placeholder="Escreva sua sugestão (até 1000 caracteres)" maxlength="1000"></textarea>
+      <button id="salvarSugestaoBtn">Salvar Sugestão</button>
+    </div>
+
+    <div id="sugestoesList">
+      <!-- Sugestões serão exibidas aqui -->
     </div>
   </div>
 
-  <div class="card">
-    <h3>Enviar sugestão</h3>
-    <textarea id="sugestao" maxlength="1000" placeholder="Escreva sua sugestão ou relato de bug aqui..."></textarea>
-    <br>
-    <button id="btnSalvarSugestao">Salvar sugestão</button>
-  </div>
-
-  <div id="listaSugestoes"></div>
-</div>
+  <script type="module" src="suporte.js"></script>
 </body>
 </html>

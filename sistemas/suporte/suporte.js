@@ -1,104 +1,86 @@
-﻿import { auth, db } from "../firebaseConfig.js";
+﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-const sugestaoInput = document.getElementById("sugestao");
-const btnSalvar = document.getElementById("btnSalvarSugestao");
-const listaSugestoes = document.getElementById("listaSugestoes");
+const sugestaoInput = document.getElementById('sugestaoInput');
+const salvarBtn = document.getElementById('salvarSugestaoBtn');
+const sugestoesList = document.getElementById('sugestoesList');
 
-// Variável global para armazenar usuário logado
-let usuarioLogado = null;
+let currentUser = null;
 let isAdmin = false;
 
-// Observa autenticação
+// Detecta usuário logado
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
-  usuarioLogado = user;
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDocs(collection(db, "users"));
-    const userDoc = await userRef.get?.() || { exists: () => false, data: () => ({ admin:false }) };
-    isAdmin = userDoc.exists() ? userDoc.data().admin===true : false;
-    carregarSugestoes();
-  } catch (e) {
-    console.error("Erro ao carregar usuário:", e);
-  }
+  currentUser = user;
+
+  // Busca admin do Firestore
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  isAdmin = userSnap.exists() ? userSnap.data().admin===true : false;
+
+  carregarSugestoes();
 });
 
 // Salvar sugestão
-btnSalvar.addEventListener("click", async () => {
-  if (!usuarioLogado) {
-    alert("Usuário não autenticado.");
-    return;
-  }
-
+salvarBtn.addEventListener('click', async () => {
+  if (!currentUser) { alert("Usuário não autenticado."); return; }
   const texto = sugestaoInput.value.trim();
-  if (!texto) {
-    alert("Escreva alguma sugestão antes de salvar.");
-    return;
-  }
+  if (!texto) return alert("Digite uma sugestão.");
 
   try {
-    await addDoc(collection(db, "suporte_sugestoes"), {
+    await addDoc(collection(db, "sugestoes"), {
       texto,
-      uid: usuarioLogado.uid,
-      email: usuarioLogado.email || "",
+      usuario: currentUser.email,
+      uid: currentUser.uid,
       status: "analise",
-      resposta: "",
       timestamp: new Date()
     });
     sugestaoInput.value = "";
     carregarSugestoes();
-    alert("Sugestão salva com sucesso!");
-  } catch (e) {
-    console.error("Erro ao salvar sugestão:", e);
+  } catch(err) {
+    console.error("Erro ao salvar sugestão:", err);
     alert("Erro ao salvar sugestão.");
   }
 });
 
-// Carregar sugestões
+// Carrega sugestões
 async function carregarSugestoes() {
-  listaSugestoes.innerHTML = "";
+  sugestoesList.innerHTML = "";
   try {
-    const snapshot = await getDocs(collection(db, "suporte_sugestoes"));
+    const q = isAdmin 
+      ? query(collection(db, "sugestoes"))
+      : query(collection(db, "sugestoes"), where("uid", "==", currentUser.uid));
+
+    const snapshot = await getDocs(q);
     snapshot.forEach(docSnap => {
-      const dados = docSnap.data();
-      const id = docSnap.id;
-
-      // Funcionário comum vê só suas sugestões
-      if (!isAdmin && dados.uid !== usuarioLogado.uid) return;
-
+      const data = docSnap.data();
       const card = document.createElement("div");
-      card.className = "suggestion-card";
-
+      card.classList.add("suggestion-card");
       card.innerHTML = `
-        <p>${dados.texto}</p>
-        <p>Status: <span class="status-badge ${dados.status}">${dados.status.toUpperCase()}</span></p>
-        ${isAdmin ? `
-          <div class="admin-actions">
-            <button class="aprovado">Aprovado</button>
-            <button class="reprovado">Reprovado</button>
-            <button class="analise">Em análise</button>
-          </div>` : ""}
+        <p>${data.texto}</p>
+        <p class="status-badge ${data.status}">${data.status.toUpperCase()}</p>
       `;
 
       if (isAdmin) {
-        const btns = card.querySelectorAll(".admin-actions button");
-        btns.forEach(btn => {
-          btn.addEventListener("click", async () => {
-            try {
-              await updateDoc(doc(db, "suporte_sugestoes", id), { status: btn.className });
-              carregarSugestoes();
-            } catch (e) {
-              console.error("Erro ao atualizar status:", e);
-            }
+        const actions = document.createElement("div");
+        actions.classList.add("admin-actions");
+        ["aprovado","reprovado","analise"].forEach(st => {
+          const btn = document.createElement("button");
+          btn.textContent = st.toUpperCase();
+          btn.classList.add(st);
+          btn.addEventListener('click', async () => {
+            await updateDoc(doc(db, "sugestoes", docSnap.id), { status: st });
+            carregarSugestoes();
           });
+          actions.appendChild(btn);
         });
+        card.appendChild(actions);
       }
 
-      listaSugestoes.appendChild(card);
+      sugestoesList.appendChild(card);
     });
-  } catch (e) {
-    console.error("Erro ao carregar sugestões:", e);
+
+  } catch(err) {
+    console.error("Erro ao carregar sugestões:", err);
   }
 }
