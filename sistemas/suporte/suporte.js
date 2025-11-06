@@ -1,6 +1,6 @@
 ﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const sugestaoInput = document.getElementById('sugestaoInput');
 const salvarBtn = document.getElementById('salvarSugestaoBtn');
@@ -9,19 +9,16 @@ const sugestoesList = document.getElementById('sugestoesList');
 let currentUser = null;
 let isAdmin = false;
 
-// Detecta usuário logado
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   currentUser = user;
 
-  // Busca admin do Firestore
   const userSnap = await getDoc(doc(db, "users", user.uid));
   isAdmin = userSnap.exists() ? userSnap.data().admin===true : false;
 
   carregarSugestoes();
 });
 
-// Salvar sugestão
 salvarBtn.addEventListener('click', async () => {
   if (!currentUser) { alert("Usuário não autenticado."); return; }
   const texto = sugestaoInput.value.trim();
@@ -43,7 +40,6 @@ salvarBtn.addEventListener('click', async () => {
   }
 });
 
-// Carrega sugestões
 async function carregarSugestoes() {
   sugestoesList.innerHTML = "";
   try {
@@ -79,7 +75,6 @@ async function carregarSugestoes() {
 
       sugestoesList.appendChild(card);
     });
-
   } catch(err) {
     console.error("Erro ao carregar sugestões:", err);
   }

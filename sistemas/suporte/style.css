@@ -1,77 +1,126 @@
-﻿/* Reset e corpo */
-* { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-body { background-color: #121212; color: #e0e0e0; line-height:1.5; font-size:16px; padding:24px; }
+﻿/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Corpo */
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 16px;
+  padding: 20px;
+}
+
+/* Container principal */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
 
 /* Títulos */
-h1 { color: #00bcd4; margin-bottom:16px; }
-h3 { color: #ffffff; margin-bottom:8px; }
+h1 {
+  color: #00bcd4;
+  text-align: center;
+  margin-bottom: 24px;
+}
+h2 {
+  color: #ffffff;
+  margin-bottom: 12px;
+}
 
 /* Cards */
 .card {
   background-color: #1f1f1f;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
-.card-footer { font-size:0.9rem; color:#b0b0b0; margin-top:12px; }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
+}
 
-/* Inputs e textarea */
+/* Footer do card */
+.card-footer {
+  font-size: 0.9rem;
+  color: #b0b0b0;
+  margin-top: 12px;
+}
+
+/* Textarea */
 textarea {
-  width:100%;
+  width: 100%;
   background-color: #1f1f1f;
-  color: #fff;
+  color: #e0e0e0;
   border: 1px solid #333;
   border-radius: 6px;
-  padding: 8px;
-  font-size:1rem;
-  margin-bottom:8px;
+  padding: 12px;
+  font-size: 1rem;
+  margin-bottom: 12px;
   resize: vertical;
+  min-height: 100px;
 }
 
 /* Botões */
 button {
-  padding: 8px 16px;
-  border:none;
-  border-radius:6px;
-  background-color:#00bcd4;
-  color:#121212;
-  font-weight:bold;
-  cursor:pointer;
-  transition: all 0.2s;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  background-color: #00bcd4;
+  color: #121212;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-button:hover { background-color:#0097a7; transform: scale(1.03); }
+button:hover {
+  background-color: #0097a7;
+  transform: scale(1.05);
+}
 
-/* Sugestões listadas */
+/* Lista de sugestões */
 .suggestion-card {
-  background: #1f1f1f;
+  background-color: #1f1f1f;
   border-left: 4px solid #9c27b0;
-  padding: 12px;
+  padding: 15px;
   margin-bottom: 12px;
   border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.suggestion-card:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(0,0,0,0.5); }
-.suggestion-card p { margin: 6px 0; }
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+}
 
 /* Status badges */
 .status-badge {
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: bold;
-  font-size:0.85rem;
-  display:inline-block;
+  font-size: 0.85rem;
+  display: inline-block;
 }
-.aprovado { background:#4caf50; color:#fff; }
-.reprovado { background:#f44336; color:#fff; }
-.analise { background:#ff9800; color:#121212; }
+.aprovado { background: #4caf50; color: #fff; }
+.reprovado { background: #f44336; color: #fff; }
+.analise { background: #ff9800; color: #121212; }
 
-/* Admin buttons em cada sugestão */
-.admin-actions button { margin-right:6px; padding:4px 8px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; transition: all 0.2s; }
-.admin-actions .aprovado { background:#4caf50; color:#fff; }
-.admin-actions .reprovado { background:#f44336; color:#fff; }
-.admin-actions .analise { background:#ff9800; color:#121212; }
-.admin-actions button:hover { opacity:0.85; transform:scale(1.05); }
+/* Admin actions */
+.admin-actions {
+  margin-top: 10px;
+}
+.admin-actions button {
+  margin-right: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.admin-actions button:hover { opacity: 0.85; transform: scale(1.05); }
