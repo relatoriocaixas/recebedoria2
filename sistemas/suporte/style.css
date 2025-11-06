@@ -1,12 +1,10 @@
-﻿/* Base */
-body {
+﻿body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
   background: #121212;
   color: #f5f5f5;
 }
 
-/* Container suporte */
 .suporte-container {
   display: flex;
   gap: 20px;
@@ -76,7 +74,7 @@ button:hover {
 /* Status buttons */
 .btn-status.aprovado { border-color:#4caf50; color:#4caf50; }
 .btn-status.reprovado { border-color:#f44336; color:#f44336; }
-.btn-status.analise, .btn-status.em-analise { border-color:#ff9800; color:#ff9800; }
+.btn-status.em-analise { border-color:#ff9800; color:#ff9800; }
 .btn-status.excluir { border-color:#f44336; color:#f44336; }
 
 /* Cards de entrada */
@@ -99,7 +97,7 @@ button:hover {
   border: 1px solid #888;
 }
 
-/* Scroll */
+/* Scroll interno */
 .card-sugestoes-content::-webkit-scrollbar {
   width: 8px;
 }
