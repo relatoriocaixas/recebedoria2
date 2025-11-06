@@ -279,3 +279,43 @@ textarea{resize:vertical;}
   flex: 1;
 }
 
+/* Modal comum */
+.modal-content {
+  width: min(90vw, 900px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg,#1b1e24,#12151a);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* Container interno do modal */
+.relatorios-container, .resumo-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Itens de relatório dentro do modal */
+.relatorio-item {
+  background: linear-gradient(180deg,#1b1e24,#12151a);
+  border-left: 4px solid var(--green);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+
+.item-body.hidden { display: none; }
+.item-header { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.positivo { color: var(--green); font-weight: bold; }
+.negativo { color: var(--danger); font-weight: bold; }
+
