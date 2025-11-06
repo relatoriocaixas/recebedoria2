@@ -1,41 +1,55 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
-    // ✅ Firebase do PORTAL (somente leitura)
+    // ✅ Firebase do PORTAL (Somente leitura)
     const portalConfig = {
         apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
         authDomain: "unificado-441cd.firebaseapp.com",
         projectId: "unificado-441cd"
     };
 
-    const portalApp = firebase.initializeApp(portalConfig, "portalApp");
+    // ✅ Inicia o Firebase do portal em um APP separado
+    let portalApp;
+    if (!firebase.apps.some(a => a.name === "portalApp")) {
+        portalApp = firebase.initializeApp(portalConfig, "portalApp");
+    } else {
+        portalApp = firebase.app("portalApp");
+    }
+
     const portalDB = portalApp.firestore();
     const portalAuth = portalApp.auth();
 
-    // ✅ PREENCHE AUTOMATICAMENTE "matriculaEmpresto" COM O USUÁRIO LOGADO
     const campoMatEmp = document.getElementById("matriculaEmpresto");
 
-    // deixa o campo bloqueado desde o início
     campoMatEmp.readOnly = true;
     campoMatEmp.style.background = "#1b1b1b";
     campoMatEmp.style.cursor = "not-allowed";
 
-    // ✅ AGORA OUVINDO O AUTH DO PORTAL CORRETAMENTE
-    portalAuth.onAuthStateChanged(async (user) => {
-        if (!user) return;
+    // ✅ Agora sim: ouvindo o usuário logado do PORTAL
+    portalAuth.onAuthStateChanged(async (usuarioPortal) => {
+
+        console.log("🔥 Portal Auth Detected:", usuarioPortal);
+
+        if (!usuarioPortal) {
+            console.warn("Nenhum usuário logado no PORTAL.");
+            return;
+        }
 
         try {
-            // ✅ busca na coleção USERS do PORTAL
             const snap = await portalDB
                 .collection("users")
-                .where("email", "==", user.email)
+                .where("email", "==", usuarioPortal.email)
                 .get();
 
             if (!snap.empty) {
                 const dados = snap.docs[0].data();
-                campoMatEmp.value = dados.matricula || "";
+
+                console.log("✅ Achou matrícula:", dados.matricula);
+
+                campoMatEmp.value = dados.matricula;
             } else {
                 console.warn("Usuário não encontrado na coleção USERS do portal.");
             }
+
         } catch (e) {
             console.error("Erro ao buscar matrícula no portal:", e);
         }
