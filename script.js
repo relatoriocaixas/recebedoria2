@@ -97,6 +97,17 @@ sidebar.querySelector('ul').appendChild(funcionarioLi);
 
 funcionarioLi.addEventListener('click', () => openRoute('funcionario'));
 
+// 🔹 Adiciona rota Suporte
+ROUTES.suporte = "sistemas/suporte/index.html";
+
+const suporteLi = document.createElement('li');
+suporteLi.dataset.target = 'suporte';
+suporteLi.innerHTML = "☎️ <span class='label'>Suporte</span>";
+sidebar.querySelector('ul').appendChild(suporteLi);
+
+suporteLi.addEventListener('click', () => openRoute('suporte'));
+
+
 // 🔹 Sidebar navigation
 document.querySelectorAll('.sidebar li').forEach(li => {
   li.addEventListener('click', () => {

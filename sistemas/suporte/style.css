@@ -1,0 +1,45 @@
+﻿#cardDesenvolvedor, .cardSugestao {
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: rgba(30,30,30,0.85);
+    color: #fff;
+}
+
+.rodape-card {
+    font-size: 0.9em;
+    margin-top: 10px;
+    color: #bbb;
+}
+
+#campoSugestao textarea {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+}
+
+#campoSugestao button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #1b1b1b;
+    color: #fff;
+}
+
+.cardSugestao button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    border: none;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.status.aprovado { color: green; font-weight: bold; }
+.status.reprovado { color: red; font-weight: bold; }
+.status.emanalise { color: gold; font-weight: bold; }
