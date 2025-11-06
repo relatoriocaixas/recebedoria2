@@ -1,109 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Relatório de Diferenças</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <script type="module" src="app.js" defer></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Relatório de Diferenças</title>
+<link rel="stylesheet" href="styles.css"/>
+<script type="module" src="app.js" defer></script>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <img src="assets/logo.png" alt="Logo" class="logo"/>
       <h1>Relatório de Diferenças</h1>
+      <button id="btnAbrirRelatorios" class="btn outline">Relatórios</button>
+      <button id="btnAbrirResumo" class="btn outline admin-only" hidden>Resumo do Recebedor</button>
     </div>
   </header>
 
   <main class="container">
-    <section id="appSection">
-      <div class="grid">
-        <!-- ESQUERDA: RESUMO (ADMIN) -->
-        <aside class="card admin-only">
-          <div class="flex-between">
-            <h3>Resumo do Recebedor</h3>
-            <button id="btnToggleResumo" class="btn outline">Esconder/Exibir</button>
+    <section id="appSection" class="grid">
+      <!-- Gerar Relatório (Admin) -->
+      <aside class="card admin-only" id="cardGerarRelatorio" hidden>
+        <h3>Gerar Relatório</h3>
+        <div id="gerarRelatorioForm">
+          <div class="row">
+            <label>Matrícula do Caixa</label>
+            <select id="matriculaForm"></select>
           </div>
-          <div id="resumoWrap" class="collapsed">
-            <div class="row">
-              <label>Matrícula</label>
-              <select id="selectMatriculas"></select>
-            </div>
-            <div class="row">
-              <label>Mês</label>
-              <input id="mesResumo" type="month"/>
-              <button id="btnCarregarResumo" class="btn">Carregar</button>
-            </div>
-            <div id="resumoDados" class="stats">
-              <div><span>Total Folha (mês)</span><strong id="resumoTotalFolha">R$ 0,00</strong></div>
-              <div><span>Saldo (Dinheiro − Folha)</span><strong id="resumoSaldo">R$ 0,00</strong></div>
-              <div><span>Situação</span><strong id="resumoSituacao">—</strong></div>
-              <div class="filter-row">
-                <label>Ver apenas:</label>
-                <select id="filtroPositivosNegativos">
-                  <option value="todos">Todos</option>
-                  <option value="positivos">Somente Sobra</option>
-                  <option value="negativos">Somente Falta</option>
-                </select>
-              </div>
-              <div id="resumoLista" class="resumo-lista"></div>
-            </div>
+          <div class="row">
+            <label>Data do Caixa</label>
+            <input id="dataCaixa" type="date"/>
           </div>
-        </aside>
-
-        <!-- DIREITA: GERAR RELATÓRIO (ADMIN) -->
-        <aside class="card">
-          <h3 class="clickable-relatorios">Relatórios</h3>
-          <div id="gerarRelatorioForm" class="admin-only" hidden>
-            <div class="row">
-              <label>Matrícula do Caixa</label>
-              <select id="matriculaForm"></select>
-            </div>
-            <div class="row">
-              <label>Data do Caixa</label>
-              <input id="dataCaixa" type="date"/>
-            </div>
-            <div class="row">
-              <label>Valor Folha (R$)</label>
-              <input id="valorFolha" type="number" step="0.01"/>
-            </div>
-            <div class="row">
-              <label>Valor em Dinheiro (R$)</label>
-              <input id="valorDinheiro" type="number" step="0.01"/>
-            </div>
-            <div class="row">
-              <label>Sobra/Falta (R$)</label>
-              <input id="sobraFalta" type="text" disabled/>
-            </div>
-            <div class="row">
-              <label>Abastecimento (Qtd. Documentos)</label>
-              <input id="abastecimento" type="number" min="0" step="1"/>
-            </div>
-            <div class="row">
-              <label>Observação</label>
-              <textarea id="observacao" rows="2"></textarea>
-            </div>
-            <button id="btnSalvarRelatorio" class="btn primary">Salvar</button>
+          <div class="row">
+            <label>Valor Folha (R$)</label>
+            <input id="valorFolha" type="number" step="0.01" />
           </div>
-        </aside>
-      </div>
-
-      <!-- LISTA DE RELATÓRIOS -->
-      <section class="card">
-        <h3 class="clickable-relatorios">Relatórios</h3>
-        <div id="listaRelatorios" class="lista"></div>
-      </section>
+          <div class="row">
+            <label>Valor em Dinheiro (R$)</label>
+            <input id="valorDinheiro" type="number" step="0.01" />
+          </div>
+          <div class="row">
+            <label>Sobra/Falta (R$)</label>
+            <input id="sobraFalta" type="text" disabled />
+          </div>
+          <div class="row">
+            <label>Abastecimento (Qtd. Documentos)</label>
+            <input id="abastecimento" type="number" min="0" step="1" />
+          </div>
+          <div class="row">
+            <label>Observação</label>
+            <textarea id="observacao" rows="2"></textarea>
+          </div>
+          <button id="btnSalvarRelatorio" class="btn primary">Salvar</button>
+        </div>
+      </aside>
     </section>
   </main>
 
   <!-- Modal Relatórios -->
-  <dialog id="relatoriosModal" class="modal">
+  <dialog id="modalRelatorios" class="modal">
     <form method="dialog" class="modal-content">
-      <h3>Relatórios</h3>
-      <div id="relatoriosContainer" class="relatorios-container"></div>
-      <button id="btnFecharRelatorios" class="btn primary" type="submit">Fechar</button>
+      <h3>Todos os Relatórios</h3>
+      <div id="listaRelatoriosModal" class="lista"></div>
+      <div class="modal-footer">
+        <button class="btn primary" type="submit">Fechar</button>
+      </div>
     </form>
   </dialog>
 
+  <!-- Modal Resumo do Recebedor (Admin) -->
+  <dialog id="modalResumo" class="modal">
+    <form method="dialog" class="modal-content">
+      <h3>Resumo do Recebedor</h3>
+      <div class="resumo-container">
+        <div><span>Total Folha:</span> <strong id="resumoTotalFolha">R$ 0,00</strong></div>
+        <div><span>Saldo:</span> <strong id="resumoSaldo">R$ 0,00</strong></div>
+        <div><span>Situação:</span> <strong id="resumoSituacao">—</strong></div>
+        <div id="resumoLista" class="resumo-lista"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn primary" type="submit">Fechar</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>
