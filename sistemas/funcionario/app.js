@@ -37,16 +37,13 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
-// NOVO: botão expandir/minimizar painel admin
-const btnToggleAdmin = document.createElement("button");
-btnToggleAdmin.textContent = "Admin";
-btnToggleAdmin.classList.add("btn-toggle-admin");
-adminControls.parentElement.prepend(btnToggleAdmin);
+// ✅ Nome vira botão do painel admin
+const btnToggleAdmin = nomeEl;
 
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
-let adminPanelExpanded = true;
+let adminPanelExpanded = false;
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -59,13 +56,13 @@ onAuthStateChanged(auth, async (user) => {
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
   if (snap.empty) return;
+
   const dados = snap.docs[0].data();
   usuarioAtual.dados = dados;
   matriculaAtual = dados.matricula;
 
   await carregarPerfil(dados);
 
-  // Exibir painel admin se usuário for admin
   if (dados.admin) {
     adminControls.classList.remove("hidden");
     carregarMatriculasAdmin();
@@ -74,8 +71,9 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- PERFIL ---
 async function carregarPerfil(dados) {
-  const matriculasRosa = ["8789","9003","6414","5271"];
+  const matriculasRosa = ["8789", "9003", "6414", "5271"];
   nomeEl.textContent = dados.nome;
+
   if (matriculasRosa.includes(dados.matricula)) {
     nomeEl.classList.add("nome-rosa");
     nomeEl.classList.remove("nome-azul");
@@ -111,12 +109,14 @@ async function carregarPerfil(dados) {
 async function carregarAvisos(matricula) {
   const q = query(collection(db, "avisos"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
+
   if (snap.empty) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
     btnAvisos.classList.remove("blink", "aviso-vermelho");
     btnAvisos.classList.add("btn-cinza");
     return;
   }
+
   btnAvisos.textContent = `🔔 ${snap.size} aviso(s)`;
   btnAvisos.classList.add("blink", "aviso-vermelho");
   btnAvisos.classList.remove("btn-cinza");
@@ -125,6 +125,7 @@ async function carregarAvisos(matricula) {
   snap.forEach((d) => {
     const p = document.createElement("p");
     p.textContent = d.data().texto;
+    p.style.color = "#fff"; // ✅ texto branco
     avisosLista.appendChild(p);
   });
 }
@@ -140,6 +141,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const agora = new Date();
   const ano = agora.getFullYear();
   const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
+
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
 
@@ -160,6 +162,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       if (!r.dataCaixa) return;
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
       const dia = data.getDate();
+
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
       dias[dia].abastecimentos++;
       dias[dia].valorFolha += Number(r.valorFolha || 0);
@@ -228,16 +231,16 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: "#888", font: { size: 12 } },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4,2] }
+            ticks: { color: "#888" },
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] }
           },
           y1: {
             position: "right",
-            ticks: { color: "#00f5ff", font: { size: 12 } },
+            ticks: { color: "#00f5ff" },
             grid: { drawOnChartArea: false }
           },
           x: {
-            ticks: { color: "#fff", font: { size: 12 } },
+            ticks: { color: "#fff" },
             grid: { color: "rgba(255,255,255,0.05)" }
           }
         }
@@ -247,7 +250,10 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
-        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString(
+          "pt-BR",
+          { minimumFractionDigits: 2 }
+        )}</span>
       </div>
     `;
   });
@@ -271,11 +277,17 @@ btnSalvarHorario.addEventListener("click", async () => {
   const matricula = adminMatriculaSelect.value;
   const horario = adminHorarioInput.value.trim();
   if (!horario) return alert("Informe um horário válido.");
+
   const q = query(collection(db, "users"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
+
   if (!snap.empty) {
     const userDoc = snap.docs[0];
     await updateDoc(userDoc.ref, { horarioTrabalho: horario });
+
+    // ✅ Atualiza instantaneamente
+    if (matriculaAtual === matricula) horarioEl.textContent = horario;
+
     alert("Horário salvo com sucesso!");
   }
 });
@@ -284,12 +296,18 @@ btnSalvarAviso.addEventListener("click", async () => {
   const matricula = adminMatriculaSelect.value;
   const texto = adminAvisoInput.value.trim();
   if (!texto) return alert("Informe um texto para o aviso.");
+
   await addDoc(collection(db, "avisos"), {
     matricula,
     texto,
     criadoEm: serverTimestamp()
   });
+
   adminAvisoInput.value = "";
+
+  // ✅ Atualiza avisos imediatamente
+  if (matriculaAtual === matricula) carregarAvisos(matriculaAtual);
+
   alert("Aviso salvo com sucesso!");
 });
 
@@ -302,8 +320,10 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
   snap.forEach(docSnap => {
     const d = docSnap.data();
     const p = document.createElement("p");
+    p.style.color = "#fff";
+
     p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
-    // Botões
+
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
     btnEditar.classList.add("btn-small");
@@ -311,18 +331,20 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
       const novoTexto = prompt("Editar aviso:", d.texto);
       if (novoTexto !== null && novoTexto.trim() !== "") {
         await updateDoc(doc(db, "avisos", docSnap.id), { texto: novoTexto });
-        btnVerAvisosAdmin.click(); // atualizar lista
+        btnVerAvisosAdmin.click();
       }
     });
+
     const btnExcluir = document.createElement("button");
     btnExcluir.textContent = "Excluir";
     btnExcluir.classList.add("btn-small");
     btnExcluir.addEventListener("click", async () => {
       if (confirm("Deseja realmente excluir este aviso?")) {
         await deleteDoc(doc(db, "avisos", docSnap.id));
-        btnVerAvisosAdmin.click(); // atualizar lista
+        btnVerAvisosAdmin.click();
       }
     });
+
     p.appendChild(btnEditar);
     p.appendChild(btnExcluir);
     adminAvisosLista.appendChild(p);
@@ -332,9 +354,5 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
 // --- TOGGLE PAINEL ADMIN ---
 btnToggleAdmin.addEventListener("click", () => {
   adminPanelExpanded = !adminPanelExpanded;
-  if (adminPanelExpanded) {
-    adminControls.style.display = "flex";
-  } else {
-    adminControls.style.display = "none";
-  }
+  adminControls.style.display = adminPanelExpanded ? "flex" : "none";
 });
