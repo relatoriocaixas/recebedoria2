@@ -8,34 +8,33 @@
   <script type="module" src="suporte.js" defer></script>
 </head>
 <body>
-  <h1 style="margin-bottom: 20px;">Suporte</h1>
+  <h1>Suporte</h1>
 
-<div class="container-suporte">
+  <div class="container-suporte">
 
-  <!-- Card Sugestões/Reports -->
-  <div class="sugestoes-card card">
-    <div style="margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-      <label for="tipoInput" style="font-weight:bold;">Tipo de solicitação:</label>
-      <select id="tipoInput" class="tipo-solicitacao">
-        <option value="sugestao">Sugestão 💡</option>
-        <option value="report">Report ❗</option>
-      </select>
+    <!-- Card Sugestões/Reports -->
+    <div class="sugestoes-card card">
+      <div class="tipo-container">
+        <label for="tipoInput">Tipo de solicitação:</label>
+        <select id="tipoInput" class="tipo-solicitacao">
+          <option value="sugestao">💡 Sugestão</option>
+          <option value="report">❗ Report</option>
+        </select>
+      </div>
+      <textarea id="descricaoInput" placeholder="Digite sua sugestão ou report... (até 1000 caracteres)" maxlength="1000"></textarea>
+      <button id="salvarBtn">Salvar</button>
+      <div class="sugestoes-list" id="sugestoesList"></div>
     </div>
-    <textarea id="descricaoInput" placeholder="Digite sua sugestão ou report... (até 1000 caracteres)" maxlength="1000"></textarea>
-    <button id="salvarBtn">Salvar</button>
-    <div class="sugestoes-list" id="sugestoesList"></div>
-  </div>
 
-  <!-- Card Contato Desenvolvedor -->
-  <div class="contato-card card">
-    <h3>Contato Desenvolvedor:</h3>
-    <p>Telefone 📞: (11) 9 8988-1903</p>
-    <p>E-mail 📧: lucas.custodio83@gmail.com</p>
-    <div class="card-footer">
-      Em caso de falhas, bugs ou erros, anote detalhadamente o problema e, se possível, tire print ou fotos.
+    <!-- Card Contato Desenvolvedor -->
+    <div class="contato-card card">
+      <h3>Contato Desenvolvedor:</h3>
+      <p>Telefone 📞: (11) 9 8988-1903</p>
+      <p>E-mail 📧: lucas.custodio83@gmail.com</p>
+      <div class="card-footer">
+        Em caso de falhas, bugs ou erros, anote detalhadamente o problema e, se possível, tire print ou fotos.
+      </div>
     </div>
-  </div>
-</div>
 
   </div>
 </body>
