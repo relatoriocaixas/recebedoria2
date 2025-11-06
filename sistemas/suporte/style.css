@@ -1,62 +1,27 @@
-﻿/* ================================
-   Reset e básico
-================================ */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
+﻿/* Base */
 body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
   background: #121212;
-  color: #e0e0e0;
-  font-size: 14px;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
+  color: #f5f5f5;
 }
 
-h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-  color: #ffffff;
-}
-
-/* ================================
-   Layout Suporte
-================================ */
+/* Container suporte */
 .suporte-container {
   display: flex;
-  width: 100%;
-  max-width: 1200px;
   gap: 20px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.card-contato, .card-sugestoes {
+/* Card sugestões */
+.card-sugestoes {
+  flex: 1;
   background: #1e1e1e;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-contato:hover, .card-sugestoes:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
-}
-
-.card-contato {
-  flex: 0 0 35%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.card-sugestoes {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -64,155 +29,88 @@ h2 {
 .card-sugestoes-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 10px;
+  margin-top: 10px;
   padding-right: 10px;
 }
 
-/* ================================
-   Contato Desenvolvedor
-================================ */
-.card-contato h3 {
-  margin-bottom: 10px;
-  color: #00bcd4;
-}
-
-.card-contato p {
-  margin-bottom: 6px;
-  font-size: 0.95rem;
-}
-
-.card-contato small {
-  font-size: 0.85rem;
-  color: #bbbbbb;
-}
-
-/* ================================
-   Campo de Sugestões
-================================ */
-textarea#sugestaoInput {
-  width: 100%;
-  height: 120px;
-  border-radius: 8px;
-  border: 2px solid #555;
-  background: #1b1b1b;
-  color: #e0e0e0;
-  padding: 10px;
-  resize: vertical;
-  font-size: 0.95rem;
-  transition: border 0.3s ease;
-}
-
-textarea#sugestaoInput:focus {
-  border-color: #00bcd4;
-  outline: none;
-}
-
-/* ================================
-   Select Tipo
-================================ */
-select#tipoSugestao {
-  width: 180px;
-  padding: 6px 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: 2px solid #555;
-  background: #1b1b1b;
-  color: #e0e0e0;
-  font-size: 0.95rem;
-}
-
-/* ================================
-   Botões cromados estilo vetor
-================================ */
-button.sugestao, button.report {
-  padding: 10px 22px;
-  font-weight: bold;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 2px solid #ccc;
-  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255,255,255,0.15), 0 0 6px rgba(255,255,255,0.2) inset;
-  transition: all 0.3s ease;
-  margin-top: 6px;
-}
-
-button.sugestao:hover {
-  border-color: #00bcd4;
-  box-shadow: 0 4px 12px rgba(0,188,212,0.5), 0 0 6px rgba(0,188,212,0.25) inset;
-  transform: translateY(-2px);
-}
-
-button.report:hover {
-  border-color: #f44336;
-  box-shadow: 0 4px 12px rgba(244,67,54,0.5), 0 0 6px rgba(244,67,54,0.25) inset;
-  transform: translateY(-2px);
-}
-
-/* ================================
-   Cards das sugestões individuais
-================================ */
-.sugestao-card {
-  background: #2a2a2a;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
+/* Card contato */
+.card-contato {
+  flex: 0 0 35%;
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  justify-content: space-between;
 }
 
-.sugestao-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+/* Inputs */
+textarea, select {
+  width: 100%;
+  border-radius: 8px;
+  padding: 8px;
+  background: #121212;
+  color: #f5f5f5;
+  border: 1px solid #333;
+  resize: vertical;
 }
 
-.sugestao-header {
+/* Botões */
+button {
+  padding: 6px 12px;
+  margin: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid #888;
+  background: transparent;
+  color: #f5f5f5;
+  transition: all 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(255,255,255,0.3);
+}
+
+/* Status buttons */
+.btn-status.aprovado { border-color:#4caf50; color:#4caf50; }
+.btn-status.reprovado { border-color:#f44336; color:#f44336; }
+.btn-status.analise, .btn-status.em-analise { border-color:#ff9800; color:#ff9800; }
+.btn-status.excluir { border-color:#f44336; color:#f44336; }
+
+/* Cards de entrada */
+.card-entrada {
+  background: #2c2c2c;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  margin-bottom: 6px;
 }
 
-.sugestao-header span.matricula {
-  color: #00bcd4;
-  font-weight: bold;
-  font-size: 0.85rem;
+.card-header .status {
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid #888;
 }
 
-.admin-actions {
-  display: flex;
-  gap: 6px;
+/* Scroll */
+.card-sugestoes-content::-webkit-scrollbar {
+  width: 8px;
+}
+.card-sugestoes-content::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
 }
 
-/* Status Buttons */
-button.aprovado { border-color:#4caf50; color:#4caf50; }
-button.reprovado { border-color:#f44336; color:#f44336; }
-button.analise { border-color:#ff9800; color:#ff9800; }
-button.solucionado { border-color:#4caf50; color:#4caf50; }
-button.emaberto { border-color:#ff9800; color:#ff9800; }
-
-/* Botão excluir */
-button.excluir-btn {
-  border-color:#f44336;
-  color:#f44336;
-  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
-}
-button.excluir-btn:hover {
-  box-shadow: 0 4px 12px rgba(244,67,54,0.5), 0 0 6px rgba(244,67,54,0.25) inset;
-  transform: translateY(-2px);
-}
-
-/* ================================
-   Responsividade básica
-================================ */
-@media(max-width: 900px){
-  .suporte-container {
-    flex-direction: column;
-  }
-  .card-contato, .card-sugestoes {
-    flex: 1 1 100%;
-  }
+/* Resposta */
+.resposta {
+  margin-top: 6px;
+  font-style: italic;
+  color: #bbb;
 }

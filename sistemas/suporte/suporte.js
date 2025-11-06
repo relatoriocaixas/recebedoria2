@@ -1,147 +1,148 @@
-﻿import { auth, db } from "./firebaseConfig.js";
+﻿// suporte.js
+import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-const sugestaoInput = document.getElementById('sugestaoInput');
-const salvarBtn = document.getElementById('salvarSugestaoBtn');
-const sugestoesList = document.getElementById('sugestoesList');
-const tipoEntrada = document.getElementById('tipoEntrada');
-const filtroTipo = document.getElementById('filtroTipo');
+// Elementos
+const sugestaoSelect = document.getElementById("tipoSugestao");
+const descricaoInput = document.getElementById("descricao");
+const salvarBtn = document.getElementById("salvarSugestao");
+const containerSugestoes = document.getElementById("sugestoesContainer");
+const filtroSelect = document.getElementById("filtroTipo");
 
+// Estado
 let currentUser = null;
 let isAdmin = false;
 
+// Inicialização
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
+
   currentUser = user;
-
-  const userSnap = await (await getDocs(query(collection(db,"users"),where("uid","==",user.uid)))).docs[0];
-  isAdmin = userSnap ? userSnap.data().admin===true : false;
-
-  carregarSugestoes();
-});
-
-tipoEntrada.addEventListener('change', () => {
-  if (tipoEntrada.value === 'report') {
-    sugestaoInput.placeholder = "Use esta opção somente para reportar erros";
-    salvarBtn.textContent = "Salvar Report";
-    salvarBtn.classList.remove('sugestao');
-    salvarBtn.classList.add('report');
-  } else {
-    sugestaoInput.placeholder = "Escreva sua sugestão (até 1000 caracteres)";
-    salvarBtn.textContent = "Salvar Sugestão";
-    salvarBtn.classList.remove('report');
-    salvarBtn.classList.add('sugestao');
+  try {
+    const userSnap = await getDocs(query(collection(db, "users"), where("email", "==", user.email)));
+    if (!userSnap.empty) {
+      isAdmin = userSnap.docs[0].data().admin === true;
+    }
+    carregarSugestoes();
+  } catch (e) {
+    console.error("Erro ao carregar usuário:", e);
   }
 });
 
-salvarBtn.addEventListener('click', async () => {
-  if (!currentUser) return alert("Usuário não autenticado.");
-  const texto = sugestaoInput.value.trim();
-  if (!texto) return alert("Digite um texto.");
+// Salvar sugestão/report
+salvarBtn.addEventListener("click", async () => {
+  if (!descricaoInput.value.trim()) return alert("Digite a descrição!");
 
-  const tipo = tipoEntrada.value;
-  const collectionName = tipo === 'report' ? 'reports' : 'sugestoes';
+  const tipo = sugestaoSelect.value; // 'sugestao' ou 'report'
+  const colecao = tipo === "report" ? "reports" : "sugestoes";
 
   try {
-    await addDoc(collection(db, collectionName), {
-      texto,
-      usuario: currentUser.email,
-      matricula: currentUser.email.split('@')[0],
-      uid: currentUser.uid,
+    await addDoc(collection(db, colecao), {
+      descricao: descricaoInput.value.trim(),
+      matricula: currentUser.email.split("@")[0],
       tipo,
-      status: tipo==='report' ? 'em aberto' : 'analise',
+      status: tipo === "report" ? "em-aberto" : "em-analise",
+      resposta: "",
       timestamp: new Date()
     });
-    sugestaoInput.value = "";
+
+    descricaoInput.value = "";
     carregarSugestoes();
-  } catch(err) {
-    console.error("Erro ao salvar entrada:", err);
-    alert("Erro ao salvar entrada.");
+  } catch (e) {
+    console.error("Erro ao salvar sugestão:", e);
+    alert("Erro ao salvar. Tente novamente.");
   }
 });
 
-filtroTipo.addEventListener('change', carregarSugestoes);
+// Filtrar sugestões
+filtroSelect?.addEventListener("change", carregarSugestoes);
 
 async function carregarSugestoes() {
-  sugestoesList.innerHTML = "";
+  containerSugestoes.innerHTML = "";
+  const tipoFiltro = filtroSelect?.value || "todos";
+
+  const colS = collection(db, "sugestoes");
+  const colR = collection(db, "reports");
+
+  let allDocs = [];
+
   try {
-    const tipoFilter = filtroTipo.value;
-    const entradas = [];
+    const docsSug = await getDocs(colS);
+    const docsRep = await getDocs(colR);
 
-    // Sugestões
-    if (tipoFilter==='all' || tipoFilter==='sugestao') {
-      const q = isAdmin 
-        ? query(collection(db, "sugestoes")) 
-        : query(collection(db, "sugestoes"), where("uid","==",currentUser.uid));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(docSnap => entradas.push({id: docSnap.id, ...docSnap.data()}));
-    }
-    // Reports
-    if (tipoFilter==='all' || tipoFilter==='report') {
-      const q = isAdmin 
-        ? query(collection(db, "reports")) 
-        : query(collection(db, "reports"), where("uid","==",currentUser.uid));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(docSnap => entradas.push({id: docSnap.id, ...docSnap.data()}));
+    docsSug.forEach(d => allDocs.push({ id: d.id, ...d.data(), colecao: "sugestoes" }));
+    docsRep.forEach(d => allDocs.push({ id: d.id, ...d.data(), colecao: "reports" }));
+
+    if (tipoFiltro !== "todos") {
+      allDocs = allDocs.filter(d => d.tipo === tipoFiltro);
     }
 
-    entradas.sort((a,b)=> b.timestamp?.toDate?.()-a.timestamp?.toDate?.());
+    allDocs.sort((a,b)=>b.timestamp?.toDate() - a.timestamp?.toDate());
 
-    entradas.forEach(data => {
+    allDocs.forEach(entry => {
+      // Apenas próprio usuário ou admin
+      if (!isAdmin && entry.matricula !== currentUser.email.split("@")[0]) return;
+
       const card = document.createElement("div");
-      card.classList.add("suggestion-card");
+      card.classList.add("card-entrada");
+
       card.innerHTML = `
-        <p>${data.texto}</p>
-        <p>Enviado por: ${data.matricula}</p>
-        <p class="status-badge ${data.status.replace(' ','')}">${data.status.toUpperCase()}</p>
+        <div class="card-header">
+          <span>${entry.matricula}</span>
+          <span class="status ${entry.status.replace(/\s+/g,'-')}">${entry.status.replace(/\-/g,' ')}</span>
+        </div>
+        <div class="card-body">
+          <p>${entry.tipo === "report" ? "(Report) " : ""}${entry.descricao}</p>
+          ${isAdmin ? `
+            <div class="admin-actions">
+              <button class="btn-status aprovado">Aprovado</button>
+              <button class="btn-status reprovado">Reprovado</button>
+              <button class="btn-status analise">Em análise</button>
+              <button class="btn-status excluir">Excluir</button>
+            </div>` : ""}
+          ${entry.resposta ? `<div class="resposta">Resposta: ${entry.resposta}</div>` : ""}
+        </div>
       `;
 
       if (isAdmin) {
-        const actions = document.createElement("div");
-        actions.classList.add("admin-actions");
-        if (data.tipo==='sugestao') {
-          ["aprovado","reprovado","analise"].forEach(st => {
-            const btn = document.createElement("button");
-            btn.textContent = st.toUpperCase();
-            btn.classList.add(st);
-            btn.addEventListener('click', async ()=> {
-              await updateDoc(doc(db, "sugestoes", data.id), {status:st});
-              carregarSugestoes();
-            });
-            actions.appendChild(btn);
-          });
-        } else { // report
-          ["solucionado","em aberto"].forEach(st => {
-            const btn = document.createElement("button");
-            btn.textContent = st.toUpperCase();
-            btn.classList.add(st);
-            btn.addEventListener('click', async ()=> {
-              await updateDoc(doc(db, "reports", data.id), {status:st});
-              carregarSugestoes();
-            });
-            actions.appendChild(btn);
-          });
-        }
+        const aprovadoBtn = card.querySelector(".aprovado");
+        const reprovadoBtn = card.querySelector(".reprovado");
+        const analiseBtn = card.querySelector(".analise");
+        const excluirBtn = card.querySelector(".excluir");
 
-        // Botão excluir
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "EXCLUIR";
-        delBtn.classList.add("excluir-btn");
-        delBtn.addEventListener('click', async ()=> {
-          if (confirm("Deseja realmente excluir esta entrada?")) {
-            await deleteDoc(doc(db, data.tipo==='report'?'reports':'sugestoes', data.id));
-            carregarSugestoes();
-          }
-        });
-        actions.appendChild(delBtn);
-        card.appendChild(actions);
+        aprovadoBtn?.addEventListener("click", ()=> atualizarStatus(entry, "aprovado"));
+        reprovadoBtn?.addEventListener("click", ()=> atualizarStatus(entry, "reprovado"));
+        analiseBtn?.addEventListener("click", ()=> atualizarStatus(entry, "em-analise"));
+        excluirBtn?.addEventListener("click", ()=> excluirEntrada(entry));
       }
 
-      sugestoesList.appendChild(card);
+      containerSugestoes.appendChild(card);
     });
 
-  } catch(err) {
-    console.error("Erro ao carregar entradas:", err);
+  } catch (e) {
+    console.error("Erro ao carregar entradas:", e);
+  }
+}
+
+// Funções admin
+async function atualizarStatus(entry, status) {
+  try {
+    const docRef = doc(db, entry.colecao, entry.id);
+    await updateDoc(docRef, { status });
+    carregarSugestoes();
+  } catch(e) {
+    console.error("Erro ao atualizar status:", e);
+  }
+}
+
+async function excluirEntrada(entry) {
+  if(!confirm("Deseja realmente excluir?")) return;
+  try {
+    const docRef = doc(db, entry.colecao, entry.id);
+    await updateDoc(docRef, { status: "excluido" });
+    carregarSugestoes();
+  } catch(e) {
+    console.error("Erro ao excluir:", e);
   }
 }
