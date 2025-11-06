@@ -1,75 +1,223 @@
-﻿/* Container */
-.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 16px;
-  font-family: Arial, sans-serif;
-  background: #121212;
+﻿/* =============================
+   Reset básico
+============================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #121212;
   color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 16px;
 }
 
-/* Headings */
-h1, h2, h3 {
-  color: #ffffff;
+/* =============================
+   Sidebar
+============================= */
+.sidebar {
+  width: 220px;
+  background-color: #1e1e1e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding-top: 16px;
+  transition: all 0.3s;
 }
 
-/* Card base */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+
+.sidebar li {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.sidebar li:hover {
+  background-color: #333333;
+}
+
+.sidebar li .label {
+  margin-left: 8px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-footer button {
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background-color: #00bcd4;
+  color: #121212;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-footer button:hover {
+  background-color: #0097a7;
+  transform: scale(1.03);
+}
+
+/* =============================
+   Sidebar Badge
+============================= */
+.sidebar-badge {
+  text-align: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #00bcd4;
+}
+
+/* =============================
+   Topbar
+============================= */
+.topbar {
+  height: 40px;
+  width: 100%;
+  background-color: #1e1e1e;
+  position: fixed;
+  top: 0;
+  left: 220px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 100;
+  border-bottom: 1px solid #333;
+}
+
+/* =============================
+   Main Content
+============================= */
+.main-content {
+  margin-left: 220px;
+  padding: 56px 24px 24px 24px;
+}
+
+/* =============================
+   Iframe Container
+============================= */
+.iframe-container {
+  width: 100%;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  transition: all 0.3s;
+}
+
+iframe {
+  width: 100%;
+  border: none;
+  background: #1a1a1a;
+}
+
+/* =============================
+   Cards
+============================= */
 .card {
-  background: #1f1f1f;
+  background-color: #1f1f1f;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.6);
 }
 
-/* Contact card highlight */
-.card-contact {
-  border-left: 4px solid #00bcd4;
+.card h3 {
+  margin-bottom: 8px;
+  color: #ffffff;
 }
 
-/* Card footer */
 .card-footer {
   font-size: 0.9rem;
   color: #b0b0b0;
   margin-top: 12px;
 }
 
-/* Textarea */
-#sugestao {
+/* =============================
+   Tables
+============================= */
+table {
   width: 100%;
-  height: 120px;
-  background: #1f1f1f;
-  color: #ffffff;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+thead tr {
+  background-color: #222;
+}
+
+thead th, tbody td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+tbody tr:hover {
+  background-color: #2c2c2c;
+}
+
+/* =============================
+   Inputs e Textarea
+============================= */
+input, select, textarea {
+  background-color: #1f1f1f;
+  color: #fff;
   border: 1px solid #333;
   border-radius: 6px;
   padding: 8px;
   font-size: 1rem;
-  resize: none;
 }
 
-/* Button */
-#btnSalvarSugestao {
-  background: #00bcd4;
-  color: #121212;
+textarea {
+  resize: vertical;
+}
+
+/* =============================
+   Botões
+============================= */
+button {
+  padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  padding: 10px 16px;
-  cursor: pointer;
+  background-color: #00bcd4;
+  color: #121212;
   font-weight: bold;
-  margin-top: 8px;
+  cursor: pointer;
   transition: all 0.2s;
 }
-#btnSalvarSugestao:hover {
-  background: #0097a7;
+
+button:hover {
+  background-color: #0097a7;
   transform: scale(1.03);
 }
 
-/* Status badges */
+/* =============================
+   Status Badges
+============================= */
 .status-badge {
   padding: 4px 8px;
   border-radius: 4px;
@@ -81,7 +229,9 @@ h1, h2, h3 {
 .reprovado { background: #f44336; color: #fff; }
 .analise { background: #ff9800; color: #121212; }
 
-/* Suggestion cards */
+/* =============================
+   Sugestões
+============================= */
 .suggestion-card {
   background: #1f1f1f;
   border-left: 4px solid #9c27b0;
@@ -91,13 +241,14 @@ h1, h2, h3 {
   box-shadow: 0 3px 10px rgba(0,0,0,0.3);
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
 .suggestion-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 12px rgba(0,0,0,0.5);
 }
+
 .suggestion-card p { margin: 6px 0; }
 
-/* Admin actions buttons */
 .admin-actions button {
   margin-right: 6px;
   padding: 4px 8px;
@@ -107,10 +258,22 @@ h1, h2, h3 {
   font-weight: bold;
   transition: all 0.2s;
 }
+
 .admin-actions button:hover {
   opacity: 0.85;
   transform: scale(1.05);
 }
+
 .admin-actions .aprovado { background: #4caf50; color: #fff; }
 .admin-actions .reprovado { background: #f44336; color: #fff; }
 .admin-actions .analise { background: #ff9800; color: #121212; }
+
+/* =============================
+   Footer
+============================= */
+footer {
+  text-align: center;
+  padding: 12px 0;
+  font-size: 0.85rem;
+  color: #888;
+}
