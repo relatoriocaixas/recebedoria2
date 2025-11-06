@@ -49,13 +49,6 @@ body {
 .nome-azul { color: #00cfff; }
 .meta div { margin-bottom: 0.25rem; }
 
-/* Nome como botão (toggle do admin) */
-.nome-toggle {
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 /* Botões de aviso */
 .btn-avisos {
   padding: 0.5rem 1rem;
@@ -76,7 +69,11 @@ body {
 
 /* Gráfico */
 .charts-wrapper { padding: 1rem; }
-.chart-col { margin-top: 1rem; height: 400px; }
+
+.chart-col {
+  margin-top: 1rem;
+  height: 400px;
+}
 
 /* Resumo abaixo do gráfico */
 .resumo {
@@ -98,7 +95,7 @@ body {
   color: #fff;
 }
 
-/* Painel Admin (dentro do card, minimizável) */
+/* Painel Admin */
 #adminControls {
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #00cfff;
@@ -110,7 +107,6 @@ body {
   gap: 0.5rem;
 }
 #adminControls.hidden { display: none; }
-#adminControls.collapsed { display: none; }
 
 .admin-row {
   display: flex;
@@ -143,96 +139,111 @@ body {
   font-weight: bold;
   color: #fff;
   background-color: #00cfff;
-  transition: all 0.2s ease;
 }
 #btnSalvarHorario:hover,
 #btnSalvarAviso:hover,
-#btnVerAvisosAdmin:hover { background-color: #0088aa; }
-
-/* Modal (bonita, grande e centralizada) */
-.modal::backdrop {
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(2px);
+#btnVerAvisosAdmin:hover {
+  background-color: #0088aa;
 }
-.modal {
+
+/* Modal Admin */
+#modalAdminAvisos {
+  background: rgba(0,0,0,0.95);
   border: 2px solid #00cfff;
   border-radius: 12px;
-  padding: 0;
-  background: rgba(0,0,0,0.95);
-  color: #fff;
-  width: min(90vw, 800px);
-}
-.modal .modal-body {
   padding: 1rem;
+  max-width: 600px;
 }
-.modal .modal-body h3 {
+#modalAdminAvisos h3 {
   color: #00cfff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
-
-/* Lista de avisos dos funcionários (texto branco) */
-#avisosLista {
-  max-height: 50vh;
-  overflow-y: auto;
-  background: rgba(255,255,255,0.05);
-  border-radius: 8px;
-  padding: 0.75rem;
-}
-#avisosLista p {
-  color: #fff;
-  margin: 0.25rem 0;
-}
-
-/* Modal Admin (lista com ações) */
 #adminAvisosLista {
-  max-height: 60vh;
+  max-height: 250px;
   overflow-y: auto;
   padding: 0.5rem;
   background: rgba(255,255,255,0.05);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 5px;
 }
-.admin-aviso-row {
+#adminAvisosLista p {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(0,207,255,0.2);
-  border-radius: 8px;
-  padding: 8px 10px;
 }
-.admin-aviso-texto {
-  color: #fff;
-  line-height: 1.2;
-}
-.admin-aviso-actions {
-  display: flex;
-  gap: 6px;
-}
+
+/* Botão dentro dos avisos admin */
 .btn-small {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  padding: 3px 6px;
+  margin-left: 6px;
+  font-size: 12px;
   background: #00cfff;
-  color: #fff;
-  font-weight: 600;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
-.btn-small:hover { background: #0088aa; }
-.btn-small.danger { background: #c93636; }
-.btn-small.danger:hover { background: #a12a2a; }
-
-/* Acessibilidade do select */
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+.btn-small:hover {
+  background: #0099bb;
 }
 
-/* Responsividade básica (sem mexer no gráfico) */
-@media (max-width: 700px) {
-  .chart-col { height: 360px; }
+/* BOTÃO PARA EXPANDIR ADMIN (via nome) */
+.btn-toggle-admin {
+  display: none; /* substituído pelo clique no nome */
+}
+
+/* O NOME vira botão */
+#funcNome {
+  cursor: pointer;
+  transition: 0.2s;
+}
+#funcNome:hover {
+  opacity: 0.7;
+}
+
+/* --- LAYOUT LADO A LADO (CARD + GRÁFICO) --- */
+.wrap {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+}
+
+/* Card à ESQUERDA */
+.profile-card {
+  flex: 0 0 380px;
+}
+
+/* Gráfico à DIREITA */
+.charts {
+  flex: 1;
+  min-width: 450px;
+}
+
+/* Ajuste para o gráfico não quebrar */
+.chart-col {
+  height: 450px;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .charts {
+    width: 100%;
+  }
+
+  .profile-card {
+    width: 100%;
+  }
 }
