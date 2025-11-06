@@ -37,13 +37,11 @@ const btnVerAvisosAdmin = document.getElementById("btnVerAvisosAdmin");
 const modalAdminAvisos = document.getElementById("modalAdminAvisos");
 const adminAvisosLista = document.getElementById("adminAvisosLista");
 
-// ✅ Nome vira botão do painel admin
-const btnToggleAdmin = nomeEl;
-
 let usuarioAtual = null;
 let chartMensal = null;
 let matriculaAtual = null;
-let adminPanelExpanded = false;
+let adminDisponivel = false;     // se usuário é admin
+let adminPanelAberto = false;    // estado do painel (toggle pelo nome)
 
 // --- LOGIN STATE ---
 onAuthStateChanged(auth, async (user) => {
@@ -56,23 +54,27 @@ onAuthStateChanged(auth, async (user) => {
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
   if (snap.empty) return;
-
   const dados = snap.docs[0].data();
   usuarioAtual.dados = dados;
   matriculaAtual = dados.matricula;
 
   await carregarPerfil(dados);
 
+  // Exibir (mas inicialmente minimizado) se for admin
   if (dados.admin) {
+    adminDisponivel = true;
     adminControls.classList.remove("hidden");
+    adminControls.classList.add("collapsed"); // começa fechado
+    adminControls.style.display = "none";
     carregarMatriculasAdmin();
   }
 });
 
 // --- PERFIL ---
 async function carregarPerfil(dados) {
-  const matriculasRosa = ["8789", "9003", "6414", "5271"];
+  const matriculasRosa = ["8789","9003","6414","5271"];
   nomeEl.textContent = dados.nome;
+  nomeEl.classList.add("nome-toggle"); // vira "botão"
 
   if (matriculasRosa.includes(dados.matricula)) {
     nomeEl.classList.add("nome-rosa");
@@ -84,6 +86,7 @@ async function carregarPerfil(dados) {
 
   matriculaEl.textContent = dados.matricula;
 
+  // Corrigir data BR (evitar -1 dia)
   if (dados.dataAdmissao) {
     const data = new Date(dados.dataAdmissao);
     data.setMinutes(data.getMinutes() + data.getTimezoneOffset());
@@ -94,14 +97,30 @@ async function carregarPerfil(dados) {
 
   horarioEl.textContent = dados.horarioTrabalho || "—";
 
+  // Gráfico individual (mantido exatamente como estava)
   carregarGraficoIndividual(dados.matricula);
+
+  // Avisos do usuário
   carregarAvisos(dados.matricula);
 
+  // Input mês
   const hoje = new Date();
   mesInput.value = hoje.toISOString().slice(0, 7);
-
   mesInput.addEventListener("change", () => {
     carregarGraficoIndividual(matriculaAtual, mesInput.value);
+  });
+
+  // Toggle do painel admin no NOME (apenas se admin)
+  nomeEl.addEventListener("click", () => {
+    if (!adminDisponivel) return;
+    adminPanelAberto = !adminPanelAberto;
+    if (adminPanelAberto) {
+      adminControls.style.display = "flex";
+      adminControls.classList.remove("collapsed");
+    } else {
+      adminControls.style.display = "none";
+      adminControls.classList.add("collapsed");
+    }
   });
 }
 
@@ -114,6 +133,7 @@ async function carregarAvisos(matricula) {
     btnAvisos.textContent = "Sem avisos vinculados à matrícula";
     btnAvisos.classList.remove("blink", "aviso-vermelho");
     btnAvisos.classList.add("btn-cinza");
+    avisosLista.innerHTML = "";
     return;
   }
 
@@ -125,23 +145,22 @@ async function carregarAvisos(matricula) {
   snap.forEach((d) => {
     const p = document.createElement("p");
     p.textContent = d.data().texto;
-    p.style.color = "#fff"; // ✅ texto branco
     avisosLista.appendChild(p);
   });
 }
 
+// Abre modal e para o pisca
 btnAvisos.addEventListener("click", () => {
   modalAvisos.showModal();
   btnAvisos.classList.remove("blink", "aviso-vermelho");
 });
 
-// --- GRÁFICO INDIVIDUAL ---
+// --- GRÁFICO INDIVIDUAL (mantido) ---
 async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
   const relatoriosRef = collection(db, "relatorios");
   const agora = new Date();
   const ano = agora.getFullYear();
   const mes = mesEscolhido ? Number(mesEscolhido.split("-")[1]) - 1 : agora.getMonth();
-
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
 
@@ -162,7 +181,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       if (!r.dataCaixa) return;
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
       const dia = data.getDate();
-
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
       dias[dia].abastecimentos++;
       dias[dia].valorFolha += Number(r.valorFolha || 0);
@@ -231,16 +249,16 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: "#888" },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] }
+            ticks: { color: "#888", font: { size: 12 } },
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4,2] }
           },
           y1: {
             position: "right",
-            ticks: { color: "#00f5ff" },
+            ticks: { color: "#00f5ff", font: { size: 12 } },
             grid: { drawOnChartArea: false }
           },
           x: {
-            ticks: { color: "#fff" },
+            ticks: { color: "#fff", font: { size: 12 } },
             grid: { color: "rgba(255,255,255,0.05)" }
           }
         }
@@ -250,10 +268,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     totalInfoEl.innerHTML = `
       <div class="resumo">
         <span class="abastecimentos">Abastecimentos: ${totalAbastecimentos}</span>
-        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString(
-          "pt-BR",
-          { minimumFractionDigits: 2 }
-        )}</span>
+        <span class="dinheiro">Dinheiro: R$ ${totalDinheiro.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
       </div>
     `;
   });
@@ -273,6 +288,7 @@ async function carregarMatriculasAdmin() {
   });
 }
 
+// Salvar horário (atualiza na hora se for o funcionário exibido)
 btnSalvarHorario.addEventListener("click", async () => {
   const matricula = adminMatriculaSelect.value;
   const horario = adminHorarioInput.value.trim();
@@ -280,49 +296,59 @@ btnSalvarHorario.addEventListener("click", async () => {
 
   const q = query(collection(db, "users"), where("matricula", "==", matricula));
   const snap = await getDocs(q);
-
   if (!snap.empty) {
     const userDoc = snap.docs[0];
     await updateDoc(userDoc.ref, { horarioTrabalho: horario });
-
-    // ✅ Atualiza instantaneamente
-    if (matriculaAtual === matricula) horarioEl.textContent = horario;
-
     alert("Horário salvo com sucesso!");
+    if (matricula === matriculaAtual) {
+      horarioEl.textContent = horario; // reflete imediatamente
+    }
   }
 });
 
+// Salvar aviso (atualiza botão/lista imediatamente se for do usuário aberto)
 btnSalvarAviso.addEventListener("click", async () => {
   const matricula = adminMatriculaSelect.value;
   const texto = adminAvisoInput.value.trim();
   if (!texto) return alert("Informe um texto para o aviso.");
-
   await addDoc(collection(db, "avisos"), {
     matricula,
     texto,
     criadoEm: serverTimestamp()
   });
-
   adminAvisoInput.value = "";
-
-  // ✅ Atualiza avisos imediatamente
-  if (matriculaAtual === matricula) carregarAvisos(matriculaAtual);
-
   alert("Aviso salvo com sucesso!");
+  // Atualiza imediatamente o botão/lista do usuário atual
+  if (matricula === matriculaAtual) {
+    carregarAvisos(matriculaAtual);
+  }
+  // Se a janela admin de avisos estiver aberta, recarrega
+  if (modalAdminAvisos.open) {
+    await renderAdminAvisosList();
+  }
 });
 
 // --- ADMIN MODAL COM EDIT/DELETE ---
 btnVerAvisosAdmin.addEventListener("click", async () => {
+  await renderAdminAvisosList();
   modalAdminAvisos.showModal();
+});
+
+async function renderAdminAvisosList() {
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
 
   snap.forEach(docSnap => {
     const d = docSnap.data();
-    const p = document.createElement("p");
-    p.style.color = "#fff";
+    const linha = document.createElement("div");
+    linha.className = "admin-aviso-row";
 
-    p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
+    const txt = document.createElement("span");
+    txt.className = "admin-aviso-texto";
+    txt.textContent = `[${d.matricula}] ${d.texto}`;
+
+    const actions = document.createElement("div");
+    actions.className = "admin-aviso-actions";
 
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
@@ -331,28 +357,27 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
       const novoTexto = prompt("Editar aviso:", d.texto);
       if (novoTexto !== null && novoTexto.trim() !== "") {
         await updateDoc(doc(db, "avisos", docSnap.id), { texto: novoTexto });
-        btnVerAvisosAdmin.click();
+        // Atualiza listas
+        await renderAdminAvisosList();
+        if (d.matricula === matriculaAtual) carregarAvisos(matriculaAtual);
       }
     });
 
     const btnExcluir = document.createElement("button");
     btnExcluir.textContent = "Excluir";
-    btnExcluir.classList.add("btn-small");
+    btnExcluir.classList.add("btn-small", "danger");
     btnExcluir.addEventListener("click", async () => {
       if (confirm("Deseja realmente excluir este aviso?")) {
         await deleteDoc(doc(db, "avisos", docSnap.id));
-        btnVerAvisosAdmin.click();
+        await renderAdminAvisosList();
+        if (d.matricula === matriculaAtual) carregarAvisos(matriculaAtual);
       }
     });
 
-    p.appendChild(btnEditar);
-    p.appendChild(btnExcluir);
-    adminAvisosLista.appendChild(p);
+    actions.appendChild(btnEditar);
+    actions.appendChild(btnExcluir);
+    linha.appendChild(txt);
+    linha.appendChild(actions);
+    adminAvisosLista.appendChild(linha);
   });
-});
-
-// --- TOGGLE PAINEL ADMIN ---
-btnToggleAdmin.addEventListener("click", () => {
-  adminPanelExpanded = !adminPanelExpanded;
-  adminControls.style.display = adminPanelExpanded ? "flex" : "none";
-});
+}
