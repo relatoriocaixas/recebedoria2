@@ -23,7 +23,7 @@ onAuthStateChanged(auth, async (user) => {
   carregarSugestoes();
 });
 
-// ✅ Salvar entrada (sempre começa EM ANÁLISE)
+// Salvar entrada (sempre começa EM ANÁLISE)
 salvarBtn.addEventListener("click", async () => {
   if (!descricaoInput.value.trim()) return;
 
@@ -48,7 +48,7 @@ salvarBtn.addEventListener("click", async () => {
 // Atualiza lista ao trocar tipo
 tipoInput.addEventListener("change", () => carregarSugestoes());
 
-// ✅ Carregar sugestões
+// Carregar sugestões
 async function carregarSugestoes() {
   sugestoesList.innerHTML = "";
   if (!userData) return;
@@ -68,7 +68,7 @@ async function carregarSugestoes() {
       const badge = document.createElement("span");
       badge.classList.add("status-badge");
 
-      // ✅ Determina classe do status
+      // Determina classe do status
       let statusClass = "";
       switch(data.status) {
         case "solucionado":
@@ -79,7 +79,7 @@ async function carregarSugestoes() {
           statusClass = "btn-reprovado";
           break;
         case "correcao iniciada":
-          statusClass = "btn-correcao"; // ✅ Azul claro
+          statusClass = "btn-correcao"; // Azul claro
           break;
         default:
           statusClass = "btn-analise"; // em analise
@@ -90,40 +90,43 @@ async function carregarSugestoes() {
       card.innerHTML = `<strong>${data.matricula}</strong>: ${data.descricao}`;
       card.prepend(badge);
 
-      // ✅ Botões admin
+      // Botões admin
       if (isAdmin) {
         const actions = document.createElement("div");
         actions.className = "admin-actions";
 
-        // ✅ Solucionado
+        // Solucionado / Aprovado
         const btnSolucionado = document.createElement("button");
         btnSolucionado.className = "btn-aprovado";
         btnSolucionado.textContent = data.tipo === "report" ? "Solucionado" : "Aprovado";
         btnSolucionado.onclick = async () =>
           await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "solucionado" : "aprovado");
 
-        // ✅ Correção Iniciada (Azul claro)
-        const btnCorrecao = document.createElement("button");
-        btnCorrecao.className = "btn-correcao";
-        btnCorrecao.textContent = "Correção iniciada";
-        btnCorrecao.onclick = async () =>
-          await updateStatus(docSnap.id, collectionName, "correcao iniciada");
-
-        // ✅ Em Análise
+        // Em Análise
         const btnAnalise = document.createElement("button");
         btnAnalise.className = "btn-analise";
         btnAnalise.textContent = "Em análise";
         btnAnalise.onclick = async () =>
           await updateStatus(docSnap.id, collectionName, "em analise");
 
-        // ❌ Reprovado só para sugestões
+        // Reprovado (somente sugestões)
+        let btnReprovado = null;
         if (data.tipo !== "report") {
-          const btnReprovado = document.createElement("button");
+          btnReprovado = document.createElement("button");
           btnReprovado.className = "btn-reprovado";
           btnReprovado.textContent = "Reprovado";
           btnReprovado.onclick = async () =>
             await updateStatus(docSnap.id, collectionName, "reprovado");
-          actions.appendChild(btnReprovado);
+        }
+
+        // Correção iniciada (somente reports)
+        let btnCorrecao = null;
+        if (data.tipo === "report") {
+          btnCorrecao = document.createElement("button");
+          btnCorrecao.className = "btn-correcao";
+          btnCorrecao.textContent = "Correção iniciada";
+          btnCorrecao.onclick = async () =>
+            await updateStatus(docSnap.id, collectionName, "correcao iniciada");
         }
 
         const btnExcluir = document.createElement("button");
@@ -134,7 +137,13 @@ async function carregarSugestoes() {
           carregarSugestoes();
         };
 
-        actions.append(btnSolucionado, btnCorrecao, btnAnalise, btnExcluir);
+        // Adiciona botões na ordem correta
+        if (data.tipo === "report") {
+          actions.append(btnSolucionado, btnCorrecao, btnAnalise, btnExcluir);
+        } else {
+          actions.append(btnSolucionado, btnAnalise, btnReprovado, btnExcluir);
+        }
+
         card.appendChild(actions);
       }
 
@@ -145,7 +154,7 @@ async function carregarSugestoes() {
   }
 }
 
-// ✅ Atualizar status no Firestore
+// Atualizar status no Firestore
 async function updateStatus(id, collectionName, status) {
   await updateDoc(doc(db, collectionName, id), { status });
   carregarSugestoes();
