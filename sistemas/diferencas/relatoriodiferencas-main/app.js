@@ -1,9 +1,12 @@
-import { auth, db, onAuthStateChanged, collection, getDocs, query, where, orderBy, addDoc, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "./firebaseConfig.js";
+import { 
+    auth, db, onAuthStateChanged, collection, getDocs, query, where, orderBy, 
+    addDoc, doc, getDoc, updateDoc, deleteDoc, serverTimestamp 
+} from "./firebaseConfig.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("[app] Iniciando app.js");
 
-    // Atualiza automaticamente o sobra/falta no formulário
+    // Atualiza automaticamente sobra/falta
     const valorFolhaInput = document.getElementById("valorFolha");
     const valorDinheiroInput = document.getElementById("valorDinheiro");
     const sobraFaltaInput = document.getElementById("sobraFalta");
@@ -42,37 +45,50 @@ document.addEventListener("DOMContentLoaded", () => {
         configurarInterface(IS_ADMIN);
         await popularSelects(IS_ADMIN);
         inicializarEventos(IS_ADMIN, MATRICULA);
-        carregarRelatorios(IS_ADMIN, MATRICULA);
+        await carregarRelatorios(IS_ADMIN, MATRICULA);
         carregarResumoMensal(IS_ADMIN);
-    });
 
-    // Abrir modal de relatórios ao clicar na palavra "Relatórios"
-    const tituloRelatorios = document.querySelector("section h3");
-    if (tituloRelatorios && tituloRelatorios.textContent.includes("Relatórios")) {
-        tituloRelatorios.style.cursor = "pointer";
-        tituloRelatorios.addEventListener("click", () => {
-            // Cria modal temporário
-            let relModal = document.getElementById("relModal");
-            if (!relModal) {
-                relModal = document.createElement("dialog");
-                relModal.id = "relModal";
-                relModal.className = "modal";
-                relModal.innerHTML = `
-                    <form method="dialog" class="modal-content">
-                        <h3>Relatórios</h3>
-                        <div id="modalListaRelatorios"></div>
-                        <div class="row">
-                            <button type="submit" class="btn">Fechar</button>
-                        </div>
-                    </form>
-                `;
-                document.body.appendChild(relModal);
-            }
-            const modalLista = relModal.querySelector("#modalListaRelatorios");
-            modalLista.innerHTML = document.getElementById("listaRelatorios").innerHTML;
-            relModal.showModal();
-        });
-    }
+        // Configura modal de relatórios
+        const tituloRelatorios = document.getElementById("tituloRelatorios");
+        const modalRelatorios = document.getElementById("modalRelatorios");
+        const listaRelatoriosModal = document.getElementById("listaRelatoriosModal");
+
+        if (tituloRelatorios && modalRelatorios && listaRelatoriosModal) {
+            tituloRelatorios.style.cursor = "pointer";
+            tituloRelatorios.addEventListener("click", () => {
+                const lista = document.getElementById("listaRelatorios");
+                if (!lista) return;
+                listaRelatoriosModal.innerHTML = lista.innerHTML;
+                modalRelatorios.showModal();
+
+                // Re-reattach events inside modal
+                modalRelatorios.querySelectorAll(".btnToggle").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        btn.closest(".relatorio-item").querySelector(".item-body").classList.toggle("hidden");
+                    });
+                });
+                modalRelatorios.querySelectorAll(".btnPos").forEach(btn => {
+                    btn.addEventListener("click", () => abrirPosConferencia(btn.dataset.id, IS_ADMIN));
+                });
+                modalRelatorios.querySelectorAll(".btnEdit").forEach(btn => {
+                    btn.addEventListener("click", () => editarRelatorio(btn.dataset.id));
+                });
+                modalRelatorios.querySelectorAll(".btnExcluir").forEach(btn => {
+                    btn.addEventListener("click", async () => {
+                        if (!confirm("Deseja realmente excluir este relatório?")) return;
+                        try {
+                            await deleteDoc(doc(db, "relatorios", btn.dataset.id));
+                            alert("Relatório excluído com sucesso!");
+                            carregarRelatorios(IS_ADMIN, MATRICULA);
+                        } catch (e) {
+                            console.error("Erro ao excluir:", e);
+                            alert("Erro ao excluir relatório.");
+                        }
+                    });
+                });
+            });
+        }
+    });
 });
 
 // ===========================
@@ -89,7 +105,6 @@ function configurarInterface(admin) {
 async function popularSelects(admin) {
     const selectForm = document.getElementById("matriculaForm");
     const selectResumo = document.getElementById("selectMatriculas");
-    const filtroMatricula = document.getElementById("filtroMatricula");
 
     const snapshot = await getDocs(collection(db, "users"));
     const matriculas = [];
@@ -100,7 +115,7 @@ async function popularSelects(admin) {
 
     matriculas.sort((a, b) => a.matricula.localeCompare(b.matricula, 'pt-BR', { numeric: true }));
 
-    [selectForm, selectResumo, filtroMatricula].forEach(sel => {
+    [selectForm, selectResumo].forEach(sel => {
         if (!sel) return;
         sel.innerHTML = '<option value="">Selecione uma matrícula</option>';
         matriculas.forEach(u => {
@@ -181,6 +196,7 @@ async function salvarRelatorio(admin) {
 // ===========================
 async function carregarRelatorios(admin, userMatricula) {
     const lista = document.getElementById("listaRelatorios");
+    if (!lista) return;
     lista.innerHTML = "";
 
     try {
@@ -201,7 +217,7 @@ async function carregarRelatorios(admin, userMatricula) {
             tr.innerHTML = `
                 <div class="item-header">
                     <strong>${dataFormatada}</strong> — Matrícula: ${r.matricula} ${alertaPos}
-                    <button class="btn outline btnToggle" data-id="${docSnap.id}">Ocultar/Exibir</button>
+                    <button class="btn outline btnToggle">Ocultar/Exibir</button>
                 </div>
                 <div class="item-body hidden">
                     <table class="relatorio-table">
@@ -222,21 +238,18 @@ async function carregarRelatorios(admin, userMatricula) {
             lista.appendChild(tr);
         });
 
+        // Eventos internos
         document.querySelectorAll(".btnToggle").forEach(btn => {
             btn.addEventListener("click", () => {
-                const body = btn.closest(".relatorio-item").querySelector(".item-body");
-                body.classList.toggle("hidden");
+                btn.closest(".relatorio-item").querySelector(".item-body").classList.toggle("hidden");
             });
         });
-
         document.querySelectorAll(".btnPos").forEach(btn => {
             btn.addEventListener("click", () => abrirPosConferencia(btn.dataset.id, admin));
         });
-
         document.querySelectorAll(".btnEdit").forEach(btn => {
             btn.addEventListener("click", () => editarRelatorio(btn.dataset.id));
         });
-
         document.querySelectorAll(".btnExcluir").forEach(btn => {
             btn.addEventListener("click", async () => {
                 if (!confirm("Deseja realmente excluir este relatório?")) return;
@@ -262,6 +275,8 @@ async function carregarRelatorios(admin, userMatricula) {
 async function abrirPosConferencia(id, admin) {
     const modal = document.getElementById("posModal");
     const textarea = document.getElementById("posTexto");
+    if (!modal || !textarea) return;
+
     modal.showModal();
 
     const docRef = doc(db, "relatorios", id);

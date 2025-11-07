@@ -3,18 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Relatório de Diferenças</title>
+<title>RelatÃ³rio de DiferenÃ§as</title>
 <link rel="stylesheet" href="styles.css"/>
 <script type="module" src="app.js" defer></script>
 </head>
 <body>
+
 <header class="topbar">
     <div class="brand">
         <img src="assets/logo.png" alt="Logo" class="logo"/>
-        <h1>Relatório de Diferenças</h1>
+        <h1>RelatÃ³rio de DiferenÃ§as</h1>
     </div>
-    <!-- Palavra "Relatórios" que abre o modal -->
-    <button id="btnAbrirRelatorios" class="btn outline">Relatórios</button>
+    <!-- BotÃ£o "RelatÃ³rios" abre o modal -->
+    <button id="btnAbrirRelatorios" class="btn outline">RelatÃ³rios</button>
 </header>
 
 <main class="container">
@@ -28,18 +29,18 @@
                 </div>
                 <div id="resumoWrap" class="collapsed">
                     <div class="row">
-                        <label>Matrícula</label>
+                        <label>MatrÃ­cula</label>
                         <select id="selectMatriculas"></select>
                     </div>
                     <div class="row">
-                        <label>Mês</label>
+                        <label>MÃªs</label>
                         <input id="mesResumo" type="month" />
                         <button id="btnCarregarResumo" class="btn">Carregar</button>
                     </div>
                     <div id="resumoDados" class="stats">
-                        <div><span>Total Folha (mês)</span><strong id="resumoTotalFolha">R$ 0,00</strong></div>
+                        <div><span>Total Folha (mÃªs)</span><strong id="resumoTotalFolha">R$ 0,00</strong></div>
                         <div><span>Saldo (Dinheiro - Folha)</span><strong id="resumoSaldo">R$ 0,00</strong></div>
-                        <div><span>Situação</span><strong id="resumoSituacao">—</strong></div>
+                        <div><span>SituaÃ§Ã£o</span><strong id="resumoSituacao">-</strong></div>
                         <div class="filter-row">
                             <label>Ver apenas:</label>
                             <select id="filtroPositivosNegativos">
@@ -53,12 +54,12 @@
                 </div>
             </aside>
 
-            <!-- DIREITA: GERAR RELATÓRIO (ADMIN) -->
+            <!-- DIREITA: GERAR RELATÃ“RIO (ADMIN) -->
             <aside class="card">
-                <h3>Gerar Relatório</h3>
+                <h3>Gerar RelatÃ³rio</h3>
                 <div id="gerarRelatorioForm" class="admin-only" hidden>
                     <div class="row">
-                        <label>Matrícula do Caixa</label>
+                        <label>MatrÃ­cula do Caixa</label>
                         <select id="matriculaForm"></select>
                     </div>
                     <div class="row">
@@ -82,13 +83,13 @@
                         <input id="abastecimento" type="number" min="0" step="1" />
                     </div>
                     <div class="row">
-                        <label>Observação</label>
+                        <label>ObservaÃ§Ã£o</label>
                         <textarea id="observacao" rows="2"></textarea>
                     </div>
                     <button id="btnSalvarRelatorio" class="btn primary">Salvar</button>
                 </div>
                 <div class="user-only" id="infoUserOnly" hidden>
-                    <p>Os relatórios são criados pelos administradores e vinculados à sua matrícula.</p>
+                    <p>Os relatÃ³rios sÃ£o criados pelos administradores e vinculados Ã  sua matrÃ­cula.</p>
                 </div>
             </aside>
         </div>
@@ -97,7 +98,7 @@
         <section class="card">
             <div class="flex-wrap">
                 <div class="row admin-only" hidden>
-                    <label>Filtrar por Matrícula</label>
+                    <label>Filtrar por MatrÃ­cula</label>
                     <select id="filtroMatricula"></select>
                     <button id="btnAplicarFiltroMatricula" class="btn outline">Abrir</button>
                 </div>
@@ -108,15 +109,19 @@
                 </div>
             </div>
         </section>
+
+        <!-- LISTA DE RELATÃ“RIOS -->
+        <section id="listaRelatorios" class="card"></section>
+
     </section>
 </main>
 
 <footer class="footer"></footer>
 
-<!-- Modal Pós Conferência -->
+<!-- Modal PÃ³s ConferÃªncia -->
 <dialog id="posModal" class="modal">
     <form method="dialog" class="modal-content">
-        <h3>Pós Conferência</h3>
+        <h3>PÃ³s ConferÃªncia</h3>
         <textarea id="posTexto" rows="6" placeholder="Somente admins podem escrever..."></textarea>
         <div class="row">
             <button id="btnAnexarImagem" class="btn outline admin-only" hidden type="button">Anexar imagem</button>
@@ -126,14 +131,14 @@
             <button id="btnExcluirImagem" class="btn danger admin-only" hidden type="button">Excluir imagem</button>
             <button id="btnFecharPos" class="btn" type="submit">Fechar</button>
         </div>
-        <img id="previewImagem" class="preview" alt="Pré-visualização" hidden />
+        <img id="previewImagem" class="preview" alt="PrÃ©-visualizaÃ§Ã£o" hidden />
     </form>
 </dialog>
 
-<!-- Modal Relatórios (novo) -->
+<!-- Modal RelatÃ³rios -->
 <dialog id="modalRelatorios" class="modal">
     <form method="dialog" class="modal-content">
-        <h3>Relatórios</h3>
+        <h3>RelatÃ³rios</h3>
         <div id="listaRelatoriosModal" class="lista"></div>
         <div class="row">
             <button class="btn" type="submit">Fechar</button>
@@ -142,16 +147,18 @@
 </dialog>
 
 <script>
-    // Abrir modal ao clicar na palavra "Relatórios"
+    // BotÃ£o de abrir modal de relatÃ³rios
     const btnAbrirRelatorios = document.getElementById("btnAbrirRelatorios");
     const modalRelatorios = document.getElementById("modalRelatorios");
     const listaRelatoriosModal = document.getElementById("listaRelatoriosModal");
 
-    btnAbrirRelatorios.addEventListener("click", async () => {
-        // Copia os relatórios já carregados para o modal
-        listaRelatoriosModal.innerHTML = document.getElementById("listaRelatorios").innerHTML;
+    btnAbrirRelatorios?.addEventListener("click", async () => {
+        const lista = document.getElementById("listaRelatorios");
+        if (!lista) return;
+        listaRelatoriosModal.innerHTML = lista.innerHTML;
         modalRelatorios.showModal();
     });
 </script>
+
 </body>
 </html>
