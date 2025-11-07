@@ -1,307 +1,290 @@
-/* ========================= Variáveis e cores ========================= */
+/* =========================
+   Variáveis e cores
+========================= */
 :root {
-  --green: #00c853;
-  --bg: #0b0c0e;
-  --card: #16181d;
-  --muted: #c9c9c9;
-  --text: #f2f2f2;
-  --warn: #ffd54f;
-  --danger: #ef5350;
-  --outline: #3a3d44;
+    --green: #00c853;
+    --bg: #0b0c0e;
+    --card: #16181d;
+    --muted: #c9c9c9;
+    --text: #f2f2f2;
+    --warn: #ffd54f;
+    --danger: #ef5350;
+    --outline: #3a3d44;
 }
 
-/* ========================= Reset ========================= */
+/* =========================
+   Reset
+========================= */
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  background:
-    radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-    radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-    linear-gradient(#0f1013, #111316 40%, #0b0c0e);
-  color: var(--text);
-  line-height: 1.5;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    background: radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
+                radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
+                linear-gradient(#0f1013, #111316 40%, #0b0c0e);
+    color: var(--text);
+    line-height: 1.5;
 }
 
-/* ========================= Topbar ========================= */
+/* =========================
+   Topbar
+========================= */
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--green);
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .logo {
-  height: 44px;
-  filter: drop-shadow(0 0 6px rgba(0,200,83,.25));
+    height: 44px;
+    filter: drop-shadow(0 0 6px rgba(0,200,83,.25));
 }
 
 h1 {
-  color: var(--green);
-  text-shadow: 0 0 10px rgba(0,200,83,.2);
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,200,83,.2);
 }
 
-/* ========================= Layout ========================= */
+/* =========================
+   Layout principal
+========================= */
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 18px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
 }
 
 .flex-between {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .flex-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
 }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
 }
 
 label {
-  min-width: 170px;
-  color: var(--muted);
+    min-width: 170px;
+    color: var(--muted);
 }
 
-input, textarea, select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 2px solid var(--green);
-  background: #f2f2f2;
-  color: #000;
-  outline: none;
+/* =========================
+   Inputs e Selects
+========================= */
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--green);
+    background: #f2f2f2;
+    color: #000;
+    outline: none;
 }
 
 textarea {
-  resize: vertical;
+    resize: vertical;
 }
 
-/* ========================= Botões ========================= */
+/* =========================
+   Botões
+========================= */
 .btn {
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--outline);
-  background: #23262b;
-  color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
-  white-space: nowrap;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--outline);
+    background: #23262b;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
 .btn:hover {
-  transform: translateY(-1px);
+    transform: translateY(-1px);
 }
 
 .btn.primary {
-  background: linear-gradient(180deg, #2fba6b, #1d8d4e);
-  border-color: #0b5;
+    background: linear-gradient(180deg, #2fba6b, #1d8d4e);
+    border-color: #0b5;
 }
 
 .btn.outline {
-  background: transparent;
-  border: 1px solid var(--outline);
+    background: transparent;
+    border: 1px solid var(--outline);
 }
 
 .btn.danger {
-  background: linear-gradient(180deg, #ef5350, #b71c1c);
-  border-color: #a33;
+    background: linear-gradient(180deg, #ef5350, #b71c1c);
+    border-color: #a33;
 }
 
-/* ========================= Cards ========================= */
+/* =========================
+   Cards
+========================= */
 .card {
-  background: linear-gradient(180deg,#1b1e24,#12151a);
-  border: 1px solid #0f1115;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-  margin: 16px 0;
-  position: relative;
-  z-index: 1;
+    background: linear-gradient(180deg, #1b1e24, #12151a);
+    border: 1px solid #0f1115;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    margin: 16px 0;
 }
 
-/* ========================= Lista de relatórios ========================= */
-.lista, .resumo-lista {
-  margin-top: 12px;
+/* =========================
+   Lista de relatórios
+========================= */
+.lista {
+    margin-top: 12px;
 }
 
 .relatorio-item {
-  background: linear-gradient(180deg,#1b1e24,#12151a);
-  border-left: 4px solid var(--green);
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.35);
+    background: linear-gradient(180deg, #1b1e24, #12151a);
+    border-left: 4px solid var(--green);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.35);
+    color: var(--text);
 }
 
 .relatorio-item .item-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-}
-
-.item-body.hidden {
-  display: none;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
 }
 
 .relatorio-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
 }
 
 .relatorio-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #2a2d33;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2d33;
+    color: var(--text);
 }
 
 .relatorio-table td:first-child {
-  font-weight: 600;
-  color: var(--muted);
+    font-weight: 600;
+    color: var(--muted);
 }
 
 .positivo {
-  color: var(--green);
-  font-weight: bold;
+    color: var(--green);
+    font-weight: bold;
 }
 
 .negativo {
-  color: var(--danger);
-  font-weight: bold;
+    color: var(--danger);
+    font-weight: bold;
 }
 
-.relatorio-item .actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
+.actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
 }
 
-.btnEdit, .btnPos {
-  padding: 6px 10px;
-  font-size: 13px;
-  border-radius: 10px;
-}
+/* =========================
+   MODAIS
+========================= */
 
-/* ========================= MODAIS GIGANTES ========================= */
 .modal {
-  width: 90vw;
-  max-width: 1400px;
-  height: 90vh;
-  border: none;
-  border-radius: 20px;
-  padding: 0;
-  background: transparent;
-  overflow: hidden;
-  z-index: 9999;
+    width: 90%;
+    max-width: 900px;
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 
 .modal::backdrop {
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
 }
 
 .modal-content {
-  background: linear-gradient(180deg,#1b1e24,#12151a);
-  height: 100%;
-  width: 100%;
-  padding: 20px;
-  overflow-y: auto;
-  border-radius: 20px;
-  border: 1px solid #0f1115;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+    background: #181a1f;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 20px;
+    color: var(--text);
+    box-shadow: 0 20px 40px rgba(0,0,0,.6);
 }
 
-/* Lista interna do modal */
-#listaRelatoriosModal {
-  max-height: calc(90vh - 150px);
-  overflow-y: auto;
-  padding-right: 10px;
+/* FLUTUANTE (RESUMO) */
+#modalResumo .modal-content {
+    max-width: 600px;
+    margin: auto;
+    background: #20232a;
 }
 
-/* Modal pós-conferência */
-#posModal .modal-content {
-  max-height: 80vh;
+/* Texto branco dentro do modal */
+#modalResumo td,
+#modalResumo strong,
+#modalResumo span {
+    color: var(--text);
 }
 
-/* Imagem */
-.preview {
-  width: 100%;
-  max-height: 50vh;
-  object-fit: contain;
-  border-radius: 10px;
-  margin-top: 10px;
+/* Diferença permanece colorida */
+#modalResumo .positivo {
+    color: var(--green);
 }
 
-/* ========================= RESUMO RECOLHÍVEL ========================= */
-#resumoWrap {
-  transition: 0.35s ease;
-  overflow: hidden;
+#modalResumo .negativo {
+    color: var(--danger);
 }
 
-#resumoWrap.collapsed {
-  max-height: 0;
-  opacity: 0;
-}
-
-#resumoWrap:not(.collapsed) {
-  max-height: 800px;
-  opacity: 1;
-}
-
-/* Detalhes do resumo */
+/* =========================
+   RESUMO MENSAL
+========================= */
 .resumo-lista details {
-  background: rgba(255,255,255,0.03);
-  padding: 10px;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  cursor: pointer;
+    background: #1c1f24;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
 }
 
 .resumo-lista summary {
-  color: var(--green);
-  font-weight: bold;
+    cursor: pointer;
 }
 
-/* ========================= Responsividade ========================= */
-@media (max-width: 850px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+.stats strong {
+    color: var(--text);
+}
 
-  label {
-    min-width: 120px;
-  }
-
-  .modal {
-    width: 98vw;
-    height: 95vh;
-  }
+/* =========================
+   Colapsar resumo
+========================= */
+#resumoWrap.collapsed {
+    display: none;
 }
