@@ -62,6 +62,10 @@ async function carregarSugestoes() {
 
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
+
+      // 🔹 FILTRO: se não for admin, só mostra itens do próprio usuário
+      if (!isAdmin && data.matricula !== userData.matricula) return;
+
       const card = document.createElement("div");
       card.className = "suggestion-card";
 
