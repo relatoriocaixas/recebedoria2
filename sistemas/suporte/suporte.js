@@ -36,7 +36,8 @@ salvarBtn.addEventListener("click", async () => {
       matricula: userData.matricula,
       descricao: descricaoInput.value,
       tipo,
-      status: tipo === "sugestao" ? "em analise" : "correcao iniciada",
+      // ✅ REPORT agora sempre nasce como "em analise"
+      status: "em analise",
       criadoEm: new Date()
     });
     descricaoInput.value = "";
@@ -66,11 +67,17 @@ async function carregarSugestoes() {
       const card = document.createElement("div");
       card.className = "suggestion-card";
 
+      // ✅ Ajuste do status (REPORT nunca mostra reprovado)
+      let statusFinal = data.tipo === "report" && data.status === "reprovado"
+        ? "em analise"
+        : data.status;
+
       // Status badge
       const badge = document.createElement("span");
       badge.classList.add("status-badge");
+
       let statusClass = "";
-      switch(data.status) {
+      switch(statusFinal) {
         case "aprovado":
         case "solucionado":
           statusClass = "btn-aprovado";
@@ -80,11 +87,13 @@ async function carregarSugestoes() {
           break;
         case "em analise":
         case "correcao iniciada":
+        default:
           statusClass = "btn-analise";
           break;
       }
+
       badge.classList.add(statusClass);
-      badge.textContent = data.status;
+      badge.textContent = statusFinal;
 
       // Conteúdo do card
       card.innerHTML = `<strong>${data.matricula}</strong>: ${data.descricao}`;
@@ -95,27 +104,40 @@ async function carregarSugestoes() {
         const actions = document.createElement("div");
         actions.className = "admin-actions";
 
+        // ✅ Aprovado / Solucionado
         const btnAprovado = document.createElement("button");
         btnAprovado.className = "btn-aprovado";
         btnAprovado.textContent = data.tipo === "report" ? "Solucionado" : "Aprovado";
-        btnAprovado.onclick = async () => { await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "solucionado" : "aprovado"); };
+        btnAprovado.onclick = async () =>
+          await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "solucionado" : "aprovado");
 
-        const btnReprovado = document.createElement("button");
-        btnReprovado.className = "btn-reprovado";
-        btnReprovado.textContent = "Reprovado";
-        btnReprovado.onclick = async () => { await updateStatus(docSnap.id, collectionName, "reprovado"); };
+        // ✅ SOMENTE SUGESTÕES têm botão Reprovado
+        if (data.tipo !== "report") {
+          const btnReprovado = document.createElement("button");
+          btnReprovado.className = "btn-reprovado";
+          btnReprovado.textContent = "Reprovado";
+          btnReprovado.onclick = async () =>
+            await updateStatus(docSnap.id, collectionName, "reprovado");
+          actions.appendChild(btnReprovado);
+        }
 
+        // ✅ Em análise
         const btnAnalise = document.createElement("button");
         btnAnalise.className = "btn-analise";
-        btnAnalise.textContent = data.tipo === "report" ? "Correção iniciada" : "Em análise";
-        btnAnalise.onclick = async () => { await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "correcao iniciada" : "em analise"); };
+        btnAnalise.textContent = "Em análise";
+        btnAnalise.onclick = async () =>
+          await updateStatus(docSnap.id, collectionName, "em analise");
 
+        // Excluir
         const btnExcluir = document.createElement("button");
         btnExcluir.className = "btn-excluir";
         btnExcluir.textContent = "Excluir";
-        btnExcluir.onclick = async () => { await deleteDoc(doc(db, collectionName, docSnap.id)); carregarSugestoes(); };
+        btnExcluir.onclick = async () => {
+          await deleteDoc(doc(db, collectionName, docSnap.id));
+          carregarSugestoes();
+        };
 
-        actions.append(btnAprovado, btnReprovado, btnAnalise, btnExcluir);
+        actions.append(btnAprovado, btnAnalise, btnExcluir);
         card.appendChild(actions);
       }
 
