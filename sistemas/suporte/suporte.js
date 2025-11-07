@@ -48,7 +48,7 @@ salvarBtn.addEventListener("click", async () => {
 // Atualiza lista ao trocar tipo
 tipoInput.addEventListener("change", () => carregarSugestoes());
 
-// Carregar sugestões
+// Carregar sugestões/reports
 async function carregarSugestoes() {
   sugestoesList.innerHTML = "";
   if (!userData) return;
@@ -79,10 +79,10 @@ async function carregarSugestoes() {
           statusClass = "btn-reprovado";
           break;
         case "correcao iniciada":
-          statusClass = "btn-correcao"; // Azul claro
+          statusClass = "btn-correcao";
           break;
         default:
-          statusClass = "btn-analise"; // em analise
+          statusClass = "btn-analise";
       }
 
       badge.classList.add(statusClass);
@@ -98,9 +98,9 @@ async function carregarSugestoes() {
         // Solucionado / Aprovado
         const btnSolucionado = document.createElement("button");
         btnSolucionado.className = "btn-aprovado";
-        btnSolucionado.textContent = data.tipo === "report" ? "Solucionado" : "Aprovado";
+        btnSolucionado.textContent = filtroTipo === "report" ? "Solucionado" : "Aprovado";
         btnSolucionado.onclick = async () =>
-          await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "solucionado" : "aprovado");
+          await updateStatus(docSnap.id, collectionName, filtroTipo === "report" ? "solucionado" : "aprovado");
 
         // Em Análise
         const btnAnalise = document.createElement("button");
@@ -109,9 +109,9 @@ async function carregarSugestoes() {
         btnAnalise.onclick = async () =>
           await updateStatus(docSnap.id, collectionName, "em analise");
 
-        // Reprovado (somente sugestões)
+        // Reprovado (somente quando filtro é sugestão)
         let btnReprovado = null;
-        if (data.tipo !== "report") {
+        if (filtroTipo === "sugestao") {
           btnReprovado = document.createElement("button");
           btnReprovado.className = "btn-reprovado";
           btnReprovado.textContent = "Reprovado";
@@ -119,9 +119,9 @@ async function carregarSugestoes() {
             await updateStatus(docSnap.id, collectionName, "reprovado");
         }
 
-        // Correção iniciada (somente reports)
+        // Correção iniciada (somente quando filtro é report)
         let btnCorrecao = null;
-        if (data.tipo === "report") {
+        if (filtroTipo === "report") {
           btnCorrecao = document.createElement("button");
           btnCorrecao.className = "btn-correcao";
           btnCorrecao.textContent = "Correção iniciada";
@@ -137,8 +137,8 @@ async function carregarSugestoes() {
           carregarSugestoes();
         };
 
-        // Adiciona botões na ordem correta
-        if (data.tipo === "report") {
+        // Adiciona botões de acordo com o filtro
+        if (filtroTipo === "report") {
           actions.append(btnSolucionado, btnCorrecao, btnAnalise, btnExcluir);
         } else {
           actions.append(btnSolucionado, btnAnalise, btnReprovado, btnExcluir);
