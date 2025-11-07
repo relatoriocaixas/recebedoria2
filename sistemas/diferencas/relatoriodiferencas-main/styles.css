@@ -13,7 +13,7 @@
 }
 
 /* =========================
-   Reset básico
+   Reset
 ========================= */
 * {
     box-sizing: border-box;
@@ -21,7 +21,7 @@
     padding: 0;
 }
 body {
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
     background: radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
                 radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
                 linear-gradient(#0f1013, #111316 40%, #0b0c0e);
@@ -95,7 +95,9 @@ input, textarea, select {
     color: #000;
     outline: none;
 }
-textarea { resize: vertical; }
+textarea {
+    resize: vertical;
+}
 
 /* =========================
    Botões
@@ -109,12 +111,17 @@ textarea { resize: vertical; }
     cursor: pointer;
     transition: 0.2s;
 }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover {
+    transform: translateY(-1px);
+}
 .btn.primary {
     background: linear-gradient(180deg, #2fba6b, #1d8d4e);
     border-color: #0b5;
 }
-.btn.outline { background: transparent; border: 1px solid var(--outline); }
+.btn.outline {
+    background: transparent;
+    border: 1px solid var(--outline);
+}
 .btn.danger {
     background: linear-gradient(180deg, #ef5350, #b71c1c);
     border-color: #a33;
@@ -133,11 +140,10 @@ textarea { resize: vertical; }
 }
 
 /* =========================
-   Lista de relatórios
+   Lista de Relatórios
 ========================= */
-.lista, .resumo-lista {
-    margin-top: 12px;
-}
+.lista, .resumo-lista { margin-top: 12px; }
+
 .relatorio-item {
     background: linear-gradient(180deg,#1b1e24,#12151a);
     border-left: 4px solid var(--green);
@@ -152,6 +158,7 @@ textarea { resize: vertical; }
     font-size: 14px;
 }
 .item-body.hidden { display: none; }
+
 .relatorio-table {
     width: 100%;
     border-collapse: collapse;
@@ -167,15 +174,76 @@ textarea { resize: vertical; }
 }
 .positivo { color: var(--green); font-weight: bold; }
 .negativo { color: var(--danger); font-weight: bold; }
+
 .relatorio-item .actions {
     margin-top: 10px;
     display: flex;
     gap: 10px;
 }
-.btnEdit, .btnPos { padding: 6px 10px; font-size: 13px; border-radius: 10px; }
 
 /* =========================
-   Modal
+   MODAL — grande
 ========================= */
 .modal {
     border: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 26px;
+    width: 95%;
+    max-width: 1200px; /* maior conforme solicitado */
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 15px 50px rgba(0,0,0,.6);
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* animação leve */
+@keyframes fadeIn {
+    from { transform: scale(0.95); opacity: 0 }
+    to { transform: scale(1); opacity: 1 }
+}
+
+/* filtros */
+.modal-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.modal-filters input,
+.modal-filters select {
+    width: auto;
+    min-width: 160px;
+}
+
+/* =========================
+   MODAL — pequeno (Pós Conferência/Resumo)
+========================= */
+#posModal .modal-content,
+#modalDetalheRelatorio .modal-content {
+    max-width: 500px;
+}
+
+#posTexto {
+    background: #fff;
+    color: #000;
+}
+
+/* =========================
+   Ocultar lista na página
+========================= */
+#listaRelatorios {
+    display: none !important;
+}
