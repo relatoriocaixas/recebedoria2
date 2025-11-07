@@ -172,15 +172,14 @@ button:hover {
     font-weight: 500;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
-
 .btn-correcao:hover {
     background-color: #3498DB; /* Azul mais intenso ao passar o mouse */
     transform: scale(1.03);
 }
-
 .btn-correcao:active {
     transform: scale(0.98);
 }
+
 /* Badge de status Correção Iniciada */
 .status-badge.btn-correcao {
     background-color: #5DADE2; /* Azul claro */
