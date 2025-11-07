@@ -239,3 +239,43 @@ details summary {
     color: var(--warn);
     font-weight: bold;
 }
+
+/* ===========================================
+   Correção: Garantir texto branco nos modais
+=========================================== */
+#modalRelatorios *,
+#modalResumo *,
+#posModal * {
+    color: var(--text) !important;
+}
+
+/* Manter cores específicas */
+#modalResumo .positivo,
+#modalRelatorios .positivo {
+    color: var(--green) !important;
+}
+
+#modalResumo .negativo,
+#modalRelatorios .negativo {
+    color: var(--danger) !important;
+}
+
+/* ===========================================
+   Borda cromada nos itens de relatório
+=========================================== */
+.relatorio-item {
+    border-left: 4px solid var(--green); /* mantém sua borda verde */
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+
+    /* ?? Borda cromada moderna */
+    border: 2px solid transparent;
+    background:
+        linear-gradient(#1b1e24, #1b1e24) padding-box,
+        linear-gradient(145deg, #d7d7d7, #ffffff, #9b9b9b, #bfbfbf, #e6e6e6) border-box;
+
+    /* leve brilho */
+    box-shadow: 0 0 12px rgba(255,255,255,0.08), 
+                0 4px 14px rgba(0,0,0,0.5);
+}
