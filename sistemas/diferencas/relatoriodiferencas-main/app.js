@@ -16,8 +16,9 @@ import {
 } from "./firebaseConfig.js";
 
 
+
 /* ============================================================
-   Inicialização principal
+   INICIALIZAÇÃO GERAL
 ============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -30,21 +31,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
+        const userSnap = await getDoc(userRef);
 
-        if (!snap.exists()) {
-            alert("Cadastro incompleto.");
+        if (!userSnap.exists()) {
+            alert("Erro ao carregar usuário. Faça login novamente.");
             auth.signOut();
             return;
         }
 
-        const userData = snap.data();
-        const IS_ADMIN = userData.admin === true;
-        const MATRICULA = userData.matricula;
+        const u = userSnap.data();
+        const IS_ADMIN = u.admin === true;
+        const MATRICULA = u.matricula;
 
         configurarInterface(IS_ADMIN);
         await popularSelects(IS_ADMIN);
         inicializarEventos(IS_ADMIN, MATRICULA);
+
         await carregarRelatoriosModal(IS_ADMIN, MATRICULA);
 
         carregarResumoMensal(IS_ADMIN);
@@ -52,8 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
 /* ============================================================
-   Atualizador automático de sobra/falta
+   ATUALIZADOR AUTOMÁTICO SOBRA/FALTA
 ============================================================ */
 function configurarAutoSobra() {
     const f = document.getElementById("valorFolha");
@@ -62,19 +65,20 @@ function configurarAutoSobra() {
 
     if (!f || !d || !s) return;
 
-    const atualizar = () => {
+    const update = () => {
         const folha = parseFloat(f.value) || 0;
         const dinheiro = parseFloat(d.value) || 0;
         s.value = (dinheiro - folha).toFixed(2);
     };
 
-    f.addEventListener("input", atualizar);
-    d.addEventListener("input", atualizar);
+    f.addEventListener("input", update);
+    d.addEventListener("input", update);
 }
 
 
+
 /* ============================================================
-   Interface do Admin / Usuário
+   CONTROLE ADMIN/USER
 ============================================================ */
 function configurarInterface(admin) {
     document.querySelectorAll(".admin-only").forEach(el => el.hidden = !admin);
@@ -82,20 +86,21 @@ function configurarInterface(admin) {
 }
 
 
+
 /* ============================================================
-   Popular selects de matrícula
+   POPULAR SELECTS DE MATRÍCULA
 ============================================================ */
 async function popularSelects(admin) {
     const selForm = document.getElementById("matriculaForm");
     const selResumo = document.getElementById("selectMatriculas");
     const selFiltro = document.getElementById("filtroMatricula");
 
-    const users = await getDocs(collection(db, "users"));
+    const snap = await getDocs(collection(db, "users"));
     const lista = [];
 
-    users.forEach(u => {
-        const d = u.data();
-        if (d.matricula) lista.push(d);
+    snap.forEach(doc => {
+        const u = doc.data();
+        if (u.matricula) lista.push(u);
     });
 
     lista.sort((a, b) =>
@@ -112,67 +117,72 @@ async function popularSelects(admin) {
         lista.forEach(u => {
             const opt = document.createElement("option");
             opt.value = u.matricula;
-            opt.textContent = `${u.matricula} - ${u.nome}`;
+            opt.textContent = `${u.matricula} — ${u.nome}`;
             sel.appendChild(opt);
         });
     });
 }
 
 
+
 /* ============================================================
-   Eventos principais da interface
+   EVENTOS
 ============================================================ */
 function inicializarEventos(admin, matricula) {
 
-    // Salvar relatório
-    document.getElementById("btnSalvarRelatorio")?.addEventListener("click", () =>
-        salvarRelatorio(admin)
-    );
+    // SALVAR RELATÓRIO
+    document.getElementById("btnSalvarRelatorio")
+        ?.addEventListener("click", () => salvarRelatorio(admin));
 
-    // Abrir modal principal
-    document.getElementById("btnAbrirRelatorios")?.addEventListener("click", async () => {
-        await carregarRelatoriosModal(admin, matricula);
-        document.getElementById("modalRelatorios").showModal();
-    });
+    // ABRIR MODAL PRINCIPAL DE RELATÓRIOS
+    document.getElementById("btnAbrirRelatorios")
+        ?.addEventListener("click", async () => {
+            await carregarRelatoriosModal(admin, matricula);
+            document.getElementById("modalRelatorios").showModal();
+        });
 
-    // Fechar modal de resumo
-    document.getElementById("btnFecharResumo")?.addEventListener("click", () =>
-        document.getElementById("modalResumo").close()
-    );
+    // FECHAR MODAL DE RESUMO
+    document.getElementById("btnFecharResumo")
+        ?.addEventListener("click", () =>
+            document.getElementById("modalResumo").close()
+        );
 
-    // Resumo mensal
+    // RESUMO MENSAL
     document.getElementById("btnCarregarResumo")
         ?.addEventListener("click", () => carregarResumoMensal(admin));
 
-    // Ocultar/Exibir resumo
+    // COLAPSAR RESUMO
     document.getElementById("btnToggleResumo")
         ?.addEventListener("click", () =>
             document.getElementById("resumoWrap").classList.toggle("collapsed")
         );
 
-    // Filtrar por data
+    // FILTRO POR DATA
     document.getElementById("btnFiltrarPorData")
         ?.addEventListener("click", () => filtrarPorData(admin, matricula));
 }
 
 
+
 /* ============================================================
-   Salvar relatório
+   SALVAR RELATÓRIO
 ============================================================ */
 async function salvarRelatorio(admin) {
 
-    if (!admin) return alert("Apenas administradores podem salvar relatórios.");
+    if (!admin)
+        return alert("Apenas administradores podem criar relatórios.");
 
     const matricula = document.getElementById("matriculaForm").value;
-    const data = document.getElementById("dataCaixa").value;
+    const dataCaixa = document.getElementById("dataCaixa").value;
     const folha = parseFloat(document.getElementById("valorFolha").value) || 0;
     const dinheiro = parseFloat(document.getElementById("valorDinheiro").value) || 0;
     const abastecimento = document.getElementById("abastecimento").value || "";
-    const obs = document.getElementById("observacao").value || "";
+    const observacao = document.getElementById("observacao").value || "";
 
-    if (!matricula || !data) return alert("Preencha todos os campos.");
+    if (!matricula || !dataCaixa)
+        return alert("Preencha todos os campos obrigatórios.");
 
-    const [ano, mes, dia] = data.split("-");
+    const [ano, mes, dia] = dataCaixa.split("-");
     const dataReal = new Date(ano, mes - 1, dia);
 
     try {
@@ -181,32 +191,36 @@ async function salvarRelatorio(admin) {
             criadoEm: serverTimestamp(),
             dataCaixa: dataReal,
             matricula,
-            observacao: obs,
-            abastecimento,
+
             valorFolha: folha,
             valorDinheiro: dinheiro,
             sobraFalta: dinheiro - folha,
+
+            abastecimento,
+            observacao,
+
             posTexto: "",
             posEditado: false
         });
 
         alert("Relatório salvo!");
-
     } catch (e) {
         console.error(e);
-        alert("Erro ao salvar relatório.");
+        alert("Erro ao salvar.");
     }
 }
 
 
+
 /* ============================================================
-   Carregar relatórios no modal principal
+   CARREGAR RELATÓRIOS NO MODAL PRINCIPAL
 ============================================================ */
 async function carregarRelatoriosModal(admin, userMatricula) {
-    const container = document.getElementById("listaRelatoriosModal");
-    if (!container) return;
 
-    container.innerHTML = `<p>Carregando...</p>`;
+    const div = document.getElementById("listaRelatoriosModal");
+    if (!div) return;
+
+    div.innerHTML = "<p>Carregando...</p>";
 
     let q;
 
@@ -221,13 +235,14 @@ async function carregarRelatoriosModal(admin, userMatricula) {
     }
 
     const snap = await getDocs(q);
-    container.innerHTML = "";
+
+    div.innerHTML = "";
 
     snap.forEach(docSnap => {
         const r = docSnap.data();
         const id = docSnap.id;
 
-        const alerta = r.posEditado ? `<span class="alerta-pos">⚠️ Pós Conferência</span>` : "";
+        const posAlerta = r.posEditado ? `<span class="alerta-pos">⚠️ Pós Conferência</span>` : "";
 
         const data = r.dataCaixa.toDate
             ? r.dataCaixa.toDate().toLocaleDateString()
@@ -238,40 +253,41 @@ async function carregarRelatoriosModal(admin, userMatricula) {
 
         item.innerHTML = `
             <div class="item-header">
-                <strong>${data}</strong> – Matrícula: ${r.matricula} ${alerta}
+                <strong>${data}</strong> — Matrícula: ${r.matricula}
+                ${posAlerta}
+
                 <button class="btn outline btnVer" data-id="${id}">Ver Detalhes</button>
             </div>
 
             <div class="actions">
                 <button class="btn outline btnPos" data-id="${id}">Pós-Conferência</button>
 
-                ${admin ?
-                `
+                ${admin ? `
                     <button class="btn primary btnEdit" data-id="${id}">Editar</button>
                     <button class="btn danger btnExcluir" data-id="${id}">Excluir</button>
-                `
-                : ""}
+                ` : ""}
             </div>
         `;
 
-        container.appendChild(item);
+        div.appendChild(item);
     });
 
     ativarEventosLista(admin, userMatricula);
 }
 
 
+
 /* ============================================================
-   Ativar eventos internos da lista (modal principal)
+   ATIVAR EVENTOS DA LISTA
 ============================================================ */
 function ativarEventosLista(admin, matricula) {
 
-    // Botão VER DETALHES (modal flutuante)
+    // VER DETALHES
     document.querySelectorAll(".btnVer").forEach(btn => {
         btn.addEventListener("click", () => abrirResumo(btn.dataset.id));
     });
 
-    // PÓS CONFERÊNCIA
+    // PÓS-CONFERÊNCIA
     document.querySelectorAll(".btnPos").forEach(btn => {
         btn.addEventListener("click", () => abrirPosConferencia(btn.dataset.id, admin));
     });
@@ -285,7 +301,7 @@ function ativarEventosLista(admin, matricula) {
     document.querySelectorAll(".btnExcluir").forEach(btn => {
         btn.addEventListener("click", async () => {
 
-            if (!confirm("Excluir este relatório?")) return;
+            if (!confirm("Excluir relatório?")) return;
 
             try {
                 await deleteDoc(doc(db, "relatorios", btn.dataset.id));
@@ -299,8 +315,9 @@ function ativarEventosLista(admin, matricula) {
 }
 
 
+
 /* ============================================================
-   MODAL FLUTUANTE — RESUMO DO RELATÓRIO
+   MODAL FLUTUANTE — VER DETALHES
 ============================================================ */
 async function abrirResumo(id) {
 
@@ -313,7 +330,7 @@ async function abrirResumo(id) {
 
     const r = snap.data();
 
-    const cls = r.sobraFalta >= 0 ? "positivo" : "negativo";
+    const classe = r.sobraFalta >= 0 ? "positivo" : "negativo";
 
     const data = r.dataCaixa.toDate
         ? r.dataCaixa.toDate().toLocaleDateString()
@@ -325,7 +342,7 @@ async function abrirResumo(id) {
             <tr><td>Matrícula:</td><td>${r.matricula}</td></tr>
             <tr><td>Folha:</td><td>R$ ${r.valorFolha.toFixed(2)}</td></tr>
             <tr><td>Dinheiro:</td><td>R$ ${r.valorDinheiro.toFixed(2)}</td></tr>
-            <tr><td>Diferença:</td><td class="${cls}">R$ ${r.sobraFalta.toFixed(2)}</td></tr>
+            <tr><td>Diferença:</td><td class="${classe}">R$ ${r.sobraFalta.toFixed(2)}</td></tr>
             <tr><td>Abastecimento:</td><td>${r.abastecimento || "-"}</td></tr>
             <tr><td>Observação:</td><td>${r.observacao || "-"}</td></tr>
             <tr><td>Pós Conferência:</td><td>${r.posTexto || "-"}</td></tr>
@@ -336,8 +353,9 @@ async function abrirResumo(id) {
 }
 
 
+
 /* ============================================================
-   Pós-Conferência
+   PÓS-CONFERÊNCIA
 ============================================================ */
 async function abrirPosConferencia(id, admin) {
 
@@ -353,6 +371,7 @@ async function abrirPosConferencia(id, admin) {
     }
 
     document.getElementById("btnSalvarPos").onclick = async () => {
+
         if (!admin) return;
 
         await updateDoc(ref, {
@@ -368,8 +387,9 @@ async function abrirPosConferencia(id, admin) {
 }
 
 
+
 /* ============================================================
-   Editar Relatório
+   EDITAR RELATÓRIO
 ============================================================ */
 async function editarRelatorio(id) {
 
@@ -380,14 +400,14 @@ async function editarRelatorio(id) {
 
     const r = snap.data();
 
-    const folha = parseFloat(prompt("Folha:", r.valorFolha)) || r.valorFolha;
-    const dinheiro = parseFloat(prompt("Dinheiro:", r.valorDinheiro)) || r.valorDinheiro;
+    const nf = parseFloat(prompt("Folha:", r.valorFolha)) || r.valorFolha;
+    const nd = parseFloat(prompt("Dinheiro:", r.valorDinheiro)) || r.valorDinheiro;
     const obs = prompt("Observação:", r.observacao || "") || r.observacao;
 
     await updateDoc(ref, {
-        valorFolha: folha,
-        valorDinheiro: dinheiro,
-        sobraFalta: dinheiro - folha,
+        valorFolha: nf,
+        valorDinheiro: nd,
+        sobraFalta: nd - nf,
         observacao: obs
     });
 
@@ -395,10 +415,12 @@ async function editarRelatorio(id) {
 }
 
 
+
 /* ============================================================
-   Resumo Mensal (Admin)
+   RESUMO MENSAL DO ADMIN
 ============================================================ */
 async function carregarResumoMensal(admin) {
+
     if (!admin) return;
 
     const sel = document.getElementById("selectMatriculas");
@@ -408,10 +430,9 @@ async function carregarResumoMensal(admin) {
     const mes = document.getElementById("mesResumo").value;
     if (!mes) return;
 
-    const [ano, mesNum] = mes.split("-");
-
-    const inicio = new Date(ano, mesNum - 1, 1);
-    const fim = new Date(ano, mesNum, 0, 23, 59, 59);
+    const [ano, m] = mes.split("-");
+    const inicio = new Date(ano, m - 1, 1);
+    const fim = new Date(ano, m, 0, 23, 59, 59);
 
     const q = query(
         collection(db, "relatorios"),
@@ -423,11 +444,13 @@ async function carregarResumoMensal(admin) {
 
     let totalFolha = 0;
     let saldo = 0;
+
     const pos = [];
     const neg = [];
 
-    snap.forEach(d => {
-        const r = d.data();
+    snap.forEach(doc => {
+
+        const r = doc.data();
         const data = r.dataCaixa.toDate();
 
         if (data >= inicio && data <= fim) {
@@ -446,7 +469,7 @@ async function carregarResumoMensal(admin) {
 
     document.getElementById("resumoTotalFolha").textContent = `R$ ${totalFolha.toFixed(2)}`;
     document.getElementById("resumoSaldo").textContent = `R$ ${saldo.toFixed(2)}`;
-    document.getElementById("resumoSituacao").textContent = saldo >= 0 ? "Positivo" : "Negativo`;
+    document.getElementById("resumoSituacao").textContent = saldo >= 0 ? "Positivo" : "Negativo";
 
     document.getElementById("resumoLista").innerHTML = `
         <details><summary>Dias com sobra</summary>${pos.join("<br>") || "-"}</details>
@@ -455,24 +478,23 @@ async function carregarResumoMensal(admin) {
 }
 
 
+
 /* ============================================================
-   Filtrar por Data no Modal Principal
+   FILTRO POR DATA DENTRO DO MODAL
 ============================================================ */
 async function filtrarPorData(admin, matricula) {
 
     const dataFiltro = document.getElementById("filtroDataGlobal").value;
 
-    if (!dataFiltro) return carregarRelatoriosModal(admin, matricula);
+    if (!dataFiltro)
+        return carregarRelatoriosModal(admin, matricula);
 
-    const container = document.getElementById("listaRelatoriosModal");
+    const alvo = new Date(dataFiltro).toLocaleDateString();
 
-    container.innerHTML = `<p>Filtrando...</p>`;
-
-    const [ano, mes, dia] = dataFiltro.split("-");
-    const alvo = new Date(ano, mes - 1, dia).toLocaleDateString();
+    const div = document.getElementById("listaRelatoriosModal");
+    div.innerHTML = "<p>Filtrando...</p>";
 
     let q;
-
     if (admin) {
         q = query(collection(db, "relatorios"), orderBy("criadoEm", "desc"));
     } else {
@@ -485,9 +507,10 @@ async function filtrarPorData(admin, matricula) {
 
     const snap = await getDocs(q);
 
-    container.innerHTML = "";
+    div.innerHTML = "";
 
     snap.forEach(docSnap => {
+
         const r = docSnap.data();
         const id = docSnap.id;
 
@@ -504,23 +527,21 @@ async function filtrarPorData(admin, matricula) {
 
         item.innerHTML = `
             <div class="item-header">
-                <strong>${data}</strong> – Matrícula: ${r.matricula} ${alerta}
+                <strong>${data}</strong> — Matrícula: ${r.matricula} ${alerta}
                 <button class="btn outline btnVer" data-id="${id}">Ver Detalhes</button>
             </div>
 
             <div class="actions">
                 <button class="btn outline btnPos" data-id="${id}">Pós-Conferência</button>
 
-                ${admin ?
-                `
+                ${admin ? `
                     <button class="btn primary btnEdit" data-id="${id}">Editar</button>
                     <button class="btn danger btnExcluir" data-id="${id}">Excluir</button>
-                `
-                : ""}
+                ` : ""}
             </div>
         `;
 
-        container.appendChild(item);
+        div.appendChild(item);
     });
 
     ativarEventosLista(admin, matricula);

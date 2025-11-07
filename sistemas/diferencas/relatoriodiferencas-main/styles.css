@@ -1,20 +1,16 @@
-/* =========================
-   Variáveis e cores
-========================= */
+/* ========================= Variáveis ========================= */
 :root {
     --green: #00c853;
     --bg: #0b0c0e;
     --card: #16181d;
     --muted: #c9c9c9;
-    --text: #f2f2f2;
+    --text: #ffffff;
     --warn: #ffd54f;
     --danger: #ef5350;
     --outline: #3a3d44;
 }
 
-/* =========================
-   Reset
-========================= */
+/* ========================= Reset ========================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -23,16 +19,12 @@
 
 body {
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    background: radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-                radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0/10px 10px,
-                linear-gradient(#0f1013, #111316 40%, #0b0c0e);
+    background: #0b0c0e;
     color: var(--text);
     line-height: 1.5;
 }
 
-/* =========================
-   Topbar
-========================= */
+/* ========================= Topbar ========================= */
 .topbar {
     display: flex;
     align-items: center;
@@ -49,17 +41,13 @@ body {
 
 .logo {
     height: 44px;
-    filter: drop-shadow(0 0 6px rgba(0,200,83,.25));
 }
 
 h1 {
     color: var(--green);
-    text-shadow: 0 0 10px rgba(0,200,83,.2);
 }
 
-/* =========================
-   Layout principal
-========================= */
+/* ========================= Layout ========================= */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -72,18 +60,6 @@ h1 {
     gap: 18px;
 }
 
-.flex-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.flex-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 22px;
-}
-
 .row {
     display: flex;
     align-items: center;
@@ -91,50 +67,42 @@ h1 {
     margin: 8px 0;
 }
 
+/* ========================= Inputs ========================= */
 label {
-    min-width: 170px;
+    min-width: 150px;
     color: var(--muted);
 }
 
-/* =========================
-   Inputs e Selects
-========================= */
-input,
-textarea,
-select {
+input, textarea, select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px;
     border-radius: 10px;
     border: 2px solid var(--green);
-    background: #f2f2f2;
-    color: #000;
-    outline: none;
+    background: #1e1f24;
+    color: white;
 }
 
 textarea {
     resize: vertical;
 }
 
-/* =========================
-   Botões
-========================= */
+/* ========================= Botões ========================= */
 .btn {
     padding: 10px 14px;
     border-radius: 12px;
     border: 1px solid var(--outline);
     background: #23262b;
-    color: #fff;
+    color: white;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.2s ease;
 }
 
 .btn:hover {
-    transform: translateY(-1px);
+    filter: brightness(1.2);
 }
 
 .btn.primary {
     background: linear-gradient(180deg, #2fba6b, #1d8d4e);
-    border-color: #0b5;
 }
 
 .btn.outline {
@@ -144,61 +112,54 @@ textarea {
 
 .btn.danger {
     background: linear-gradient(180deg, #ef5350, #b71c1c);
-    border-color: #a33;
 }
 
-/* =========================
-   Cards
-========================= */
+/* ========================= Cards ========================= */
 .card {
-    background: linear-gradient(180deg, #1b1e24, #12151a);
+    background: #1b1e24;
     border: 1px solid #0f1115;
     border-radius: 16px;
     padding: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    margin: 16px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
 }
 
-/* =========================
-   Lista de relatórios
-========================= */
+/* ========================= Lista ========================= */
 .lista {
     margin-top: 12px;
 }
 
 .relatorio-item {
-    background: linear-gradient(180deg, #1b1e24, #12151a);
+    background: #1b1e24;
     border-left: 4px solid var(--green);
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 12px;
     margin-bottom: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,.35);
-    color: var(--text);
 }
 
 .relatorio-item .item-header {
     display: flex;
     justify-content: space-between;
-    font-size: 14px;
+    align-items: center;
 }
 
+/* ========================= Tabela do Resumo ========================= */
 .relatorio-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 14px;
 }
 
 .relatorio-table td {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #2a2d33;
-    color: var(--text);
 }
 
 .relatorio-table td:first-child {
-    font-weight: 600;
     color: var(--muted);
+    width: 150px;
 }
 
+/* ? Diferença colorida */
 .positivo {
     color: var(--green);
     font-weight: bold;
@@ -209,82 +170,72 @@ textarea {
     font-weight: bold;
 }
 
-.actions {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-}
-
-/* =========================
-   MODAIS
-========================= */
-
+/* ========================= Modais ========================= */
 .modal {
-    width: 90%;
-    max-width: 900px;
-    background: transparent;
     border: none;
     padding: 0;
+    max-width: 90%;
+    background: transparent;
 }
 
 .modal::backdrop {
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0,0,0,.6);
     backdrop-filter: blur(3px);
 }
 
-.modal-content {
-    background: #181a1f;
-    border: 1px solid #333;
-    border-radius: 16px;
-    padding: 20px;
-    color: var(--text);
-    box-shadow: 0 20px 40px rgba(0,0,0,.6);
+/* ? Modal principal (quase tela inteira) */
+#modalRelatorios .modal-content {
+    width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #1b1e24;
+    border-radius: 18px;
+    padding: 22px;
+    border: 1px solid #0f1115;
 }
 
-/* FLUTUANTE (RESUMO) */
+/* ? Modal flutuante de resumo */
 #modalResumo .modal-content {
-    max-width: 600px;
-    margin: auto;
-    background: #20232a;
+    width: 420px;
+    max-width: 90vw;
+    background: #1b1e24;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #0f1115;
 }
 
-/* Texto branco dentro do modal */
-#modalResumo td,
-#modalResumo strong,
-#modalResumo span {
-    color: var(--text);
+/* ? Modal pós-conferência */
+#posModal .modal-content {
+    width: 450px;
+    max-width: 90vw;
+    padding: 20px;
+    background: #1b1e24;
+    border-radius: 16px;
+    border: 1px solid #0f1115;
 }
 
-/* Diferença permanece colorida */
-#modalResumo .positivo {
+/* ========================= Resumo Mensal ========================= */
+.resumo-lista {
+    margin-top: 12px;
+    color: white;
+}
+
+details {
+    margin-bottom: 8px;
+}
+
+details summary {
+    cursor: pointer;
     color: var(--green);
 }
 
-#modalResumo .negativo {
-    color: var(--danger);
-}
-
-/* =========================
-   RESUMO MENSAL
-========================= */
-.resumo-lista details {
-    background: #1c1f24;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.resumo-lista summary {
-    cursor: pointer;
-}
-
-.stats strong {
-    color: var(--text);
-}
-
-/* =========================
-   Colapsar resumo
-========================= */
+/* ========================= Colapsar Resumo ========================= */
 #resumoWrap.collapsed {
     display: none;
+}
+
+/* ========================= Aviso Pós-conferência ========================= */
+.alerta-pos {
+    color: var(--warn);
+    font-weight: bold;
 }
