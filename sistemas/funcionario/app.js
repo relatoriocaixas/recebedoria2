@@ -164,10 +164,12 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
       const dia = data.getDate();
 
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
-      dias[dia].abastecimentos++;
+
+      // 🔹 Soma do campo "abastecimento" em vez de contar documentos
+      dias[dia].abastecimentos += Number(r.abastecimento || 0);
       dias[dia].valorFolha += Number(r.valorFolha || 0);
 
-      totalAbastecimentos++;
+      totalAbastecimentos += Number(r.abastecimento || 0);
       totalDinheiro += Number(r.valorFolha || 0);
     });
 
