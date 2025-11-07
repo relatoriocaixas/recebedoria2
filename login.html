@@ -28,7 +28,7 @@
       <input type="password" id="regSenha" placeholder="Senha" required />
       <input type="password" id="regConfirmaSenha" placeholder="Confirmar senha" required />
       <button id="btnRegistrar">Registrar</button>
-      <div class="toggle-link" id="showLogin">J� tenho conta</div>
+      <div class="toggle-link" id="showLogin">Ja tenho conta</div>
     </div>
   </div>
 
@@ -101,16 +101,16 @@
         return alert("Preencha todos os campos.");
 
       if (senha !== confirmaSenha)
-        return alert("As senhas n�o conferem.");
+        return alert("As senhas nao conferem.");
 
       try {
-        // Cria o usu�rio no Auth
+        // Cria o usuario no Auth
         const cred = await createUserWithEmailAndPassword(auth, `${matricula}@movebuss.local`, senha);
 
         // Define o displayName (nome)
         await updateProfile(cred.user, { displayName: nome });
 
-        // Salva na cole��o USERS (apenas ela)
+        // Salvo na colecao USERS (apenas ela)
         await setDoc(doc(db, "users", cred.user.uid), {
           uid: cred.user.uid,
           nome,
@@ -121,7 +121,7 @@
           admin: false
         });
 
-        alert("Usu�rio registrado com sucesso!");
+        alert("Usuario registrado com sucesso!");
         registerForm.style.display = "none";
         loginForm.style.display = "block";
         formTitle.textContent = "Login";
