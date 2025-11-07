@@ -16,7 +16,6 @@ onAuthStateChanged(auth, async (user) => {
   const parts = user.email.split("@");
   userData = { matricula: parts[0], email: user.email };
   
-  // Verifica se é admin
   const userSnap = await getDocs(collection(db, "users"));
   const currentUserDoc = userSnap.docs.find(d => d.data().email === user.email);
   isAdmin = currentUserDoc ? currentUserDoc.data().admin : false;
@@ -36,8 +35,7 @@ salvarBtn.addEventListener("click", async () => {
       matricula: userData.matricula,
       descricao: descricaoInput.value,
       tipo,
-      // ✅ REPORT agora sempre nasce como "em analise"
-      status: "em analise",
+      status: "em analise",   // ✅ Sempre começa em análise
       criadoEm: new Date()
     });
     descricaoInput.value = "";
@@ -47,7 +45,7 @@ salvarBtn.addEventListener("click", async () => {
   }
 });
 
-// Atualiza a lista filtrando por tipo selecionado
+// Atualiza a lista filtrando por tipo
 tipoInput.addEventListener("change", () => carregarSugestoes());
 
 // Carregar entradas
@@ -55,7 +53,7 @@ async function carregarSugestoes() {
   sugestoesList.innerHTML = "";
   if (!userData) return;
 
-  const filtroTipo = tipoInput.value; // "sugestao" ou "report"
+  const filtroTipo = tipoInput.value;
   const collectionName = filtroTipo === "sugestao" ? "sugestoes" : "reports";
 
   try {
@@ -67,51 +65,49 @@ async function carregarSugestoes() {
       const card = document.createElement("div");
       card.className = "suggestion-card";
 
-      // ✅ Ajuste do status (REPORT nunca mostra reprovado)
-      let statusFinal = data.tipo === "report" && data.status === "reprovado"
-        ? "em analise"
-        : data.status;
+      // ✅ Correção FINAL
+      // Todos reports ficam como "em analise" EXCETO quando for solucionado
+      let statusFinal = data.status;
+      if (data.tipo === "report" && data.status !== "solucionado") {
+        statusFinal = "em analise";
+      }
 
-      // Status badge
+      // Badge
       const badge = document.createElement("span");
       badge.classList.add("status-badge");
 
       let statusClass = "";
       switch(statusFinal) {
-        case "aprovado":
         case "solucionado":
+        case "aprovado":
           statusClass = "btn-aprovado";
           break;
         case "reprovado":
           statusClass = "btn-reprovado";
           break;
-        case "em analise":
-        case "correcao iniciada":
         default:
           statusClass = "btn-analise";
-          break;
       }
 
       badge.classList.add(statusClass);
       badge.textContent = statusFinal;
 
-      // Conteúdo do card
+      // Conteúdo
       card.innerHTML = `<strong>${data.matricula}</strong>: ${data.descricao}`;
       card.prepend(badge);
 
-      // Botões admin
+      // ✅ Botões admin
       if (isAdmin) {
         const actions = document.createElement("div");
         actions.className = "admin-actions";
 
-        // ✅ Aprovado / Solucionado
+        // Aprovado / Solucionado
         const btnAprovado = document.createElement("button");
         btnAprovado.className = "btn-aprovado";
         btnAprovado.textContent = data.tipo === "report" ? "Solucionado" : "Aprovado";
         btnAprovado.onclick = async () =>
           await updateStatus(docSnap.id, collectionName, data.tipo === "report" ? "solucionado" : "aprovado");
 
-        // ✅ SOMENTE SUGESTÕES têm botão Reprovado
         if (data.tipo !== "report") {
           const btnReprovado = document.createElement("button");
           btnReprovado.className = "btn-reprovado";
@@ -121,14 +117,12 @@ async function carregarSugestoes() {
           actions.appendChild(btnReprovado);
         }
 
-        // ✅ Em análise
         const btnAnalise = document.createElement("button");
         btnAnalise.className = "btn-analise";
         btnAnalise.textContent = "Em análise";
         btnAnalise.onclick = async () =>
           await updateStatus(docSnap.id, collectionName, "em analise");
 
-        // Excluir
         const btnExcluir = document.createElement("button");
         btnExcluir.className = "btn-excluir";
         btnExcluir.textContent = "Excluir";
