@@ -160,3 +160,35 @@ button:hover {
   color: #b0b0b0;
   margin-top: 12px;
 }
+
+/* Botão Correção Iniciada */
+.btn-correcao {
+    background-color: #5DADE2; /* Azul claro */
+    color: #fff;
+    border: 1px solid #3498DB;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-correcao:hover {
+    background-color: #3498DB; /* Azul mais intenso ao passar o mouse */
+    transform: scale(1.03);
+}
+
+.btn-correcao:active {
+    transform: scale(0.98);
+}
+/* Badge de status Correção Iniciada */
+.status-badge.btn-correcao {
+    background-color: #5DADE2; /* Azul claro */
+    color: #fff;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 6px;
+}
+
