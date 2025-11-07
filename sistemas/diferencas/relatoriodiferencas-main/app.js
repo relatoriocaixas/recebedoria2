@@ -15,8 +15,6 @@ import {
     serverTimestamp
 } from "./firebaseConfig.js";
 
-
-
 /* ============================================================
    INICIALIZAÇÃO GERAL
 ============================================================ */
@@ -53,8 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-
-
 /* ============================================================
    ATUALIZADOR AUTOMÁTICO SOBRA/FALTA
 ============================================================ */
@@ -75,8 +71,6 @@ function configurarAutoSobra() {
     d.addEventListener("input", update);
 }
 
-
-
 /* ============================================================
    CONTROLE ADMIN/USER
 ============================================================ */
@@ -84,8 +78,6 @@ function configurarInterface(admin) {
     document.querySelectorAll(".admin-only").forEach(el => el.hidden = !admin);
     document.querySelectorAll(".user-only").forEach(el => el.hidden = admin);
 }
-
-
 
 /* ============================================================
    POPULAR SELECTS DE MATRÍCULA
@@ -123,8 +115,6 @@ async function popularSelects(admin) {
     });
 }
 
-
-
 /* ============================================================
    EVENTOS
 ============================================================ */
@@ -132,7 +122,18 @@ function inicializarEventos(admin, matricula) {
 
     // SALVAR RELATÓRIO
     document.getElementById("btnSalvarRelatorio")
-        ?.addEventListener("click", () => salvarRelatorio(admin));
+        ?.addEventListener("click", async () => {
+            await salvarRelatorio(admin);
+
+            // Limpa os campos após salvar
+            document.getElementById("matriculaForm").value = "";
+            document.getElementById("dataCaixa").value = "";
+            document.getElementById("valorFolha").value = "";
+            document.getElementById("valorDinheiro").value = "";
+            document.getElementById("sobraFalta").value = "";
+            document.getElementById("abastecimento").value = "";
+            document.getElementById("observacao").value = "";
+        });
 
     // ABRIR MODAL PRINCIPAL DE RELATÓRIOS
     document.getElementById("btnAbrirRelatorios")
@@ -141,11 +142,12 @@ function inicializarEventos(admin, matricula) {
             document.getElementById("modalRelatorios").showModal();
         });
 
-    // FECHAR MODAL DE RESUMO
+    // FECHAR MODAL DE RESUMO (volta para modal principal)
     document.getElementById("btnFecharResumo")
-        ?.addEventListener("click", () =>
-            document.getElementById("modalResumo").close()
-        );
+        ?.addEventListener("click", async () => {
+            document.getElementById("modalResumo").close();
+            await carregarRelatoriosModal(admin, matricula);
+        });
 
     // RESUMO MENSAL
     document.getElementById("btnCarregarResumo")
@@ -160,9 +162,16 @@ function inicializarEventos(admin, matricula) {
     // FILTRO POR DATA
     document.getElementById("btnFiltrarPorData")
         ?.addEventListener("click", () => filtrarPorData(admin, matricula));
+
+    // FILTRO POR MATRÍCULA
+    const filtroMat = document.getElementById("filtroMatricula");
+    if (filtroMat) {
+        filtroMat.addEventListener("change", async () => {
+            const mat = filtroMat.value || matricula;
+            await carregarRelatoriosModal(admin, mat);
+        });
+    }
 }
-
-
 
 /* ============================================================
    SALVAR RELATÓRIO
@@ -209,8 +218,6 @@ async function salvarRelatorio(admin) {
         alert("Erro ao salvar.");
     }
 }
-
-
 
 /* ============================================================
    CARREGAR RELATÓRIOS NO MODAL PRINCIPAL
@@ -275,8 +282,6 @@ async function carregarRelatoriosModal(admin, userMatricula) {
     ativarEventosLista(admin, userMatricula);
 }
 
-
-
 /* ============================================================
    ATIVAR EVENTOS DA LISTA
 ============================================================ */
@@ -314,8 +319,6 @@ function ativarEventosLista(admin, matricula) {
     });
 }
 
-
-
 /* ============================================================
    MODAL FLUTUANTE — VER DETALHES
 ============================================================ */
@@ -337,6 +340,7 @@ async function abrirResumo(id) {
         : new Date(r.dataCaixa).toLocaleDateString();
 
     conteudo.innerHTML = `
+        <button class="btn outline" id="btnFecharResumo">Fechar</button>
         <table class="relatorio-table">
             <tr><td>Data:</td><td>${data}</td></tr>
             <tr><td>Matrícula:</td><td>${r.matricula}</td></tr>
@@ -349,10 +353,14 @@ async function abrirResumo(id) {
         </table>
     `;
 
+    document.getElementById("btnFecharResumo").addEventListener("click", async () => {
+        modal.close();
+        await carregarRelatoriosModal(true, r.matricula);
+        document.getElementById("modalRelatorios").showModal();
+    });
+
     modal.showModal();
 }
-
-
 
 /* ============================================================
    PÓS-CONFERÊNCIA
@@ -386,8 +394,6 @@ async function abrirPosConferencia(id, admin) {
     modal.showModal();
 }
 
-
-
 /* ============================================================
    EDITAR RELATÓRIO
 ============================================================ */
@@ -413,8 +419,6 @@ async function editarRelatorio(id) {
 
     alert("Atualizado!");
 }
-
-
 
 /* ============================================================
    RESUMO MENSAL DO ADMIN
@@ -476,8 +480,6 @@ async function carregarResumoMensal(admin) {
         <details><summary>Dias com falta</summary>${neg.join("<br>") || "-"}</details>
     `;
 }
-
-
 
 /* ============================================================
    FILTRO POR DATA DENTRO DO MODAL
