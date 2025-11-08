@@ -35,30 +35,41 @@ async function handleFileUpload(file, tipo) {
     const json = XLSX.utils.sheet_to_json(ws, { raw: false });
 
     const novaLista = json.map(r => {
-        // 🔹 Matricula: se estiver vazia, tenta pegar de outro campo
+        // Pega a matrícula como string e remove espaços
         let matricula = r["Matrícula"] || r["matricula"] || "";
         matricula = String(matricula).trim();
 
-        // 🔹 Data: se vier como número (Excel serial date), converte para Date
-        let dataRetirada = r["Data Retirada"] || r["dataRetirada"] || null;
-        if (dataRetirada) {
-            if (!isNaN(dataRetirada)) {
-                // Excel serial date para JS Date
-                dataRetirada = new Date(Math.round((dataRetirada - 25569) * 86400 * 1000));
+        // Pega o nome
+        let nome = r["Nome"] || r["nome"] || "";
+
+        // ID Bordo e Viagem
+        let idBordo = r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || "";
+        let idViagem = r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || "";
+
+        // Serial Bordo e Viagem
+        let serialBordo = r["Serial Bordo"] || r["Nº Cartão de Bordo"] || "";
+        let serialViagem = r["Serial Viagem"] || r["Nº Cartão Viagem"] || "";
+
+        // Data retirada
+        let dataRetiradaRaw = r["Data Retirada"] || r["dataRetirada"];
+        let dataRetirada = null;
+        if (dataRetiradaRaw) {
+            if (!isNaN(dataRetiradaRaw)) {
+                // Número do Excel convertido em data
+                dataRetirada = XLSX.SSF.parse_date_code(Number(dataRetiradaRaw));
+                dataRetirada = new Date(dataRetirada.y, dataRetirada.m - 1, dataRetirada.d);
             } else {
-                dataRetirada = new Date(dataRetirada);
+                dataRetirada = new Date(dataRetiradaRaw);
             }
-        } else {
-            dataRetirada = null;
         }
 
         return {
             matricula,
-            nome: r["Nome"] || r["nome"] || "",
-            idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
-            idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
-            serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
-            serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
+            nome,
+            idBordo: String(idBordo),
+            idViagem: String(idViagem),
+            serialBordo: String(serialBordo),
+            serialViagem: String(serialViagem),
             dataRetirada,
             tipo
         };
@@ -83,7 +94,7 @@ function renderTabela() {
     listaFiltrada.forEach(c => {
         const tr = document.createElement("tr");
 
-        const dataFormatada = c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt-BR") : "-";
+        const dataFormatada = c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-";
 
         tr.innerHTML = `
             <td>${c.matricula}</td>
@@ -104,7 +115,7 @@ function getHistoricoCartao(id) {
     if (!id) return "";
     const historico = cartoes
         .filter(c => c.idBordo === id || c.idViagem === id)
-        .map(c => `${c.matricula || "-"} (${c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt-BR") : "-"})`);
+        .map(c => `${c.matricula} (${c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-"})`);
     return historico.join(", ");
 }
 
@@ -117,4 +128,6 @@ fileProdata.addEventListener("change", e => {
 });
 
 fileDigicon.addEventListener("change", e => {
-    if (!userIsAdmin) { alert("Apenas admins podem subir pl
+    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
+    handleFileUpload(e.target.files[0], "digicon");
+});
