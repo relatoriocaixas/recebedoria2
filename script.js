@@ -108,6 +108,16 @@ sidebar.querySelector('ul').appendChild(suporteLi);
 
 suporteLi.addEventListener('click', () => openRoute('suporte'));
 
+// 🔹 Adiciona rota Pesquisa Cartões
+ROUTES.pesquisa = "sistemas/pesquisa-cartoes/index.html";
+
+const pesquisaLi = document.createElement('li');
+pesquisaLi.dataset.target = 'pesquisa';
+pesquisaLi.innerHTML = "🔍 <span class='label'>Pesquisa</span>";
+sidebar.querySelector('ul').appendChild(pesquisaLi);
+
+pesquisaLi.addEventListener('click', () => openRoute('pesquisa'));
+
 
 // 🔹 Sidebar navigation
 document.querySelectorAll('.sidebar li').forEach(li => {
