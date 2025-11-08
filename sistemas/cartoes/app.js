@@ -31,7 +31,7 @@ async function handleFileUpload(file, tipo) {
     if (!file) return;
 
     // Importa XLSX dinamicamente do CDN
-    const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mjs");
+    const XLSX = await import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs");
 
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: "array" });
@@ -39,25 +39,36 @@ async function handleFileUpload(file, tipo) {
     const json = XLSX.utils.sheet_to_json(ws, { raw: false });
 
     const novaLista = json.map(r => {
-        // corrige matrícula e data
+        let matricula = String(r["Matrícula"] || r["matricula"] || "").trim();
+        let nome = r["Nome"] || r["nome"] || "";
+
+        let idBordo = String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || "");
+        let idViagem = String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || "");
+
+        let serialBordo = String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || "");
+        let serialViagem = String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || "");
+
+        let dataRetiradaRaw = r["Data Retirada"] || r["dataRetirada"];
         let dataRetirada = null;
-        if (r["Data Retirada"]) {
-            const parsed = Date.parse(r["Data Retirada"]);
-            if (!isNaN(parsed)) dataRetirada = new Date(parsed);
-        } else if (r["dataRetirada"]) {
-            const parsed = Date.parse(r["dataRetirada"]);
-            if (!isNaN(parsed)) dataRetirada = new Date(parsed);
+        if (dataRetiradaRaw) {
+            if (!isNaN(dataRetiradaRaw)) {
+                // considera como número Excel
+                const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                dataRetirada = new Date(excelEpoch.getTime() + Number(dataRetiradaRaw) * 86400000);
+            } else {
+                dataRetirada = new Date(dataRetiradaRaw);
+            }
         }
 
         return {
-            matricula: String(r["Matrícula"] || r["matricula"] || "").trim(),
-            nome: r["Nome"] || r["nome"] || "",
-            idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
-            idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
-            serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
-            serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
-            dataRetirada: dataRetirada,
-            tipo: tipo
+            matricula,
+            nome,
+            idBordo,
+            idViagem,
+            serialBordo,
+            serialViagem,
+            dataRetirada,
+            tipo
         };
     });
 
@@ -70,11 +81,18 @@ function renderTabela() {
     tabela.innerHTML = "";
     let listaFiltrada = cartoes;
 
-    // filtros
-    if (filtroTipo.value) listaFiltrada = listaFiltrada.filter(c => c.tipo.toLowerCase() === filtroTipo.value.toLowerCase());
-    if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => String(c.matricula).includes(filtroMatricula.value));
-    if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => String(c.idBordo).includes(filtroIdBordo.value));
-    if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => String(c.idViagem).includes(filtroIdViagem.value));
+    if (filtroTipo.value) {
+        listaFiltrada = listaFiltrada.filter(c => c.tipo.toLowerCase() === filtroTipo.value.toLowerCase());
+    }
+    if (filtroMatricula.value) {
+        listaFiltrada = listaFiltrada.filter(c => String(c.matricula).includes(filtroMatricula.value));
+    }
+    if (filtroIdBordo.value) {
+        listaFiltrada = listaFiltrada.filter(c => String(c.idBordo).includes(filtroIdBordo.value));
+    }
+    if (filtroIdViagem.value) {
+        listaFiltrada = listaFiltrada.filter(c => String(c.idViagem).includes(filtroIdViagem.value));
+    }
 
     listaFiltrada.forEach(c => {
         const tr = document.createElement("tr");
@@ -94,12 +112,12 @@ function renderTabela() {
     });
 }
 
-// 🔹 Histórico de cartão para tooltip
+// 🔹 Retorna histórico do cartão para tooltip
 function getHistoricoCartao(id) {
     if (!id) return "";
     const historico = cartoes
         .filter(c => c.idBordo === id || c.idViagem === id)
-        .map(c => `${c.matricula} (${c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt-BR") : "-"})`);
+        .map(c => `${c.matricula} (${c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt‑BR") : "-"})`);
     return historico.join(", ");
 }
 
