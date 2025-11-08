@@ -15,16 +15,20 @@ const auth = getAuth(app);
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
+
 const btnFiltrar = document.getElementById("btnFiltrar");
+const btnLimpar = document.getElementById("btnLimpar");
+
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
 const filtroIdBordo = document.getElementById("filtroIdBordo");
 const filtroIdViagem = document.getElementById("filtroIdViagem");
+const filtroSerial = document.getElementById("filtroSerial");
 
 let cartoes = [];
 let isAdmin = false;
 
-// Excel -> Data (serial) para data real
+// Excel -> Data real
 function excelDateToJSDate(excelSerial) {
     if (!excelSerial) return "";
     if (typeof excelSerial === "string") return excelSerial;
@@ -46,7 +50,7 @@ onAuthStateChanged(auth, user => {
         });
 });
 
-// ✅ Função corrigida para ler as planilhas reais
+// Leitura + parse da planilha
 async function handleFileUpload(file, tipo) {
     if (!file) return;
 
@@ -95,7 +99,7 @@ async function handleFileUpload(file, tipo) {
         tipo
     }));
 
-    // ✅ SALVAR NO FIRESTORE COM OS CAMPOS CORRETOS
+    // Salvar no Firestore (apenas admin)
     if (isAdmin) {
         for (const c of parsed) {
             await addDoc(collection(db, "cartoes"), c);
@@ -146,19 +150,34 @@ function renderTabela(lista) {
     });
 }
 
-// Filtros (agora funcionando porque os campos existem)
+// FILTROS (corrigidos)
 btnFiltrar.addEventListener("click", () => {
     const tipo = filtroTipo.value;
     const mat = filtroMatricula.value.trim();
     const bordo = filtroIdBordo.value.trim();
     const viagem = filtroIdViagem.value.trim();
+    const serial = filtroSerial.value.trim();
 
     const filtrado = cartoes.filter(c =>
         (!tipo || c.tipo === tipo) &&
-        (!mat || c.matricula.includes(mat)) &&
-        (!bordo || c.idBordo.includes(bordo)) &&
-        (!viagem || c.idViagem.includes(viagem))
+        (!mat || String(c.matricula).includes(mat)) &&
+        (!bordo || String(c.idBordo).includes(bordo)) &&
+        (!viagem || String(c.idViagem).includes(viagem)) &&
+        (!serial ||
+            String(c.serialBordo).includes(serial) ||
+            String(c.serialViagem).includes(serial))
     );
 
     renderTabela(filtrado);
+});
+
+// LIMPAR FILTROS
+btnLimpar.addEventListener("click", () => {
+    filtroTipo.value = "";
+    filtroMatricula.value = "";
+    filtroIdBordo.value = "";
+    filtroIdViagem.value = "";
+    filtroSerial.value = "";
+
+    renderTabela(cartoes);
 });
