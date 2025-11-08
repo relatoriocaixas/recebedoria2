@@ -1,0 +1,336 @@
+/* ========================= Variáveis ========================= */
+:root {
+    --green: #00c853;
+    --bg: #0b0c0e;
+    --card: #16181d;
+    --muted: #c9c9c9;
+    --text: #ffffff;
+    --warn: #ffd54f;
+    --danger: #ef5350;
+    --outline: #3a3d44;
+}
+
+/* ========================= Reset ========================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    background: #0b0c0e;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+/* ========================= Topbar ========================= */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--green);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    height: 44px;
+}
+
+h1 {
+    color: var(--green);
+}
+
+/* ========================= Layout ========================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+/* ========================= Inputs ========================= */
+label {
+    min-width: 150px;
+    color: var(--muted);
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid var(--green);
+    background: #1e1f24;
+    color: white;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* ========================= Botões ========================= */
+.btn {
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--outline);
+    background: #23262b;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn:hover {
+    filter: brightness(1.2);
+}
+
+.btn.primary {
+    background: linear-gradient(180deg, #2fba6b, #1d8d4e);
+}
+
+.btn.outline {
+    background: transparent;
+    border: 1px solid var(--outline);
+}
+
+.btn.danger {
+    background: linear-gradient(180deg, #ef5350, #b71c1c);
+}
+
+/* ========================= Cards ========================= */
+.card {
+    background: #1b1e24;
+    border: 1px solid #0f1115;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+/* ========================= Lista ========================= */
+.lista {
+    margin-top: 12px;
+}
+
+.relatorio-item {
+    background: #1b1e24;
+    border-left: 4px solid var(--green);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.relatorio-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ========================= Tabela do Resumo ========================= */
+.relatorio-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+}
+
+.relatorio-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #2a2d33;
+}
+
+.relatorio-table td:first-child {
+    color: var(--muted);
+    width: 150px;
+}
+
+/* ? Diferença colorida */
+.positivo {
+    color: var(--green);
+    font-weight: bold;
+}
+
+.negativo {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+/* ========================= Modais ========================= */
+.modal {
+    border: none;
+    padding: 0;
+    max-width: 90%;
+    background: transparent;
+}
+
+.modal::backdrop {
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(3px);
+}
+
+/* ? Modal principal (quase tela inteira) */
+#modalRelatorios .modal-content {
+    width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #1b1e24;
+    border-radius: 18px;
+    padding: 22px;
+    border: 1px solid #0f1115;
+}
+
+/* ? Modal flutuante de resumo */
+#modalResumo .modal-content {
+    width: 420px;
+    max-width: 90vw;
+    background: #1b1e24;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #0f1115;
+}
+
+/* ? Modal pós-conferência */
+#posModal .modal-content {
+    width: 450px;
+    max-width: 90vw;
+    padding: 20px;
+    background: #1b1e24;
+    border-radius: 16px;
+    border: 1px solid #0f1115;
+}
+
+/* ========================= Resumo Mensal ========================= */
+.resumo-lista {
+    margin-top: 12px;
+    color: white;
+}
+
+details {
+    margin-bottom: 8px;
+}
+
+details summary {
+    cursor: pointer;
+    color: var(--green);
+}
+
+/* ========================= Colapsar Resumo ========================= */
+#resumoWrap.collapsed {
+    display: none;
+}
+
+/* ========================= Aviso Pós-conferência ========================= */
+.alerta-pos {
+    color: var(--warn);
+    font-weight: bold;
+}
+
+/* ===========================================
+   Borda cromada nos itens de relatório
+=========================================== */
+.relatorio-item {
+    border-left: 4px solid var(--green); /* mantém sua borda verde */
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+
+    /* ?? Borda cromada moderna */
+    border: 2px solid transparent;
+    background:
+        linear-gradient(#1b1e24, #1b1e24) padding-box,
+        linear-gradient(145deg, #d7d7d7, #ffffff, #9b9b9b, #bfbfbf, #e6e6e6) border-box;
+
+    /* leve brilho */
+    box-shadow: 0 0 12px rgba(255,255,255,0.08), 
+                0 4px 14px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   ? Corrigir textos pretos dentro dos modais
+   Força cor branca APENAS onde está faltando
+============================================================ */
+
+/* Título do modal principal e modal flutuante */
+#modalRelatorios h3,
+#modalResumo h3 {
+    color: #ffffff !important;
+}
+
+/* Textos do cabeçalho do relatório (minimizado) */
+.relatorio-item .item-header strong,
+.relatorio-item .item-header {
+    color: #ffffff !important;
+}
+
+/* Matrícula e data minimizada */
+.relatorio-item .item-header * {
+    color: #ffffff !important;
+}
+
+/* Campos salvos no resumo (lado direito da tabela) */
+#modalResumo .relatorio-table td:last-child {
+    color: #ffffff !important;
+}
+
+/* Manter as cores de sobra/falta */
+.positivo {
+    color: var(--green) !important;
+}
+
+.negativo {
+    color: var(--danger) !important;
+}
+
+/* ============================================================
+   ? Borda cromada realista ao redor de cada relatório
+============================================================ */
+.relatorio-item {
+    position: relative;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+
+    /* remove conflitos da antiga borda */
+    background: #1b1e24 !important; 
+
+    /* ? borda cromada realista */
+    border: 2px solid transparent;
+    background-image:
+        linear-gradient(#1b1e24, #1b1e24),
+        linear-gradient(145deg, #e6e6e6, #ffffff, #9b9b9b, #cfcfcf, #f5f5f5);
+    background-origin: padding-box, border-box;
+    background-clip: padding-box, border-box;
+
+    /* brilho suave */
+    box-shadow: 
+        0 0 8px rgba(255,255,255,.10),
+        0 4px 14px rgba(0,0,0,.45);
+}
+
+/* ? Mantém a faixa verde lateral */
+.relatorio-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 4px;
+    background: var(--green);
+    border-radius: 4px;
+}
+

@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa de Cartões</title>
+
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="app.js" defer></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Pesquisa de Cartões</h1>
+
+        <div class="filtros">
+
+            <select id="filtroTipo">
+                <option value="">Todos os Tipos</option>
+                <option value="prodata">Prodata</option>
+                <option value="digicon">Digicon</option>
+            </select>
+
+            <input type="text" id="filtroMatricula" placeholder="Filtrar por Matrícula">
+            <input type="text" id="filtroIdBordo" placeholder="Filtrar por ID Bordo">
+            <input type="text" id="filtroIdViagem" placeholder="Filtrar por ID Viagem">
+            <input type="text" id="filtroSerial" placeholder="Filtrar por Serial">
+
+            <button id="btnFiltrar">Filtrar</button>
+            <button id="btnLimpar">Limpar Filtros</button>
+        </div>
+
+        <div class="upload">
+            <label class="upload-btn">
+                Subir Planilha Prodata
+                <input type="file" id="fileProdata" accept=".xlsx,.xls">
+            </label>
+
+            <label class="upload-btn">
+                Subir Planilha Digicon
+                <input type="file" id="fileDigicon" accept=".xlsx,.xls">
+            </label>
+        </div>
+
+        <table id="tabelaCartoes">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>ID Bordo</th>
+                    <th>ID Viagem</th>
+                    <th>Serial Bordo</th>
+                    <th>Serial Viagem</th>
+                    <th>Data Retirada</th>
+                    <th>Tipo</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+
+</body>
+</html>

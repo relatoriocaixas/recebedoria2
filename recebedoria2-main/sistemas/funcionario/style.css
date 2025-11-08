@@ -1,0 +1,255 @@
+﻿/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Fundo radial animado */
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at center, #000000, #111111, #000000);
+  animation: pulse 10s infinite alternate;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 50% 50%; }
+  100% { background-position: 100% 100%; }
+}
+
+/* Topbar */
+.topbar {
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #004d4d;
+  display: flex;
+  align-items: center;
+}
+
+.topbar h1 {
+  font-size: 1.5rem;
+}
+
+/* ✅ LAYOUT PRINCIPAL (lado a lado fixo) */
+.dashboard {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 1rem;
+
+  /* ✅ OBRIGA manter tudo lado a lado */
+  flex-wrap: nowrap;
+
+  /* ✅ Deixa o flex encolher sem jogar nada pra baixo */
+  width: 100%;
+  min-width: 0;
+}
+
+/* ✅ Card do funcionário nunca quebra */
+.profile-card {
+  flex: 0 0 350px;  /* fixa o tamanho do card */
+}
+
+/* ✅ Gráfico ocupa o resto */
+.charts {
+  flex: 1 1 auto;
+  min-width: 0;   /* impede o gráfico de empurrar o layout */
+}
+
+/* Cards */
+.card {
+  background: rgba(0,0,0,0.5);
+  border: 2px solid #004d4d;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* Perfil */
+.profile-left h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer; /* nome vira botão */
+  transition: 0.2s;
+}
+
+.profile-left h2:hover {
+  color: #00cfff;
+  transform: scale(1.03);
+}
+
+/* Cores do nome */
+.nome-rosa { color: #ff00ff; }
+.nome-azul { color: #00cfff; }
+
+.meta div { margin-bottom: 0.25rem; }
+
+/* Botões de aviso */
+.btn-avisos {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+.btn-cinza { background-color: #888; color: #fff; }
+.aviso-vermelho { background-color: #ff0000; color: #fff; }
+
+.blink { animation: blink 1s infinite; }
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+/* Gráfico */
+.chart-col {
+  margin-top: 1rem;
+  height: 400px;
+}
+
+/* Resumo abaixo do gráfico */
+.resumo {
+  margin-top: 1rem;
+  font-size: 1rem;
+  display: flex;
+  justify-content: space-around;
+}
+.resumo .abastecimentos { color: #888; font-weight: bold; }
+.resumo .dinheiro { color: #00f5ff; font-weight: bold; }
+
+/* Input mês */
+#mesEscolhido {
+  margin-top: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #004d4d;
+  background-color: rgba(0,0,0,0.3);
+  color: #fff;
+}
+
+/* Painel Admin (dentro do card) */
+#adminControls {
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid #00cfff;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 10px;
+  display: none; /* inicia fechado */
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-row label {
+  min-width: 90px;
+  color: #00cfff;
+  font-weight: bold;
+}
+
+#adminMatriculaSelect,
+#adminHorarioInput,
+#adminAvisoInput {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #004d4d;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+}
+
+.btn.small {
+  padding: 0.35rem 0.7rem;
+  background-color: #00cfff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+.btn.small:hover { background-color: #0088aa; }
+
+.btn.primary {
+  background-color: #00f5ff;
+}
+
+/* Modais */
+.modal {
+  border: 2px solid #00cfff;
+  background: rgba(0,0,0,0.95);
+  border-radius: 12px;
+  padding: 0;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+/* Listas de avisos */
+#avisosLista,
+#adminAvisosLista {
+  max-height: 250px;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.06);
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+#avisosLista p,
+#adminAvisosLista p {
+  margin: 0.4rem 0;
+  color: #fff !important;
+  font-size: 1rem;
+}
+
+/* Botões editar/excluir */
+.btn-small {
+  margin-left: 10px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+.btn-small:hover { opacity: .8; }
+
+.btn-small:nth-child(1) { background: #0099ff; color: #fff; }
+.btn-small:nth-child(2) { background: #ff3333; color: #fff; }
+
+/* ✅ BOTÃO FECHAR ESTILIZADO */
+.modal-body button.btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 0.6rem;
+  background: linear-gradient(135deg, #0066aa, #0088cc);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.modal-body button.btn:hover {
+  background: linear-gradient(135deg, #0088cc, #00aaff);
+  transform: scale(1.03);
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .dashboard {
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+}

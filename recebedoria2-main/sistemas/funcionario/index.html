@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Funcionário — Recebedoria</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Funcionário</h1>
+    </div>
+  </header>
+
+  <main class="wrap charts-wrapper">
+    <div class="dashboard">
+      <!-- PERFIL -->
+      <section class="card profile-card">
+        <div class="profile-left">
+          <h2 id="funcNome" class="btn-toggle-admin">—</h2>
+          <div class="meta">
+            <div><strong>Matrícula:</strong> <span id="funcMatricula">—</span></div>
+            <div><strong>Admissão:</strong> <span id="funcAdmissao">—</span></div>
+            <div><strong>Horário:</strong> <span id="funcHorario">—</span></div>
+          </div>
+
+          <div id="avisosContainer">
+            <button id="btnAvisos" class="btn-avisos btn-cinza">Sem avisos vinculados à matrícula</button>
+          </div>
+
+          <!-- Painel Admin -->
+          <div id="adminControls" class="admin-only hidden">
+            <div class="admin-row">
+              <label>Matrícula:</label>
+              <select id="adminMatriculaSelect"></select>
+            </div>
+            <div class="admin-row">
+              <label>Horário:</label>
+              <input id="adminHorarioInput" placeholder="07:00 - 17:00" />
+              <button id="btnSalvarHorario" class="btn small">Salvar Horário</button>
+            </div>
+            <div class="admin-row">
+              <label>Aviso:</label>
+              <input id="adminAvisoInput" placeholder="Texto do aviso..." />
+              <button id="btnSalvarAviso" class="btn small primary">Salvar Aviso</button>
+            </div>
+            <div class="admin-row">
+              <button id="btnVerAvisosAdmin" class="btn small">Ver/Editar Todos os Avisos</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GRÁFICO MENSAL -->
+      <section class="card charts">
+        <div class="chart-col">
+          <h3>Resumo Mensal — Caixa</h3>
+          <div class="controls">
+            <label for="mesEscolhido">Mês:</label>
+            <input id="mesEscolhido" type="month" />
+          </div>
+          <canvas id="mensalChart"></canvas>
+          <div id="totalInfo" class="total-info"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL DE AVISOS -->
+  <dialog id="modalAvisos" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Avisos</h3>
+      <div id="avisosLista"></div>
+      <button type="submit" class="btn">Fechar</button>
+    </form>
+  </dialog>
+
+  <!-- MODAL ADMIN AVISOS -->
+  <dialog id="modalAdminAvisos" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Todos os Avisos</h3>
+      <div id="adminAvisosLista"></div>
+      <button type="submit" class="btn">Fechar</button>
+    </form>
+  </dialog>
+</body>
+</html>

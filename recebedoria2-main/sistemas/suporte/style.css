@@ -1,0 +1,193 @@
+﻿/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 16px;
+  padding: 20px;
+}
+
+/* Container flexível */
+.container-suporte {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Cards */
+.card {
+  background-color: #1f1f1f;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
+}
+
+/* Card sugestões com rolagem */
+.sugestoes-card {
+  flex: 1 1 60%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+textarea {
+  width: 100%;
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.tipo-solicitacao {
+  background-color: #333;
+  color: #fff;
+  border-radius: 6px;
+  border: 1px solid #555;
+  padding: 6px 10px;
+  font-size: 1rem;
+}
+
+/* Lista de sugestões */
+.sugestoes-list {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.suggestion-card {
+  background-color: #1f1f1f;
+  border-left: 4px solid #9c27b0;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+/* Admin actions container */
+.admin-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Botões cromados metalizados padrão */
+button {
+  padding: 8px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 2px solid #888;
+  color: #fff;
+  background: linear-gradient(145deg, #3a3a3a, #1f1f1f);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Botões com cores específicas de status */
+.btn-aprovado {
+  background: linear-gradient(145deg, #4caf50, #388e3c);
+  border-color: #b0b0b0;
+}
+.btn-reprovado {
+  background: linear-gradient(145deg, #f44336, #d32f2f);
+  border-color: #b0b0b0;
+}
+.btn-analise {
+  background: linear-gradient(145deg, #ff9800, #f57c00);
+  border-color: #b0b0b0;
+}
+.btn-solucionado {
+  background: linear-gradient(145deg, #4caf50, #388e3c);
+  border-color: #b0b0b0;
+}
+.btn-correcao-iniciada {
+  background: linear-gradient(145deg, #ff9800, #f57c00);
+  border-color: #b0b0b0;
+}
+.btn-excluir {
+  background: linear-gradient(145deg, #f44336, #d32f2f);
+  border-color: #b0b0b0;
+}
+
+/* Card contato desenvolvedor */
+.contato-card {
+  flex: 1 1 35%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-footer {
+  font-size: 0.9rem;
+  color: #b0b0b0;
+  margin-top: 12px;
+}
+
+/* Botão Correção Iniciada */
+.btn-correcao {
+    background-color: #5DADE2; /* Azul claro */
+    color: #fff;
+    border: 1px solid #3498DB;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.btn-correcao:hover {
+    background-color: #3498DB; /* Azul mais intenso ao passar o mouse */
+    transform: scale(1.03);
+}
+.btn-correcao:active {
+    transform: scale(0.98);
+}
+
+/* Badge de status Correção Iniciada */
+.status-badge.btn-correcao {
+    background-color: #5DADE2; /* Azul claro */
+    color: #fff;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 6px;
+}
+

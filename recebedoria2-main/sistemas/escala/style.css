@@ -1,0 +1,386 @@
+﻿:root {
+  --bg: radial-gradient(circle at 25% 25%, #1b1d22 2px, transparent 2px) 0 0 / 10px 10px,
+        radial-gradient(circle at 75% 75%, #1b1d22 2px, transparent 2px) 0 0 / 10px 10px,
+        linear-gradient(#0f1013, #111316 40%, #0b0c0e);
+  --text: #f5f5f5;
+  --muted: #cfcfcf;
+  --metal: #c0c0c0;
+}
+
+/* Reset */
+* { box-sizing:border-box; font-family:Inter,system-ui,Arial,sans-serif; }
+html,body { height:100%; margin:0; background:var(--bg); color:var(--text); overflow:hidden; }
+
+/* Layout principal */
+.app { display:flex; height:100vh; }
+
+/* Sidebar */
+.sidebar {
+  width:70px;
+  background:rgba(10,10,10,0.6);
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  transition:width .28s ease;
+  overflow:hidden;
+  padding-top:12px;
+  position:relative;
+}
+.sidebar:hover { width:220px; }
+
+.sidebar .toggle {
+  background:transparent;
+  border:none;
+  color:var(--metal);
+  font-size:20px;
+  margin-bottom:12px;
+  cursor:pointer;
+}
+
+.sidebar ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  width:100%;
+}
+
+.sidebar li {
+  padding:12px 10px;
+  width:100%;
+  cursor:pointer;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:all .2s ease;
+}
+
+.sidebar li .label { display:none; }
+.sidebar:hover li .label { display:inline; }
+
+.sidebar li:hover {
+  background:rgba(255,255,255,0.03);
+  color:var(--metal);
+}
+
+/* Badge */
+.sidebar-badge {
+  padding:6px 10px;
+  border-radius:8px;
+  margin-bottom:16px;
+  text-align:center;
+  transition:all .3s ease;
+}
+
+/* Footer buttons */
+.sidebar-footer {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:8px 10px;
+  margin-top:auto;
+}
+
+.sidebar-footer button {
+  display:none;
+  border:none;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:all .2s ease;
+}
+
+#changePassBtn { background-color:#4da6ff; color:#fff; }
+#logoutBtn { background-color:#ff4d4d; color:#fff; }
+
+.sidebar:hover .sidebar-footer button { display:block; }
+
+/* Main content */
+.main-content {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:16px;
+  gap:12px;
+  overflow:hidden;
+}
+
+.topbar {
+  height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+/* iframe */
+.iframe-container {
+  flex:1;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.03);
+  display:none;
+}
+.iframe-container.full { display:block; }
+.iframe-container iframe { width:100%; height:100vh; border:0; background:transparent; }
+
+/* Tabela de avisos */
+#avisosTable {
+  width:100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  background: rgba(20,20,20,0.7);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#avisosTable th, #avisosTable td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#avisosTable th {
+  background: rgba(50,50,50,0.8);
+}
+
+#avisosTable tbody tr.riscado td {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+#avisosTable tbody tr:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+#avisosTable input[type="checkbox"] {
+  width:16px;
+  height:16px;
+}
+
+/* Botões */
+.adminBtn {
+  background-color: #4da6ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.adminBtn:hover { background-color: #3399ff; }
+
+.delBtn {
+  background-color: #ff4d4d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.delBtn:hover { background-color: #e60000; }
+
+/* Timestamps */
+.timestamp {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media(max-width:900px){ .sidebar { display:none; } }
+
+/* Tela de carregamento */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+#loadingOverlay .spinner {
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top: 6px solid #fff;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tabela-calendario {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+}
+
+.tabela-calendario th {
+  background: rgba(255,255,255,0.15);
+  padding: 8px;
+  color: #fff;
+}
+
+.tabela-calendario td {
+  width: 14.2%;
+  height: 80px;
+  border: 1px solid rgba(255,255,255,0.1);
+  vertical-align: top;
+  color: #fff;
+  position: relative;
+  cursor: pointer;
+}
+
+.tabela-calendario td.folga {
+  background: rgba(0, 255, 128, 0.2);
+}
+
+.tabela-calendario td.troca {
+  background: rgba(0, 128, 255, 0.2);
+}
+
+.descricao {
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+dialog#modalEdicao {
+  background: #202020;
+  color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: none;
+  max-width: 320px;
+}
+/* Wrapper das badges dentro do dia */
+.day .badges {
+  display: flex;
+  flex-wrap: wrap;        /* permite segunda fileira */
+  gap: 4px;               /* espaço entre badges */
+  max-height: 120px;      /* altura máxima antes de rolar */
+  overflow-y: auto;       /* barra de rolagem vertical se passar do limite */
+  padding: 2px;
+}
+
+/* Badge */
+.day .badge {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border-radius: 4px;
+  max-width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reduz o tamanho do calendário sem afetar o restante da tela */
+#calendar {
+  transform: scale(0.75);
+  transform-origin: top center;
+  width: 133%; /* compensa a redução do scale para manter a largura visual */
+  margin: 0 auto;
+}
+
+/* ============================
+   Ajuste visual do calendário
+   (aplicar dentro do iframe da Escala)
+   ============================ */
+
+/* Container do calendário: centraliza e cria scroll se exceder */
+.calendar {
+  width: calc(100% / 0.75);   /* compensa o scale para evitar corte */
+  margin: 0 auto;
+  transform: scale(0.75);     /* zoom 75% */
+  transform-origin: top center;
+  overflow: auto;             /* barra de rolagem caso exceda */
+  max-height: calc(100vh - 80px); /* deixa espaço para cabeçalho/topbar */
+  box-sizing: border-box;
+}
+
+/* Garante que a grade interna possa rolar independentemente */
+.calendar .grid {
+  max-height: calc((100vh - 80px) / 0.75); /* corrige altura interna após scale */
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 6px;
+}
+
+/* ============================
+   Badges: empilhar 4 verticalmente e depois criar nova coluna
+   ============================ */
+
+/* Container de badges em cada dia:
+   - flex-direction: column + flex-wrap: wrap faz as badges preencherem
+     na vertical até atingir altura máxima e então cria nova coluna */
+.day .badges {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: calc( (24px + 6px) * 4 ); /* 4 badges visíveis verticalmente */
+  overflow: auto; /* caso ainda tenha mais, aparece scroll dentro do dia */
+  align-content: flex-start; /* nova coluna começa à direita */
+  padding-top: 22px; /* espaço para o número do dia */
+}
+
+/* Força altura fixa nas badges para cálculo consistente */
+.day .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;        /* altura de referência */
+  padding: 0 8px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* Quando houver muitas badges, as colunas aparecerão à direita */
+.day .badges::-webkit-scrollbar { height: 6px; }
+.day .badges::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+/* Melhora visual para trocas e folgas */
+.badge.folga { /* cor base pode ser aplicada dinamicamente pelo JS */
+  color: #fff;
+}
+.badge.troca {
+  background: #ffb347 !important;
+  color: #000;
+  box-shadow: 0 0 6px rgba(255,159,64,0.18);
+}
+
+/* Responsivo: em telas pequenas reduzir um pouco o scale para evitar cortes */
+@media (max-height: 720px), (max-width: 900px) {
+  .calendar {
+    transform: scale(0.70);
+    width: calc(100% / 0.70);
+    max-height: calc(100vh - 64px);
+  }
+  .calendar .grid {
+    max-height: calc((100vh - 64px) / 0.70);
+  }
+}
+
