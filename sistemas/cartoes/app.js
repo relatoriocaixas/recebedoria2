@@ -1,178 +1,136 @@
-﻿// ✅ firebaseConfig como módulo ES
-import { auth, db } from "./firebaseConfig.js";
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import {
-    collection,
-    getDocs,
-    setDoc,
-    doc,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+﻿// app.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// ✅ XLSX JÁ ESTÁ DISPONÍVEL GLOBALMENTE
-// NÃO IMPORTAR, NÃO USAR "import XLSX", NEM "import * as XLSX"
+// 🔹 SheetJS via CDN
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
 
-// ===================================================================
-// VARIÁVEIS
-// ===================================================================
+// 🔹 Firebase config
+import { firebaseConfig } from "./firebaseConfig.js";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-let cartoes = [];
-let userIsAdmin = false;
-
-// ===================================================================
-// ELEMENTOS
-// ===================================================================
-
+// 🔹 Elementos
+const fileProdata = document.getElementById("fileProdata");
+const fileDigicon = document.getElementById("fileDigicon");
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
+const btnFiltrar = document.getElementById("btnFiltrar");
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
 const filtroIdBordo = document.getElementById("filtroIdBordo");
 const filtroIdViagem = document.getElementById("filtroIdViagem");
-const filtroSerial = document.getElementById("filtroSerial");
-const btnFiltrar = document.getElementById("btnFiltrar");
 
-const fileProdata = document.getElementById("fileProdata");
-const fileDigicon = document.getElementById("fileDigicon");
+let cartoes = []; // Array completo
 
-// ===================================================================
-// LOGIN + PERMISSÃO
-// ===================================================================
-
-onAuthStateChanged(auth, async user => {
-    if (!user) {
-        window.location.href = "/login.html";
-        return;
-    }
-
-    const snap = await getDocs(collection(db, "users"));
-    userIsAdmin = snap.docs.some(doc => doc.id === user.uid && doc.data().admin === true);
+// 🔹 Monitorar autenticação
+let isAdmin = false;
+onAuthStateChanged(auth, user => {
+    if (!user) return;
+    const uid = user.uid;
+    // Busca info do usuário
+    getDocs(query(collection(db, "users"), where("uid", "==", uid))).then(snapshot => {
+        const docUser = snapshot.docs[0];
+        isAdmin = docUser?.data()?.admin || false;
+        carregarCartoes();
+    });
 });
 
-// ===================================================================
-// CONVERSÃO DE DATA DO EXCEL (ex: 45722 → data real)
-// ===================================================================
-
-function excelDateToJS(value) {
-    if (!value || isNaN(value)) return null;
-    return new Date((value - 25569) * 86400000);
-}
-
-// ===================================================================
-// PROCESSAMENTO DA PLANILHA
-// ===================================================================
-
+// 🔹 Função para processar upload de planilha
 async function handleFileUpload(file, tipo) {
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array" });
+    if (!file) return;
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: "array" });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
-    const ws = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(ws, { raw: false });
+    const batch = jsonData.map(row => {
+        return {
+            matricula: row.Matricula || row.MATRICULA || "",
+            nome: row.Nome || row.NOME || "",
+            idBordo: row["Identificador Bordo"] || row["ID. Bordo"] || "",
+            idViagem: row["Identificador ½ Viagem"] || row["ID. Viagem"] || "",
+            serialBordo: row["Identificação Bordo"] || row["Nº Cartão de Bordo"] || "",
+            serialViagem: row["Identificação ½ Viagem"] || row["Nº Cartão Viagem"] || "",
+            dataRetirada: row["Data Retirada"] || row["Desligados"] || "",
+            tipo
+        };
+    });
 
-    const registros = json.map(r => ({
-        matricula: String(r["Matrícula"] || r["Matricula"] || r["matricula"] || "").trim(),
-        nome: r["Nome"] || "",
-        idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
-        idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
-        serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
-        serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
-
-        // ✅ converte data númerica ou data normal
-        dataRetirada: (() => {
-            const d = r["Data Retirada"];
-            if (!d) return null;
-
-            if (!isNaN(d)) return excelDateToJS(Number(d));
-            return new Date(d);
-        })(),
-
-        tipo
-    }));
-
-    // ✅ salva todos no Firestore
-    for (const c of registros) {
-        const ref = doc(collection(db, "cartoes"));
-        await setDoc(ref, {
-            ...c,
-            criadoEm: serverTimestamp()
-        });
+    // Salvar no Firestore se for admin
+    if (isAdmin) {
+        for (const c of batch) {
+            await addDoc(collection(db, "cartoes"), c);
+        }
+        alert(`Planilha ${tipo} enviada com sucesso!`);
     }
 
-    // ✅ carrega no array local
-    cartoes = cartoes.concat(registros);
-
-    // ✅ renderiza tabela
-    renderTabela();
+    cartoes.push(...batch);
+    renderTabela(cartoes);
 }
 
-// ===================================================================
-// RENDERIZA A TABELA
-// ===================================================================
+// 🔹 Uploads
+fileProdata.addEventListener("change", async e => {
+    const file = e.target.files[0];
+    await handleFileUpload(file, "prodata");
+    e.target.value = "";
+});
 
-function renderTabela() {
+fileDigicon.addEventListener("change", async e => {
+    const file = e.target.files[0];
+    await handleFileUpload(file, "digicon");
+    e.target.value = "";
+});
+
+// 🔹 Carregar do Firestore
+async function carregarCartoes() {
+    const q = query(collection(db, "cartoes"), orderBy("matricula"));
+    const snapshot = await getDocs(q);
+    cartoes = snapshot.docs.map(doc => doc.data());
+    renderTabela(cartoes);
+}
+
+// 🔹 Renderizar tabela
+function renderTabela(data) {
     tabela.innerHTML = "";
-
-    let lista = cartoes;
-
-    if (filtroTipo.value) lista = lista.filter(c => c.tipo === filtroTipo.value);
-    if (filtroMatricula.value) lista = lista.filter(c => c.matricula.includes(filtroMatricula.value));
-    if (filtroIdBordo.value) lista = lista.filter(c => c.idBordo.includes(filtroIdBordo.value));
-    if (filtroIdViagem.value) lista = lista.filter(c => c.idViagem.includes(filtroIdViagem.value));
-
-    if (filtroSerial.value) {
-        lista = lista.filter(c =>
-            c.serialBordo.includes(filtroSerial.value) ||
-            c.serialViagem.includes(filtroSerial.value)
-        );
-    }
-
-    lista.forEach(c => {
+    for (const c of data) {
         const tr = document.createElement("tr");
-
-        const dataFormatada = c.dataRetirada
-            ? new Date(c.dataRetirada).toLocaleDateString("pt-BR")
-            : "-";
-
         tr.innerHTML = `
             <td>${c.matricula}</td>
             <td>${c.nome}</td>
-            <td title="${getHistorico(c.idBordo)}">${c.idBordo}</td>
-            <td title="${getHistorico(c.idViagem)}">${c.idViagem}</td>
-            <td>${c.serialBordo}</td>
-            <td>${c.serialViagem}</td>
-            <td>${dataFormatada}</td>
+            <td title="${getHistorico(c.idBordo, c.tipo)}">${c.idBordo}</td>
+            <td title="${getHistorico(c.idViagem, c.tipo)}">${c.idViagem}</td>
+            <td title="${getHistorico(c.serialBordo, c.tipo)}">${c.serialBordo}</td>
+            <td title="${getHistorico(c.serialViagem, c.tipo)}">${c.serialViagem}</td>
+            <td>${c.dataRetirada}</td>
             <td>${c.tipo}</td>
         `;
-
         tabela.appendChild(tr);
+    }
+}
+
+// 🔹 Função para mostrar histórico em tooltip
+function getHistorico(valor, tipo) {
+    const historico = cartoes
+        .filter(c => (c.idBordo === valor || c.idViagem === valor || c.serialBordo === valor || c.serialViagem === valor) && c.tipo === tipo)
+        .map(c => `${c.matricula} (${c.dataRetirada})`);
+    return historico.join(", ");
+}
+
+// 🔹 Filtros
+btnFiltrar.addEventListener("click", () => {
+    const tipo = filtroTipo.value;
+    const mat = filtroMatricula.value.trim();
+    const idBordo = filtroIdBordo.value.trim();
+    const idViagem = filtroIdViagem.value.trim();
+
+    const filtrado = cartoes.filter(c => {
+        return (!tipo || c.tipo === tipo)
+            && (!mat || c.matricula.includes(mat))
+            && (!idBordo || c.idBordo.includes(idBordo))
+            && (!idViagem || c.idViagem.includes(idViagem));
     });
-}
 
-// ===================================================================
-// HISTÓRICO DO CARTÃO (TOOLTIP)
-// ===================================================================
-
-function getHistorico(id) {
-    if (!id) return "";
-    return cartoes
-        .filter(c => c.idBordo === id || c.idViagem === id)
-        .map(c => `${c.matricula} - ${(c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-")}`)
-        .join("\n");
-}
-
-// ===================================================================
-// EVENTOS
-// ===================================================================
-
-btnFiltrar.addEventListener("click", renderTabela);
-
-fileProdata.addEventListener("change", e => {
-    if (!userIsAdmin) return alert("Apenas admins podem enviar planilhas.");
-    handleFileUpload(e.target.files[0], "prodata");
-});
-
-fileDigicon.addEventListener("change", e => {
-    if (!userIsAdmin) return alert("Apenas admins podem enviar planilhas.");
-    handleFileUpload(e.target.files[0], "digicon");
+    renderTabela(filtrado);
 });
