@@ -1,108 +1,133 @@
-﻿body {
-  background-color: #1a1a2e;
-  color: #f5f5f5;
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0;
+﻿/* Fundo com radial gradient */
+body {
+    background: radial-gradient(circle at center, #0a0a0a 0%, #000000 70%);
+    color: #e6e6e6;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
+/* Container */
 .container {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 10px 20px;
+    max-width: 1300px;
+    margin: 30px auto;
+    padding: 20px;
 }
 
+/* Título neon */
 h1 {
-  text-align: center;
-  color: #00f5ff;
-  margin-bottom: 20px;
+    text-align: center;
+    color: #00eaff;
+    font-size: 32px;
+    text-shadow: 0 0 10px #00eaff;
+    margin-bottom: 25px;
 }
 
+/* Área de filtros */
 .filtros, .upload {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-.filtros input, .filtros select, .upload input[type="file"] {
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
+/* Inputs futuristas */
+.filtros input, .filtros select {
+    background: #0f0f0f;
+    border: 1px solid #444;
+    color: #00eaff;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 15px;
+    box-shadow: inset 0 0 10px rgba(0,255,255,0.2);
+    transition: border 0.2s, box-shadow 0.2s;
 }
 
-.upload-btn {
-  background-color: #00f5ff;
-  color: #1a1a2e;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  font-weight: bold;
-  transition: background 0.3s;
+.filtros input:focus, .filtros select:focus {
+    border-color: #00f5ff;
+    box-shadow: 0 0 10px #00f5ff;
+    outline: none;
 }
 
-.upload-btn:hover {
-  background-color: #00c0ff;
+/* Botões com borda cromada */
+button, .upload-btn {
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a);
+    color: #00eaff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid;
+    border-image: linear-gradient(to right, #d3d3d3, #ffffff, #d3d3d3) 1;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.25s;
 }
 
-.upload-btn input {
-  display: none;
+button:hover, .upload-btn:hover {
+    background: #00eaff;
+    color: #000;
+    box-shadow: 0 0 12px #00eaff;
 }
 
-button {
-  background-color: #00f5ff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.3s;
+/* Esconder input file */
+.upload input {
+    display: none;
 }
 
-button:hover {
-  background-color: #00c0ff;
-}
-
+/* Tabela estilizada */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 50px;
-}
-
-th, td {
-  border: 1px solid #444;
-  padding: 8px;
-  text-align: center;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #333;
+    overflow: hidden;
+    border-radius: 10px;
 }
 
 th {
-  background-color: #162447;
-  color: #00f5ff;
+    background: #0a0f1f;
+    color: #00eaff;
+    padding: 12px;
+    font-size: 15px;
+    border-bottom: 2px solid #00eaff;
+    text-shadow: 0 0 6px #00eaff;
 }
 
+td {
+    padding: 10px;
+    border-bottom: 1px solid #222;
+    font-size: 14px;
+    color: #dcdcdc;
+}
+
+/* Linhas alternadas */
 tr:nth-child(even) {
-  background-color: #1f4068;
+    background: #111827;
 }
 
 tr:nth-child(odd) {
-  background-color: #1b1b2f;
+    background: #0a0a15;
 }
 
+/* Hover da linha */
+tr:hover {
+    background: #003147;
+    transition: 0.2s;
+}
+
+/* Tooltip premium */
 .hover-id {
-  cursor: pointer;
-  position: relative;
-  color: #00f5ff;
+    cursor: pointer;
+    color: #00eaff;
+    position: relative;
 }
 
 .tooltip {
-  position: absolute;
-  background-color: #00f5ff;
-  color: #1a1a2e;
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  z-index: 1000;
-  pointer-events: none;
+    position: absolute;
+    background: #00eaff;
+    color: #000;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 999;
+    box-shadow: 0 0 10px #00eaff;
+    pointer-events: none;
 }

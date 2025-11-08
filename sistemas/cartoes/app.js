@@ -2,7 +2,6 @@
 import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// SheetJS
 import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
 
 import { firebaseConfig } from "./firebaseConfig.js";
@@ -11,7 +10,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ELEMENTOS
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
@@ -28,7 +26,6 @@ const filtroSerial = document.getElementById("filtroSerial");
 let cartoes = [];
 let isAdmin = false;
 
-// Excel -> Data real
 function excelDateToJSDate(excelSerial) {
     if (!excelSerial) return "";
     if (typeof excelSerial === "string") return excelSerial;
@@ -37,12 +34,10 @@ function excelDateToJSDate(excelSerial) {
     return date.toLocaleDateString("pt-BR");
 }
 
-// Autenticação
 onAuthStateChanged(auth, user => {
     if (!user) return;
-    const uid = user.uid;
 
-    getDocs(query(collection(db, "users"), where("uid", "==", uid)))
+    getDocs(query(collection(db, "users"), where("uid", "==", user.uid)))
         .then(snapshot => {
             const u = snapshot.docs[0];
             isAdmin = u?.data()?.admin || false;
@@ -50,7 +45,6 @@ onAuthStateChanged(auth, user => {
         });
 });
 
-// Leitura + parse da planilha
 async function handleFileUpload(file, tipo) {
     if (!file) return;
 
@@ -60,46 +54,28 @@ async function handleFileUpload(file, tipo) {
     const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
     const parsed = json.map(row => ({
-        matricula:
-            row.Matricula ||
-            row.MATRICULA ||
-            row["Matricula "] ||
-            "",
-
-        nome:
-            row.Nome ||
-            row.NOME ||
-            "",
-
-        idBordo:
-            row["Identificador Bordo"] ||
-            row["ID. Bordo"] ||
-            "",
-
+        matricula: row.Matricula || row.MATRICULA || row["Matricula "] || "",
+        nome: row.Nome || row.NOME || "",
+        idBordo: row["Identificador Bordo"] || row["ID. Bordo"] || "",
         idViagem:
             row["Identificador ½ Viagem"] ||
             row["Identificador 1/2 Viagem"] ||
             row["ID. Viagem"] ||
             "",
-
         serialBordo:
             row["Identificação Bordo"] ||
             row["Nº Cartão de Bordo"] ||
             "",
-
         serialViagem:
             row["Identificação ½ Viagem"] ||
             row["Identificação 1/2 Viagem"] ||
             row["Nº Cartão Viagem"] ||
             "",
-
         dataRetirada:
             excelDateToJSDate(row["Data Retirada"] || row["Desligados"]),
-
         tipo
     }));
 
-    // Salvar no Firestore (apenas admin)
     if (isAdmin) {
         for (const c of parsed) {
             await addDoc(collection(db, "cartoes"), c);
@@ -111,7 +87,6 @@ async function handleFileUpload(file, tipo) {
     renderTabela(cartoes);
 }
 
-// Upload listeners
 fileProdata.addEventListener("change", async e => {
     await handleFileUpload(e.target.files[0], "prodata");
     e.target.value = "";
@@ -122,7 +97,6 @@ fileDigicon.addEventListener("change", async e => {
     e.target.value = "";
 });
 
-// Carregar Firestore
 async function carregarCartoes() {
     const q = query(collection(db, "cartoes"), orderBy("matricula"));
     const ss = await getDocs(q);
@@ -130,7 +104,6 @@ async function carregarCartoes() {
     renderTabela(cartoes);
 }
 
-// Render tabela
 function renderTabela(lista) {
     tabela.innerHTML = "";
 
@@ -150,8 +123,10 @@ function renderTabela(lista) {
     });
 }
 
-// FILTROS (corrigidos)
-btnFiltrar.addEventListener("click", () => {
+// -----------------------------
+// ✅ BUSCA INSTANTÂNEA
+// -----------------------------
+function aplicarFiltros() {
     const tipo = filtroTipo.value;
     const mat = filtroMatricula.value.trim();
     const bordo = filtroIdBordo.value.trim();
@@ -169,7 +144,13 @@ btnFiltrar.addEventListener("click", () => {
     );
 
     renderTabela(filtrado);
-});
+}
+
+// ✅ busca instantânea em todos os inputs
+[filtroTipo, filtroMatricula, filtroIdBordo, filtroIdViagem, filtroSerial]
+    .forEach(el => el.addEventListener("input", aplicarFiltros));
+
+btnFiltrar.addEventListener("click", aplicarFiltros);
 
 // LIMPAR FILTROS
 btnLimpar.addEventListener("click", () => {
