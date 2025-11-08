@@ -109,7 +109,7 @@ sidebar.querySelector('ul').appendChild(suporteLi);
 suporteLi.addEventListener('click', () => openRoute('suporte'));
 
 // 🔹 Adiciona rota Pesquisa Cartões
-ROUTES.pesquisa = "sistemas/pesquisa-cartoes/index.html";
+ROUTES.pesquisa = "sistemas/cartoes/index.html";
 
 const pesquisaLi = document.createElement('li');
 pesquisaLi.dataset.target = 'pesquisa';
