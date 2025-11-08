@@ -12,11 +12,11 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Variáveis
+// 🔹 Variáveis
 let cartoes = [];
 let userIsAdmin = false;
 
-// Elementos
+// 🔹 Elementos
 const tabela = document.querySelector("#tabelaCartoes tbody");
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
@@ -27,101 +27,101 @@ const btnFiltrar = document.getElementById("btnFiltrar");
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
 
-// Autenticação
+// 🔹 Autenticação
 auth.onAuthStateChanged(async user => {
-    if (!user) { window.location.href = "login.html"; return; }
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
-    const snap = await db.collection("users").doc(user.uid).get();
-    userIsAdmin = snap.exists && snap.data().admin === true;
+  const userSnap = await db.collection("users").doc(user.uid).get();
+  userIsAdmin = userSnap.exists && userSnap.data().admin === true;
+
+  // Carrega cartões já salvos no Firebase
+  const snapshot = await db.collection("cartoes").get();
+  cartoes = snapshot.docs.map(doc => doc.data());
+  renderTabela();
 });
 
-// Upload Planilha
-function handleFileUpload(file, tipo) {
-    const reader = new FileReader();
-    reader.onload = async e => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const ws = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, { raw: false });
+// 🔹 Upload
+async function handleFileUpload(file, tipo) {
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: "array" });
+  const ws = workbook.Sheets[workbook.SheetNames[0]];
+  const json = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-        const novaLista = json.map(r => ({
-            matricula: String(r["Matrícula"] || r["matricula"] || "").trim(),
-            nome: r["Nome"] || r["nome"] || "",
-            idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
-            idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
-            serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
-            serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
-            dataRetirada: r["Data Retirada"] ? new Date(r["Data Retirada"]) : null,
-            tipo: tipo
-        }));
+  const novaLista = json.map(r => ({
+    matricula: String(r["Matrícula"] || r["matricula"] || "").trim(),
+    nome: r["Nome"] || r["nome"] || "",
+    idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
+    idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
+    serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
+    serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
+    dataRetirada: r["Data Retirada"] ? new Date(r["Data Retirada"]) : null,
+    tipo: tipo
+  }));
 
-        // Salva na Firestore
-        for (let c of novaLista) {
-            const docRef = db.collection("cartoes").doc();
-            await docRef.set({
-                matricula: c.matricula,
-                nome: c.nome,
-                idBordo: c.idBordo,
-                idViagem: c.idViagem,
-                serialBordo: c.serialBordo,
-                serialViagem: c.serialViagem,
-                dataRetirada: c.dataRetirada ? firebase.firestore.Timestamp.fromDate(c.dataRetirada) : null,
-                tipo: c.tipo
-            });
-        }
-
-        cartoes = cartoes.concat(novaLista);
-        renderTabela();
-        alert("Planilha processada com sucesso!");
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-// Render tabela
-function renderTabela() {
-    tabela.innerHTML = "";
-    let listaFiltrada = cartoes;
-
-    if (filtroTipo.value) listaFiltrada = listaFiltrada.filter(c => c.tipo.toLowerCase() === filtroTipo.value.toLowerCase());
-    if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => c.matricula.includes(filtroMatricula.value));
-    if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => c.idBordo.includes(filtroIdBordo.value));
-    if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => c.idViagem.includes(filtroIdViagem.value));
-    if (filtroSerial.value) listaFiltrada = listaFiltrada.filter(c => c.serialBordo.includes(filtroSerial.value) || c.serialViagem.includes(filtroSerial.value));
-
-    listaFiltrada.forEach(c => {
-        const tr = document.createElement("tr");
-        const dataFormatada = c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-";
-
-        tr.innerHTML = `
-            <td>${c.matricula}</td>
-            <td>${c.nome}</td>
-            <td title="${getHistoricoCartao(c.idBordo)}">${c.idBordo}</td>
-            <td title="${getHistoricoCartao(c.idViagem)}">${c.idViagem}</td>
-            <td>${c.serialBordo}</td>
-            <td>${c.serialViagem}</td>
-            <td>${dataFormatada}</td>
-            <td>${c.tipo}</td>
-        `;
-        tabela.appendChild(tr);
+  // Salva na Firebase
+  if (userIsAdmin) {
+    const batch = db.batch();
+    novaLista.forEach(c => {
+      const docRef = db.collection("cartoes").doc(); // cria doc auto id
+      batch.set(docRef, c);
     });
+    await batch.commit();
+  }
+
+  cartoes = cartoes.concat(novaLista);
+  renderTabela();
 }
 
-// Histórico para tooltip
+// 🔹 Renderiza tabela
+function renderTabela() {
+  tabela.innerHTML = "";
+  let listaFiltrada = cartoes;
+
+  if (filtroTipo.value) listaFiltrada = listaFiltrada.filter(c => c.tipo.toLowerCase() === filtroTipo.value.toLowerCase());
+  if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => String(c.matricula).includes(filtroMatricula.value));
+  if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => String(c.idBordo).includes(filtroIdBordo.value));
+  if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => String(c.idViagem).includes(filtroIdViagem.value));
+  if (filtroSerial.value) listaFiltrada = listaFiltrada.filter(c => String(c.serialBordo).includes(filtroSerial.value) || String(c.serialViagem).includes(filtroSerial.value));
+
+  listaFiltrada.forEach(c => {
+    const tr = document.createElement("tr");
+    const dataFormatada = c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-";
+
+    tr.innerHTML = `
+      <td>${c.matricula}</td>
+      <td>${c.nome}</td>
+      <td title="${getHistoricoCartao(c.idBordo)}">${c.idBordo}</td>
+      <td title="${getHistoricoCartao(c.idViagem)}">${c.idViagem}</td>
+      <td>${c.serialBordo}</td>
+      <td>${c.serialViagem}</td>
+      <td>${dataFormatada}</td>
+      <td>${c.tipo}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+}
+
+// 🔹 Histórico do cartão (hover)
 function getHistoricoCartao(id) {
-    if (!id) return "";
-    const historico = cartoes
-        .filter(c => c.idBordo === id || c.idViagem === id)
-        .map(c => `${c.matricula} (${c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-"})`);
-    return historico.join(", ");
+  if (!id) return "";
+  const historico = cartoes
+    .filter(c => c.idBordo === id || c.idViagem === id)
+    .map(c => `${c.matricula} (${c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-"})`);
+  return historico.join(", ");
 }
 
-// Eventos
+// 🔹 Eventos
 btnFiltrar.addEventListener("click", renderTabela);
+
 fileProdata.addEventListener("change", e => {
-    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
-    handleFileUpload(e.target.files[0], "prodata");
+  if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
+  handleFileUpload(e.target.files[0], "prodata");
 });
+
 fileDigicon.addEventListener("change", e => {
-    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
-    handleFileUpload(e.target.files[0], "digicon");
+  if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
+  handleFileUpload(e.target.files[0], "digicon");
 });
