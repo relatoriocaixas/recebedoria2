@@ -1,8 +1,9 @@
 ﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, getDocs, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs";
 
-let cartoes = [];
+let cartoes = []; // todos os cartões carregados
 let userIsAdmin = false;
 
 // 🔹 Elementos
@@ -11,6 +12,8 @@ const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
 const filtroIdBordo = document.getElementById("filtroIdBordo");
 const filtroIdViagem = document.getElementById("filtroIdViagem");
+const filtroSerialBordo = document.getElementById("filtroSerialBordo");
+const filtroSerialViagem = document.getElementById("filtroSerialViagem");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
@@ -24,29 +27,57 @@ onAuthStateChanged(auth, async user => {
 
     const snap = await getDocs(collection(db, "users"));
     userIsAdmin = snap.docs.some(d => d.id === user.uid && d.data().admin === true);
+
+    if (!userIsAdmin) {
+        // se não for admin, carrega todos os cartões já salvos no Firestore
+        await carregarCartoesFirestore();
+    }
+    renderTabela();
 });
+
+// 🔹 Carregar cartões do Firestore
+async function carregarCartoesFirestore() {
+    try {
+        const snapshot = await getDocs(collection(db, "cartoes"));
+        cartoes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+        console.error("Erro ao carregar cartões do Firestore:", err);
+    }
+}
 
 // 🔹 Função para processar planilha
 async function handleFileUpload(file, tipo) {
-    if (!file) return;
-
-    // Importa XLSX do CDN oficial
-    const XLSX = await import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs");
-
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: "array" });
     const ws = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-    const novaLista = json.map(r => {
-        let matricula = String(r["Matrícula"] || r["matricula"] || "").trim();
-        let nome = r["Nome"] || r["nome"] || "";
+    const novaLista = [];
 
-        let idBordo = String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || "");
-        let idViagem = String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || "");
+    for (const r of json) {
+        let matricula = (
+            r["Matrícula"] || r["matricula"] || r["VerificadorMatricula"] || ""
+        ).toString().trim();
 
-        let serialBordo = String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || "");
-        let serialViagem = String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || "");
+        let nome = (
+            r["Nome"] || r["nome"] || ""
+        ).toString().trim();
+
+        let idBordo = (
+            r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || r["ID. Bordo"] || ""
+        ).toString();
+
+        let idViagem = (
+            r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || r["ID. Viagem"] || ""
+        ).toString();
+
+        let serialBordo = (
+            r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""
+        ).toString();
+
+        let serialViagem = (
+            r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""
+        ).toString();
 
         let dataRetiradaRaw = r["Data Retirada"] || r["dataRetirada"];
         let dataRetirada = null;
@@ -60,7 +91,7 @@ async function handleFileUpload(file, tipo) {
             }
         }
 
-        return {
+        const cartaoObj = {
             matricula,
             nome,
             idBordo,
@@ -70,7 +101,29 @@ async function handleFileUpload(file, tipo) {
             dataRetirada,
             tipo
         };
-    });
+
+        // salva no Firestore se for admin
+        if (userIsAdmin) {
+            try {
+                const docRef = doc(collection(db, "cartoes"));
+                await setDoc(docRef, {
+                    matricula,
+                    nome,
+                    idBordo,
+                    idViagem,
+                    serialBordo,
+                    serialViagem,
+                    dataRetirada,
+                    tipo,
+                    createdAt: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("Erro ao salvar no Firestore:", err);
+            }
+        }
+
+        novaLista.push(cartaoObj);
+    }
 
     cartoes = cartoes.concat(novaLista);
     renderTabela();
@@ -85,13 +138,15 @@ function renderTabela() {
     if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => String(c.matricula).includes(filtroMatricula.value));
     if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => String(c.idBordo).includes(filtroIdBordo.value));
     if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => String(c.idViagem).includes(filtroIdViagem.value));
+    if (filtroSerialBordo && filtroSerialBordo.value) listaFiltrada = listaFiltrada.filter(c => String(c.serialBordo).includes(filtroSerialBordo.value));
+    if (filtroSerialViagem && filtroSerialViagem.value) listaFiltrada = listaFiltrada.filter(c => String(c.serialViagem).includes(filtroSerialViagem.value));
 
     listaFiltrada.forEach(c => {
         const tr = document.createElement("tr");
-        const dataFormatada = c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt-BR") : "-";
+        const dataFormatada = c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-";
 
         tr.innerHTML = `
-            <td>${c.matricula}</td>
+            <td title="${getHistoricoCartaoMatricula(c.matricula, c.tipo)}">${c.matricula}</td>
             <td>${c.nome}</td>
             <td title="${getHistoricoCartao(c.idBordo)}">${c.idBordo}</td>
             <td title="${getHistoricoCartao(c.idViagem)}">${c.idViagem}</td>
@@ -109,7 +164,16 @@ function getHistoricoCartao(id) {
     if (!id) return "";
     const historico = cartoes
         .filter(c => c.idBordo === id || c.idViagem === id)
-        .map(c => `${c.matricula} (${c.dataRetirada ? c.dataRetirada.toLocaleDateString("pt-BR") : "-"})`);
+        .map(c => `${c.matricula} (${c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-"})`);
+    return historico.join(", ");
+}
+
+// 🔹 Histórico das matrículas no hover
+function getHistoricoCartaoMatricula(matricula, tipo) {
+    if (!matricula) return "";
+    const historico = cartoes
+        .filter(c => (c.matricula === matricula || c.tipo === tipo))
+        .map(c => `${c.matricula} (${c.dataRetirada ? new Date(c.dataRetirada).toLocaleDateString("pt-BR") : "-"})`);
     return historico.join(", ");
 }
 
