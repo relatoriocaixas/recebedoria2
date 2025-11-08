@@ -1,12 +1,11 @@
-﻿// 🔹 App.js - Pesquisa de Cartões (XLSX global + Firebase)
-import { auth, db } from "./firebaseConfig.js";
+﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, getDocs, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, getDocs, setDoc, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-let cartoes = []; // Armazena cartões carregados
+let cartoes = [];
 let userIsAdmin = false;
 
-// 🔹 Elementos
+// Elementos
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
@@ -24,54 +23,77 @@ onAuthStateChanged(auth, async user => {
         return;
     }
 
+    const userRef = doc(db, "users", user.uid);
     const snap = await getDocs(collection(db, "users"));
     userIsAdmin = snap.docs.some(d => d.id === user.uid && d.data().admin === true);
 
-    // Carregar dados existentes da Firestore
-    const snapshot = await getDocs(collection(db, "cartoes"));
-    cartoes = snapshot.docs.map(doc => doc.data());
-    renderTabela();
+    // Carrega dados existentes do Firestore
+    await carregarCartoesFirestore();
 });
 
 // 🔹 Função para processar planilha
 async function handleFileUpload(file, tipo) {
+    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
+
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: "array" });
     const ws = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-    const novaLista = json.map(r => {
-        let matricula = String(r["Matrícula"] || r["matricula"] || "").trim();
-        let nome = r["Nome"] || r["nome"] || "";
-        let idBordo = String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || "");
-        let idViagem = String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || "");
-        let serialBordo = String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || "");
-        let serialViagem = String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || "");
-        let dataRetirada = r["Data Retirada"];
-        if (dataRetirada) {
-            // Se veio como número do Excel, converte
-            if (!isNaN(dataRetirada)) {
-                dataRetirada = new Date((dataRetirada - 25569) * 86400000);
-            } else {
-                dataRetirada = new Date(dataRetirada);
-            }
-        } else {
-            dataRetirada = null;
-        }
-        return { matricula, nome, idBordo, idViagem, serialBordo, serialViagem, dataRetirada, tipo };
-    });
+    const novaLista = json.map(r => ({
+        matricula: String(r["Matrícula"] || r["matricula"] || "").trim(),
+        nome: r["Nome"] || r["nome"] || "",
+        idBordo: String(r["ID Bordo"] || r["Identificador Bordo"] || r["Identificação Bordo"] || ""),
+        idViagem: String(r["ID Viagem"] || r["Identificador ½ Viagem"] || r["Identificação ½ Viagem"] || ""),
+        serialBordo: String(r["Serial Bordo"] || r["Nº Cartão de Bordo"] || ""),
+        serialViagem: String(r["Serial Viagem"] || r["Nº Cartão Viagem"] || ""),
+        dataRetirada: r["Data Retirada"] ? new Date(r["Data Retirada"]) : null,
+        tipo: tipo
+    }));
 
-    // Salvar na Firestore
-    if (userIsAdmin) {
-        const batchPromises = novaLista.map(async c => {
-            const id = `${c.tipo}_${c.matricula}_${c.idBordo}_${c.idViagem}_${c.serialBordo}_${c.serialViagem}`;
-            await setDoc(doc(db, "cartoes", id), { ...c, createdAt: serverTimestamp() });
-        });
-        await Promise.all(batchPromises);
-        console.log("✅ Planilha salva na Firestore");
-    }
-
+    // Atualiza lista principal e salva no Firestore
     cartoes = cartoes.concat(novaLista);
+    await salvarCartoesFirestore(novaLista);
+    renderTabela();
+}
+
+// 🔹 Salvar no Firestore
+async function salvarCartoesFirestore(lista) {
+    const colecaoRef = collection(db, "cartoes");
+    for (let c of lista) {
+        try {
+            await addDoc(colecaoRef, {
+                matricula: c.matricula,
+                nome: c.nome,
+                idBordo: c.idBordo,
+                idViagem: c.idViagem,
+                serialBordo: c.serialBordo,
+                serialViagem: c.serialViagem,
+                dataRetirada: c.dataRetirada ? serverTimestamp() : null,
+                tipo: c.tipo
+            });
+        } catch (err) {
+            console.error("Erro ao salvar cartão:", err);
+        }
+    }
+}
+
+// 🔹 Carregar do Firestore
+async function carregarCartoesFirestore() {
+    const snapshot = await getDocs(collection(db, "cartoes"));
+    cartoes = snapshot.docs.map(d => {
+        const data = d.data();
+        return {
+            matricula: data.matricula || "",
+            nome: data.nome || "",
+            idBordo: data.idBordo || "",
+            idViagem: data.idViagem || "",
+            serialBordo: data.serialBordo || "",
+            serialViagem: data.serialViagem || "",
+            dataRetirada: data.dataRetirada ? data.dataRetirada.toDate() : null,
+            tipo: data.tipo || ""
+        };
+    });
     renderTabela();
 }
 
@@ -81,10 +103,10 @@ function renderTabela() {
     let listaFiltrada = cartoes;
 
     if (filtroTipo.value) listaFiltrada = listaFiltrada.filter(c => c.tipo.toLowerCase() === filtroTipo.value.toLowerCase());
-    if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => c.matricula.includes(filtroMatricula.value));
-    if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => c.idBordo.includes(filtroIdBordo.value));
-    if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => c.idViagem.includes(filtroIdViagem.value));
-    if (filtroSerial.value) listaFiltrada = listaFiltrada.filter(c => c.serialBordo.includes(filtroSerial.value) || c.serialViagem.includes(filtroSerial.value));
+    if (filtroMatricula.value) listaFiltrada = listaFiltrada.filter(c => String(c.matricula).includes(filtroMatricula.value));
+    if (filtroIdBordo.value) listaFiltrada = listaFiltrada.filter(c => String(c.idBordo).includes(filtroIdBordo.value));
+    if (filtroIdViagem.value) listaFiltrada = listaFiltrada.filter(c => String(c.idViagem).includes(filtroIdViagem.value));
+    if (filtroSerial.value) listaFiltrada = listaFiltrada.filter(c => String(c.serialBordo).includes(filtroSerial.value) || String(c.serialViagem).includes(filtroSerial.value));
 
     listaFiltrada.forEach(c => {
         const tr = document.createElement("tr");
@@ -104,7 +126,7 @@ function renderTabela() {
     });
 }
 
-// 🔹 Histórico de matriculas para tooltip
+// 🔹 Histórico do cartão (hover)
 function getHistoricoCartao(id) {
     if (!id) return "";
     const historico = cartoes
@@ -115,13 +137,5 @@ function getHistoricoCartao(id) {
 
 // 🔹 Eventos
 btnFiltrar.addEventListener("click", renderTabela);
-
-fileProdata.addEventListener("change", e => {
-    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
-    handleFileUpload(e.target.files[0], "prodata");
-});
-
-fileDigicon.addEventListener("change", e => {
-    if (!userIsAdmin) { alert("Apenas admins podem subir planilhas"); return; }
-    handleFileUpload(e.target.files[0], "digicon");
-});
+fileProdata.addEventListener("change", e => handleFileUpload(e.target.files[0], "prodata"));
+fileDigicon.addEventListener("change", e => handleFileUpload(e.target.files[0], "digicon"));
