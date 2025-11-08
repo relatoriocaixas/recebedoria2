@@ -1,9 +1,9 @@
-﻿import { auth, db } from "/recebedoria2-main/sistemas/cartoes/firebaseConfig.js";
+﻿import { auth, db } from "./firebaseConfig.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
 
-const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
+// 🔹 Elementos
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
 const filtroIdBordo = document.getElementById("filtroIdBordo");
@@ -13,93 +13,138 @@ const btnFiltrar = document.getElementById("btnFiltrar");
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
 
-let cartoes = []; // Array local
+const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
 
-// 🔹 Função para processar planilha
-async function processarArquivo(file, tipo) {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+let cartoes = [];
 
-    const processado = json.map(r => ({
-        matricula: r["Matricula"] || r["Matrícula"] || "",
-        nome: r["Nome"] || "",
-        idBordo: r["Identificador Bordo"] || r["ID. Bordo"] || "",
-        idViagem: r["Identificador ½ Viagem"] || r["ID. Viagem"] || "",
-        serialBordo: r["Identificação Bordo"] || r["Nº Cartão de Bordo"] || "",
-        serialViagem: r["Identificação ½ Viagem"] || r["Nº Cartão Viagem"] || "",
-        dataRetirada: r["Data Retirada"] || r["Desligados"] || "",
-        tipo
-    }));
+// 🔹 Carregar dados do Firestore
+async function carregarCartoes() {
+    const tipos = ["prodata", "digicon"];
+    cartoes = [];
 
-    // Salvar no Firestore se admin
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Usuário não autenticado!");
-        return;
+    for (const tipo of tipos) {
+        const q = query(collection(db, "cartoes_" + tipo), orderBy("matricula", "asc"));
+        const snap = await getDocs(q);
+
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            cartoes.push({ ...data, tipo });
+        });
     }
 
-    const userSnap = await getDocs(query(collection(db, "users")));
-    const currentUser = userSnap.docs.find(d => d.data().uid === user.uid);
-    const isAdmin = currentUser ? currentUser.data().admin : false;
-
-    if (isAdmin) {
-        const col = collection(db, "cartoes");
-        for (let c of processado) {
-            await addDoc(col, { ...c, criadoEm: serverTimestamp() });
-        }
-        alert(`Planilha ${tipo} enviada com sucesso!`);
-    }
-
-    cartoes = cartoes.concat(processado);
     renderizarTabela();
 }
 
 // 🔹 Renderizar tabela
 function renderizarTabela() {
     tabela.innerHTML = "";
-    let lista = [...cartoes];
 
-    const tipo = filtroTipo.value;
-    const mat = filtroMatricula.value.trim();
-    const idB = filtroIdBordo.value.trim();
-    const idV = filtroIdViagem.value.trim();
+    const tipoFiltro = filtroTipo.value.toLowerCase();
+    const matriculaFiltro = filtroMatricula.value.trim();
+    const idBordoFiltro = filtroIdBordo.value.trim();
+    const idViagemFiltro = filtroIdViagem.value.trim();
 
-    if (tipo) lista = lista.filter(c => c.tipo === tipo);
-    if (mat) lista = lista.filter(c => c.matricula.includes(mat));
-    if (idB) lista = lista.filter(c => c.idBordo.toString().includes(idB));
-    if (idV) lista = lista.filter(c => c.idViagem.toString().includes(idV));
+    const filtrados = cartoes.filter(c => {
+        if (tipoFiltro && c.tipo !== tipoFiltro) return false;
+        if (matriculaFiltro && !c.matricula.includes(matriculaFiltro)) return false;
+        if (idBordoFiltro && !c.idBordo.toString().includes(idBordoFiltro)) return false;
+        if (idViagemFiltro && !c.idViagem.toString().includes(idViagemFiltro)) return false;
+        return true;
+    });
 
-    lista.forEach(c => {
+    filtrados.forEach(c => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${c.matricula}</td>
-            <td>${c.nome}</td>
-            <td title="Cartões anteriores: ${cartoes.filter(x=>x.idBordo===c.idBordo && x.matricula!==c.matricula).map(x=>x.matricula).join(", ")}">${c.idBordo}</td>
-            <td title="Cartões anteriores: ${cartoes.filter(x=>x.idViagem===c.idViagem && x.matricula!==c.matricula).map(x=>x.matricula).join(", ")}">${c.idViagem}</td>
-            <td>${c.serialBordo}</td>
-            <td>${c.serialViagem}</td>
-            <td>${c.dataRetirada}</td>
-            <td>${c.tipo}</td>
-        `;
+
+        const tdMat = document.createElement("td");
+        tdMat.textContent = c.matricula;
+        tr.appendChild(tdMat);
+
+        const tdNome = document.createElement("td");
+        tdNome.textContent = c.nome;
+        tr.appendChild(tdNome);
+
+        const tdIdBordo = document.createElement("td");
+        tdIdBordo.textContent = c.idBordo;
+        tdIdBordo.title = gerarTooltip(c.idBordo, "bordo", c.tipo);
+        tr.appendChild(tdIdBordo);
+
+        const tdIdViagem = document.createElement("td");
+        tdIdViagem.textContent = c.idViagem;
+        tdIdViagem.title = gerarTooltip(c.idViagem, "viagem", c.tipo);
+        tr.appendChild(tdIdViagem);
+
+        const tdSerialBordo = document.createElement("td");
+        tdSerialBordo.textContent = c.serialBordo || "";
+        tr.appendChild(tdSerialBordo);
+
+        const tdSerialViagem = document.createElement("td");
+        tdSerialViagem.textContent = c.serialViagem || "";
+        tr.appendChild(tdSerialViagem);
+
+        const tdData = document.createElement("td");
+        tdData.textContent = c.dataRetirada || "";
+        tr.appendChild(tdData);
+
+        const tdTipo = document.createElement("td");
+        tdTipo.textContent = c.tipo;
+        tr.appendChild(tdTipo);
+
         tabela.appendChild(tr);
     });
 }
 
-// 🔹 Eventos de filtro
+// 🔹 Gerar tooltip com histórico de matrículas para o ID
+function gerarTooltip(id, campo, tipo) {
+    const historico = cartoes
+        .filter(c => c.tipo === tipo && c[campo] === id)
+        .map(c => `${c.matricula} (${c.dataRetirada || "-"})`)
+        .join("\n");
+    return historico;
+}
+
+// 🔹 Filtrar
 btnFiltrar.addEventListener("click", renderizarTabela);
 
-// 🔹 Uploads
-fileProdata.addEventListener("change", e => processarArquivo(e.target.files[0], "prodata"));
-fileDigicon.addEventListener("change", e => processarArquivo(e.target.files[0], "digicon"));
+// 🔹 Upload arquivos Excel
+fileProdata.addEventListener("change", (e) => handleFileUpload(e, "prodata"));
+fileDigicon.addEventListener("change", (e) => handleFileUpload(e, "digicon"));
 
-// 🔹 Carregar dados do Firestore ao iniciar
-onAuthStateChanged(auth, async user => {
+async function handleFileUpload(event, tipo) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet, { raw: false });
+
+    const batchPromises = [];
+
+    json.forEach(row => {
+        const docData = {
+            matricula: row.Matricula || row["Matrícula"] || "",
+            nome: row.Nome || "",
+            idBordo: row["Identificador Bordo"] || row["ID. Bordo"] || row["ID Bordo"] || "",
+            idViagem: row["Identificador ½ Viagem"] || row["ID. Viagem"] || row["ID Viagem"] || "",
+            serialBordo: row["Identificação Bordo"] || row["Nº Cartão de Bordo"] || "",
+            serialViagem: row["Identificação ½ Viagem"] || row["Nº Cartão Viagem"] || "",
+            dataRetirada: row["Data Retirada"] || row["Desligados"] || "",
+        };
+        batchPromises.push(addDoc(collection(db, "cartoes_" + tipo), docData));
+    });
+
+    try {
+        await Promise.all(batchPromises);
+        alert(`Planilha ${tipo.toUpperCase()} importada com sucesso!`);
+        carregarCartoes();
+    } catch (err) {
+        console.error(err);
+        alert("Erro ao enviar planilha.");
+    }
+}
+
+// 🔹 Inicialização
+onAuthStateChanged(auth, async (user) => {
     if (!user) return;
-
-    const snap = await getDocs(collection(db, "cartoes"));
-    cartoes = snap.docs.map(d => d.data());
-    renderizarTabela();
+    await carregarCartoes();
 });
