@@ -1,10 +1,26 @@
-﻿import { auth, db } from "./firebaseConfig.js";
-import { collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import * as XLSX from "./xlsx.mjs"; // Certifique-se de que xlsx.mjs está na mesma pasta
+﻿// app.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// Elementos do DOM
-const fileProdata = document.getElementById("fileProdata");
-const fileDigicon = document.getElementById("fileDigicon");
+// 🔹 Import XLSX via CDN
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
+
+// 🔹 Firebase config
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// 🔹 Referências DOM
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
@@ -12,129 +28,97 @@ const filtroIdBordo = document.getElementById("filtroIdBordo");
 const filtroIdViagem = document.getElementById("filtroIdViagem");
 const btnFiltrar = document.getElementById("btnFiltrar");
 
-// ============================================================
-// Carregar tabela com todos os cartões
-// ============================================================
-async function carregarTabela() {
-    tabela.innerHTML = "<tr><td colspan='8'>Carregando...</td></tr>";
+const fileProdata = document.getElementById("fileProdata");
+const fileDigicon = document.getElementById("fileDigicon");
 
-    let q = query(collection(db, "cartoes"), orderBy("matricula"));
-    const snap = await getDocs(q);
+// 🔹 Dados em memória
+let cartoes = [];
 
-    tabela.innerHTML = "";
-    snap.forEach(docSnap => {
-        const r = docSnap.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${r.matricula}</td>
-            <td>${r.nome}</td>
-            <td class="hoverIdBordo" title="Clique para ver histórico">${r.idBordo}</td>
-            <td>${r.idViagem}</td>
-            <td class="hoverSerialBordo" title="Clique para ver histórico">${r.serialBordo}</td>
-            <td>${r.serialViagem}</td>
-            <td>${r.dataRetirada ? new Date(r.dataRetirada.seconds ? r.dataRetirada.seconds*1000 : r.dataRetirada).toLocaleDateString() : ""}</td>
-            <td>${r.tipo}</td>
-        `;
-        tabela.appendChild(tr);
-    });
+// 🔹 Carregar dados do Firestore
+async function carregarCartoes() {
+  const snapshot = await getDocs(collection(db, "cartoes"));
+  cartoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderizarTabela(cartoes);
 }
 
-// ============================================================
-// Upload de planilha
-// ============================================================
-async function handleFileUpload(file, tipo) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const data = e.target.result;
-        const workbook = XLSX.read(data, { type: "array" }); // <-- CORRETO
-
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-        const batch = [];
-
-        json.forEach(row => {
-            const item = {
-                matricula: row.Matricula || row.MATRICULA || "",
-                nome: row.Nome || row.NOME || "",
-                idBordo: row["Identificador Bordo"] || row["ID. Bordo"] || row["ID Bordo"] || "",
-                idViagem: row["Identificador ½ Viagem"] || row["ID. Viagem"] || row["ID Viagem"] || "",
-                serialBordo: row["Identificação Bordo"] || row["Nº Cartão de Bordo"] || "",
-                serialViagem: row["Identificação ½ Viagem"] || row["Nº Cartão Viagem"] || "",
-                dataRetirada: row["Data Retirada"] ? new Date(row["Data Retirada"].split("/").reverse().join("-")) : null,
-                tipo
-            };
-            batch.push(item);
-        });
-
-        // Salvar todos os itens no Firestore
-        for (let item of batch) {
-            await addDoc(collection(db, "cartoes"), item);
-        }
-
-        alert(`Planilha ${tipo} carregada com ${batch.length} registros`);
-        await carregarTabela();
-    };
-    reader.readAsArrayBuffer(file); // <-- CORRETO
+// 🔹 Renderizar tabela
+function renderizarTabela(lista) {
+  tabela.innerHTML = "";
+  lista.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${c.matricula}</td>
+      <td>${c.nome}</td>
+      <td title="${c.idBordoHistory?.join(", ") || ""}">${c.idBordo}</td>
+      <td title="${c.idViagemHistory?.join(", ") || ""}">${c.idViagem}</td>
+      <td title="${c.serialBordoHistory?.join(", ") || ""}">${c.serialBordo}</td>
+      <td title="${c.serialViagemHistory?.join(", ") || ""}">${c.serialViagem}</td>
+      <td>${c.dataRetirada}</td>
+      <td>${c.tipo}</td>
+    `;
+    tabela.appendChild(tr);
+  });
 }
 
-// ============================================================
-// Eventos de upload
-// ============================================================
-if (fileProdata) {
-    fileProdata.addEventListener("change", async (e) => {
-        await handleFileUpload(e.target.files[0], "prodata");
-        e.target.value = "";
-    });
-}
+// 🔹 Filtrar
+btnFiltrar.addEventListener("click", () => {
+  const tipo = filtroTipo.value;
+  const matricula = filtroMatricula.value.trim();
+  const idBordo = filtroIdBordo.value.trim();
+  const idViagem = filtroIdViagem.value.trim();
 
-if (fileDigicon) {
-    fileDigicon.addEventListener("change", async (e) => {
-        await handleFileUpload(e.target.files[0], "digicon");
-        e.target.value = "";
-    });
-}
+  const filtrados = cartoes.filter(c => {
+    return (!tipo || c.tipo === tipo)
+      && (!matricula || c.matricula.includes(matricula))
+      && (!idBordo || c.idBordo.includes(idBordo))
+      && (!idViagem || c.idViagem.includes(idViagem));
+  });
 
-// ============================================================
-// Filtro de tabela
-// ============================================================
-btnFiltrar.addEventListener("click", async () => {
-    const tipo = filtroTipo.value.trim().toLowerCase();
-    const matricula = filtroMatricula.value.trim();
-    const idBordo = filtroIdBordo.value.trim();
-    const idViagem = filtroIdViagem.value.trim();
-
-    let q = query(collection(db, "cartoes"), orderBy("matricula"));
-    const snap = await getDocs(q);
-
-    tabela.innerHTML = "";
-    snap.forEach(docSnap => {
-        const r = docSnap.data();
-        if ((tipo && r.tipo !== tipo) ||
-            (matricula && !r.matricula.includes(matricula)) ||
-            (idBordo && !r.idBordo.toString().includes(idBordo)) ||
-            (idViagem && !r.idViagem.toString().includes(idViagem))) return;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${r.matricula}</td>
-            <td>${r.nome}</td>
-            <td class="hoverIdBordo" title="Clique para ver histórico">${r.idBordo}</td>
-            <td>${r.idViagem}</td>
-            <td class="hoverSerialBordo" title="Clique para ver histórico">${r.serialBordo}</td>
-            <td>${r.serialViagem}</td>
-            <td>${r.dataRetirada ? new Date(r.dataRetirada.seconds ? r.dataRetirada.seconds*1000 : r.dataRetirada).toLocaleDateString() : ""}</td>
-            <td>${r.tipo}</td>
-        `;
-        tabela.appendChild(tr);
-    });
+  renderizarTabela(filtrados);
 });
 
-// ============================================================
-// Inicialização
-// ============================================================
-document.addEventListener("DOMContentLoaded", () => {
-    carregarTabela();
+// 🔹 Upload planilha
+async function handleFileUpload(file, tipo) {
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: "array" });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const json = XLSX.utils.sheet_to_json(worksheet);
+
+  for (let row of json) {
+    const docData = {
+      matricula: row["Matricula"] || row["Matrícula"] || "",
+      nome: row["Nome"] || "",
+      idBordo: row["Identificador Bordo"] || row["ID. Bordo"] || "",
+      idViagem: row["Identificador ½ Viagem"] || row["ID. Viagem"] || "",
+      serialBordo: row["Identificação Bordo"] || row["Nº Cartão de Bordo"] || "",
+      serialViagem: row["Identificação ½ Viagem"] || row["Nº Cartão Viagem"] || "",
+      dataRetirada: row["Data Retirada"] || row["Desligados"] || "",
+      tipo: tipo,
+      // Arrays para histórico
+      idBordoHistory: [],
+      idViagemHistory: [],
+      serialBordoHistory: [],
+      serialViagemHistory: []
+    };
+
+    await addDoc(collection(db, "cartoes"), docData);
+  }
+
+  alert(`Planilha ${tipo} carregada com sucesso!`);
+  carregarCartoes();
+}
+
+// 🔹 Eventos upload
+fileProdata.addEventListener("change", e => {
+  if (e.target.files.length) handleFileUpload(e.target.files[0], "prodata");
+});
+fileDigicon.addEventListener("change", e => {
+  if (e.target.files.length) handleFileUpload(e.target.files[0], "digicon");
+});
+
+// 🔹 Inicialização
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  carregarCartoes();
 });
