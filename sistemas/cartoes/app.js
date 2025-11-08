@@ -1,17 +1,20 @@
 ﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+// SheetJS
 import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
 
 import { firebaseConfig } from "./firebaseConfig.js";
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// ELEMENTOS
 const fileProdata = document.getElementById("fileProdata");
 const fileDigicon = document.getElementById("fileDigicon");
 const tabela = document.getElementById("tabelaCartoes").querySelector("tbody");
-
 const btnFiltrar = document.getElementById("btnFiltrar");
 const filtroTipo = document.getElementById("filtroTipo");
 const filtroMatricula = document.getElementById("filtroMatricula");
@@ -21,17 +24,21 @@ const filtroIdViagem = document.getElementById("filtroIdViagem");
 let cartoes = [];
 let isAdmin = false;
 
-// ✅ Converte número excel → data real
-function excelDateToJSDate(n) {
-    if (!n || isNaN(n)) return "";
-    const base = new Date(1899, 11, 30);
-    return new Date(base.getTime() + n * 86400000).toLocaleDateString("pt-BR");
+// Excel -> Data (serial) para data real
+function excelDateToJSDate(excelSerial) {
+    if (!excelSerial) return "";
+    if (typeof excelSerial === "string") return excelSerial;
+
+    const date = new Date((excelSerial - 25569) * 86400 * 1000);
+    return date.toLocaleDateString("pt-BR");
 }
 
+// Autenticação
 onAuthStateChanged(auth, user => {
     if (!user) return;
+    const uid = user.uid;
 
-    getDocs(query(collection(db, "users"), where("uid", "==", user.uid)))
+    getDocs(query(collection(db, "users"), where("uid", "==", uid)))
         .then(snapshot => {
             const u = snapshot.docs[0];
             isAdmin = u?.data()?.admin || false;
@@ -39,95 +46,92 @@ onAuthStateChanged(auth, user => {
         });
 });
 
-// ✅ TRATAMENTO DA PLANILHA (corrigido matricula e data)
+// ✅ Função corrigida para ler as planilhas reais
 async function handleFileUpload(file, tipo) {
     if (!file) return;
 
-    const buffer = await file.arrayBuffer();
-    const wb = XLSX.read(buffer, { type: "array" });
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, { type: "array" });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
     const parsed = json.map(row => ({
-        matricula: String(
+        matricula:
             row.Matricula ||
-            row["Matricula"] ||
+            row.MATRICULA ||
             row["Matricula "] ||
-            row["MATRICULA"] ||
-            row["Matrícula"] ||
-            row["matricula"] ||
-            ""
-        ).trim(),
+            "",
 
-        nome: row.Nome || row["Nome "] || row["NOME"] || "",
+        nome:
+            row.Nome ||
+            row.NOME ||
+            "",
 
-        idBordo: String(
+        idBordo:
             row["Identificador Bordo"] ||
-            row["ID Bordo"] ||
             row["ID. Bordo"] ||
-            row["ID"] ||
-            ""
-        ).trim(),
+            "",
 
-        idViagem: String(
+        idViagem:
             row["Identificador ½ Viagem"] ||
-            row["ID Viagem"] ||
+            row["Identificador 1/2 Viagem"] ||
             row["ID. Viagem"] ||
-            ""
-        ).trim(),
+            "",
 
-        serialBordo: String(
+        serialBordo:
             row["Identificação Bordo"] ||
             row["Nº Cartão de Bordo"] ||
-            ""
-        ).trim(),
+            "",
 
-        serialViagem: String(
+        serialViagem:
             row["Identificação ½ Viagem"] ||
+            row["Identificação 1/2 Viagem"] ||
             row["Nº Cartão Viagem"] ||
-            ""
-        ).trim(),
+            "",
 
-        dataRetirada: excelDateToJSDate(row["Data Retirada"]),
+        dataRetirada:
+            excelDateToJSDate(row["Data Retirada"] || row["Desligados"]),
 
         tipo
     }));
 
-    // ✅ salvar no Firestore
+    // ✅ SALVAR NO FIRESTORE COM OS CAMPOS CORRETOS
     if (isAdmin) {
         for (const c of parsed) {
             await addDoc(collection(db, "cartoes"), c);
         }
-        alert(`Planilha (${tipo}) enviada com sucesso!`);
+        alert(`Planilha ${tipo} enviada com sucesso!`);
     }
 
     cartoes.push(...parsed);
     renderTabela(cartoes);
 }
 
-fileProdata.addEventListener("change", e => {
-    handleFileUpload(e.target.files[0], "prodata");
+// Upload listeners
+fileProdata.addEventListener("change", async e => {
+    await handleFileUpload(e.target.files[0], "prodata");
     e.target.value = "";
 });
 
-fileDigicon.addEventListener("change", e => {
-    handleFileUpload(e.target.files[0], "digicon");
+fileDigicon.addEventListener("change", async e => {
+    await handleFileUpload(e.target.files[0], "digicon");
     e.target.value = "";
 });
 
+// Carregar Firestore
 async function carregarCartoes() {
-    const snap = await getDocs(collection(db, "cartoes"));
-    cartoes = snap.docs.map(d => d.data());
+    const q = query(collection(db, "cartoes"), orderBy("matricula"));
+    const ss = await getDocs(q);
+    cartoes = ss.docs.map(doc => doc.data());
     renderTabela(cartoes);
 }
 
-// ✅ Renderização (apenas mantendo o seu padrão)
+// Render tabela
 function renderTabela(lista) {
     tabela.innerHTML = "";
 
     lista.forEach(c => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td>${c.matricula}</td>
             <td>${c.nome}</td>
@@ -138,23 +142,22 @@ function renderTabela(lista) {
             <td>${c.dataRetirada}</td>
             <td>${c.tipo}</td>
         `;
-
         tabela.appendChild(tr);
     });
 }
 
-// ✅ Filtros corrigidos (agora funcionam com number ou string)
+// Filtros (agora funcionando porque os campos existem)
 btnFiltrar.addEventListener("click", () => {
-    const tipo = filtroTipo.value.trim();
+    const tipo = filtroTipo.value;
     const mat = filtroMatricula.value.trim();
     const bordo = filtroIdBordo.value.trim();
     const viagem = filtroIdViagem.value.trim();
 
     const filtrado = cartoes.filter(c =>
         (!tipo || c.tipo === tipo) &&
-        (!mat || String(c.matricula).includes(mat)) &&
-        (!bordo || String(c.idBordo).includes(bordo)) &&
-        (!viagem || String(c.idViagem).includes(viagem))
+        (!mat || c.matricula.includes(mat)) &&
+        (!bordo || c.idBordo.includes(bordo)) &&
+        (!viagem || c.idViagem.includes(viagem))
     );
 
     renderTabela(filtrado);
