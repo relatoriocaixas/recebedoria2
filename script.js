@@ -35,7 +35,7 @@ function hideLoading() { loadingOverlay.style.display = 'none'; }
 // 🔹 Ajusta topbar e iframe
 document.addEventListener("DOMContentLoaded", () => {
   const topbar = document.querySelector(".topbar");
-  if (topbar) topbar.style.height = "32px"; // 🔻 diminui topbar
+  if (topbar) topbar.style.height = "15px"; // 🔻 diminui topbar
 
   // 🔻 aumenta área útil dos iframes para baixo
   iframeContainer.style.height = "calc(100vh - 32px)"; // pega quase toda a tela
@@ -178,25 +178,56 @@ let authChecked = false;
 let retryCount = 0;
 const MAX_RETRIES = 3;
 
+// ============================================================
+// ✅ Autenticação estável (SEM REDIRECT PREMATURO / SEM LOOP)
+// ============================================================
 onAuthStateChanged(auth, async (user) => {
-  showLoading();
+    if (!user) {
+        // Usuário realmente não logado → envia para login
+        window.location.href = "login.html";
+        return;
+    }
 
-  if (!user) {
-    setTimeout(() => {
-      if (!auth.currentUser && !authChecked) {
-        authChecked = true;
+    try {
+        showLoading();
+
+        // Aguarda o Firebase garantir o token
+        await user.getIdToken(true);
+
+        const { matricula, isAdmin } = await ensureUserInFirestore(user);
+
+        sidebar.classList.remove('hidden');
+        sidebarBadge.textContent = matricula;
+
+        sidebar.addEventListener('mouseenter', ()=> { 
+            sidebarBadge.textContent = `${user.displayName || 'Usuário'} • ${matricula}`;
+        });
+
+        sidebar.addEventListener('mouseleave', ()=> {
+            sidebarBadge.textContent = matricula;
+        });
+
+        // Envia token assim que o usuário estiver estável
+        await sendAuthToIframe();
+
+        // Agora sim, libera a navegação
+        goHome();
+
         hideLoading();
-        window.location.href = 'login.html';
-      }
-    }, 1000);
-    return;
-  }
 
-  try {
-    authChecked = true;
-    const { matricula, isAdmin } = await ensureUserInFirestore(user);
+        console.log(`✅ Usuário autenticado: ${matricula} | Admin: ${isAdmin}`);
 
-    sidebar.classList.remove('hidden');
+    } catch (err) {
+        console.error("🔥 Erro na autenticação estável:", err);
+
+        alert("Falha ao validar sessão. Refaça o login.");
+        await signOut(auth);
+        window.location.href = "login.html";
+    }
+});
+  
+
+  sidebar.classList.remove('hidden');
     sidebarBadge.textContent = matricula;
     sidebar.addEventListener('mouseenter', ()=> {
       sidebarBadge.textContent = (user.displayName||'Usuário') + ' • ' + matricula;
