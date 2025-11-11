@@ -29,7 +29,7 @@ const dataVigenteSpan = document.getElementById('dataVigente');
 // ✅ ROTAS ABSOLUTAS (corrige logout e reload)
 // ======================================================
 // GitHub Pages exige rotas 100% absolutas
-const BASE = "https://relatoriocaixas.github.io/recebedoria2";
+const BASE = "https://relatoriocaixas.github.io/recebedoria2/";
 
 const ROUTES = {
   home: null,
