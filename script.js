@@ -1,10 +1,11 @@
 // script.js
 import { auth, db } from "./firebaseConfig.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { updatePassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// 🔹 Elementos principais
+// ----------------------------------------------------------------------
+// ELEMENTOS PRINCIPAIS
+// ----------------------------------------------------------------------
 const sidebar = document.getElementById('sidebar');
 const logoutBtn = document.getElementById('logoutBtn');
 const changePassBtn = document.getElementById('changePassBtn');
@@ -14,63 +15,73 @@ const iframeContainer = document.getElementById('iframeContainer');
 const avisosSection = document.getElementById('avisosSection');
 const dataVigenteSpan = document.getElementById('dataVigente');
 
-// 🔹 Rotas
+// ----------------------------------------------------------------------
+// ROTAS
+// ----------------------------------------------------------------------
 const ROUTES = {
   home: null,
   abastecimento: "sistemas/abastecimento/index.html",
   emprestimo: "sistemas/emprestimo/index.html",
   relatorios: "sistemas/emprestimo/emprestimocartao-main/relatorio.html",
   diferencas: "sistemas/diferencas/index.html",
-  escala: "sistemas/escala/escala.html"
+  escala: "sistemas/escala/escala.html",
+  funcionario: "sistemas/funcionario/index.html",
+  suporte: "sistemas/suporte/index.html",
+  pesquisa: "sistemas/cartoes/index.html"
 };
 
-// 🔹 Loading overlay
-const loadingOverlay = document.createElement('div');
-loadingOverlay.id = 'loadingOverlay';
+// ----------------------------------------------------------------------
+// LOADING OVERLAY
+// ----------------------------------------------------------------------
+const loadingOverlay = document.createElement("div");
+loadingOverlay.id = "loadingOverlay";
 loadingOverlay.innerHTML = `<div class="spinner"></div><div>Carregando...</div>`;
 document.body.appendChild(loadingOverlay);
-function showLoading() { loadingOverlay.style.display = 'flex'; }
-function hideLoading() { loadingOverlay.style.display = 'none'; }
 
-// 🔹 Ajusta topbar e iframe
+function showLoading() { loadingOverlay.style.display = "flex"; }
+function hideLoading() { loadingOverlay.style.display = "none"; }
+
+// ----------------------------------------------------------------------
+// AJUSTE DE LAYOUT
+// ----------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   const topbar = document.querySelector(".topbar");
-  if (topbar) topbar.style.height = "15px"; // 🔻 diminui topbar
+  if (topbar) topbar.style.height = "15px";
 
-  // 🔻 aumenta área útil dos iframes para baixo
-  iframeContainer.style.height = "calc(100vh - 32px)"; // pega quase toda a tela
+  iframeContainer.style.height = "calc(100vh - 32px)";
   iframeContainer.style.top = "0";
   frame.style.height = "calc(100vh - 32px)";
 });
 
-// 🔹 Navegação
+// ----------------------------------------------------------------------
+// NAVEGAÇÃO
+// ----------------------------------------------------------------------
 function goHome() {
-  iframeContainer.classList.remove('full');
-  iframeContainer.style.display = 'none';
-  avisosSection.style.display = 'block';
-  sidebar.style.display = 'flex';
+  iframeContainer.classList.remove("full");
+  iframeContainer.style.display = "none";
+  avisosSection.style.display = "block";
+  sidebar.style.display = "flex";
 }
 
-function openRoute(route) {
+async function openRoute(route) {
   const src = ROUTES[route];
   if (!src) { goHome(); return; }
 
   showLoading();
-  avisosSection.style.display = 'none';
-  iframeContainer.style.display = 'block';
-  iframeContainer.classList.add('full');
+  avisosSection.style.display = "none";
+  iframeContainer.style.display = "block";
+  iframeContainer.classList.add("full");
 
   frame.onload = async () => {
     await sendAuthToIframe();
     ajustarAlturaIframe(frame);
 
-    // 🔹 Envia mensagem para aumentar badges apenas se for escala e funcionário
     const user = auth.currentUser;
     if (user) {
-      const userSnap = await getDoc(doc(db, "users", user.uid));
-      const isAdmin = userSnap.exists() ? userSnap.data().admin===true : false;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      const isAdmin = snap.exists() ? snap.data().admin === true : false;
 
-      if (!isAdmin && route === 'escala') {
+      if (!isAdmin && route === "escala") {
         frame.contentWindow.postMessage({ type: "aumentarBadges" }, "*");
       }
     }
@@ -81,283 +92,176 @@ function openRoute(route) {
   frame.src = src;
 }
 
-// 🔹 Adiciona rota Escala
-const escalaLi = document.createElement('li');
-escalaLi.dataset.target = 'escala';
-escalaLi.innerHTML = "📅 <span class='label'>Escala</span>";
-sidebar.querySelector('ul').appendChild(escalaLi);
-escalaLi.addEventListener('click', () => openRoute('escala'));
+// Sidebar items dinâmicos (Escala, Funcionário, Suporte, Pesquisa)
+["escala", "funcionario", "suporte", "pesquisa"].forEach((route) => {
+  const li = document.createElement("li");
+  li.dataset.target = route;
+  li.innerHTML =
+    route === "escala" ? "📅 <span class='label'>Escala</span>" :
+    route === "funcionario" ? "👤 <span class='label'>Funcionário</span>" :
+    route === "suporte" ? "☎️ <span class='label'>Suporte</span>" :
+    "🔍 <span class='label'>Pesquisa</span>";
 
-// 🔹 Adiciona rota Funcionário
-ROUTES.funcionario = "sistemas/funcionario/index.html";
+  sidebar.querySelector("ul").appendChild(li);
+  li.addEventListener("click", () => openRoute(route));
+});
 
-const funcionarioLi = document.createElement('li');
-funcionarioLi.dataset.target = 'funcionario';
-funcionarioLi.innerHTML = "👤 <span class='label'>Funcionário</span>";
-sidebar.querySelector('ul').appendChild(funcionarioLi);
-
-funcionarioLi.addEventListener('click', () => openRoute('funcionario'));
-
-// 🔹 Adiciona rota Suporte
-ROUTES.suporte = "sistemas/suporte/index.html";
-
-const suporteLi = document.createElement('li');
-suporteLi.dataset.target = 'suporte';
-suporteLi.innerHTML = "☎️ <span class='label'>Suporte</span>";
-sidebar.querySelector('ul').appendChild(suporteLi);
-
-suporteLi.addEventListener('click', () => openRoute('suporte'));
-
-// 🔹 Adiciona rota Pesquisa Cartões
-ROUTES.pesquisa = "sistemas/cartoes/index.html";
-
-const pesquisaLi = document.createElement('li');
-pesquisaLi.dataset.target = 'pesquisa';
-pesquisaLi.innerHTML = "🔍 <span class='label'>Pesquisa</span>";
-sidebar.querySelector('ul').appendChild(pesquisaLi);
-
-pesquisaLi.addEventListener('click', () => openRoute('pesquisa'));
-
-
-// 🔹 Sidebar navigation
-document.querySelectorAll('.sidebar li').forEach(li => {
-  li.addEventListener('click', () => {
+// Sidebar existente
+document.querySelectorAll(".sidebar li").forEach((li) => {
+  li.addEventListener("click", () => {
     const t = li.dataset.target;
-    if (t === 'home') goHome();
+    if (t === "home") goHome();
     else openRoute(t);
   });
 });
 
-// 🔹 Atualiza data
+// ----------------------------------------------------------------------
+// DATA DO DIA
+// ----------------------------------------------------------------------
 if (dataVigenteSpan) {
   const hoje = new Date();
-  const dia = String(hoje.getDate()).padStart(2,'0');
-  const mes = String(hoje.getMonth()+1).padStart(2,'0');
-  const ano = hoje.getFullYear();
-  dataVigenteSpan.textContent = `${dia}/${mes}/${ano}`;
+  dataVigenteSpan.textContent =
+    hoje.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-// ============================================================
-// 🔹 Garante usuário no Firestore
-// ============================================================
+// ----------------------------------------------------------------------
+// GARANTE QUE O USUÁRIO EXISTE NO FIRESTORE
+// ----------------------------------------------------------------------
 async function ensureUserInFirestore(user) {
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-    const parts = (user.email||'').split('@');
-    const matricula = parts[0]||'';
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+  const matricula = (user.email || "").split("@")[0] || "";
 
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        uid: user.uid,
-        email: user.email||'',
-        matricula,
-        nome: user.displayName||matricula,
-        admin: false,
-        createdAt: new Date()
-      });
-      console.log("🟢 Usuário criado com admin: false");
-    } else {
-      console.log("✅ Usuário já existe, mantendo admin atual");
-    }
-
-    const finalSnap = await getDoc(userRef);
-    const userData = finalSnap.data();
-    return { matricula: userData.matricula, isAdmin: userData.admin };
-
-  } catch(e) {
-    console.error("Erro ao salvar usuário em 'users':", e);
-    throw e;
+  if (!snap.exists()) {
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email || "",
+      matricula,
+      nome: user.displayName || matricula,
+      admin: false,
+      createdAt: new Date()
+    });
   }
+
+  const final = await getDoc(userRef);
+  const data = final.data();
+  return { matricula: data.matricula, isAdmin: data.admin };
 }
 
-// ============================================================
-// 🔹 Autenticação e inicialização
-// ============================================================
-let authChecked = false;
-let retryCount = 0;
-const MAX_RETRIES = 3;
-
-// ============================================================
-// ✅ Autenticação estável (SEM REDIRECT PREMATURO / SEM LOOP)
-// ============================================================
+// ----------------------------------------------------------------------
+// AUTENTICAÇÃO — VERSÃO CORRIGIDA (SEM LOOP / SEM REDIRECT PREMATURO)
+// ----------------------------------------------------------------------
 onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        // Usuário realmente não logado → envia para login
-        window.location.href = "login.html";
-        return;
-    }
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
-    try {
-        showLoading();
+  try {
+    showLoading();
 
-        // Aguarda o Firebase garantir o token
-        await user.getIdToken(true);
+    await user.getIdToken(true);
 
-        const { matricula, isAdmin } = await ensureUserInFirestore(user);
+    const { matricula, isAdmin } = await ensureUserInFirestore(user);
 
-        sidebar.classList.remove('hidden');
-        sidebarBadge.textContent = matricula;
+    sidebar.classList.remove("hidden");
 
-        sidebar.addEventListener('mouseenter', ()=> { 
-            sidebarBadge.textContent = `${user.displayName || 'Usuário'} • ${matricula}`;
-        });
-
-        sidebar.addEventListener('mouseleave', ()=> {
-            sidebarBadge.textContent = matricula;
-        });
-
-        // Envia token assim que o usuário estiver estável
-        await sendAuthToIframe();
-
-        // Agora sim, libera a navegação
-        goHome();
-
-        hideLoading();
-
-        console.log(`✅ Usuário autenticado: ${matricula} | Admin: ${isAdmin}`);
-
-    } catch (err) {
-        console.error("🔥 Erro na autenticação estável:", err);
-
-        alert("Falha ao validar sessão. Refaça o login.");
-        await signOut(auth);
-        window.location.href = "login.html";
-    }
-});
-  
-
-  sidebar.classList.remove('hidden');
     sidebarBadge.textContent = matricula;
-    sidebar.addEventListener('mouseenter', ()=> {
-      sidebarBadge.textContent = (user.displayName||'Usuário') + ' • ' + matricula;
+    sidebar.addEventListener("mouseenter", () => {
+      sidebarBadge.textContent = `${user.displayName || "Usuário"} • ${matricula}`;
     });
-    sidebar.addEventListener('mouseleave', ()=> {
+    sidebar.addEventListener("mouseleave", () => {
       sidebarBadge.textContent = matricula;
     });
 
     if (!isAdmin) {
-      const adminButtons = document.querySelectorAll('.adminOnly');
-      adminButtons.forEach(b => b.style.display = 'none');
+      document.querySelectorAll(".adminOnly").forEach(b => (b.style.display = "none"));
     }
 
     await sendAuthToIframe();
+
     goHome();
     hideLoading();
 
-    console.log(`Usuário autenticado: ${matricula} | Admin: ${isAdmin}`);
-
-  } catch(err) {
-    console.warn("⚠️ Falha temporária ao inicializar usuário:", err);
-
-    if (retryCount < MAX_RETRIES) {
-      retryCount++;
-      console.log(`Tentando novamente (${retryCount}/${MAX_RETRIES})...`);
-      setTimeout(() => { onAuthStateChanged(auth, ()=>{}); }, 1500);
-      return;
-    }
-
-    console.error("Erro persistente — mantendo tela de carregamento.");
-    showLoading();
+    console.log("✅ Usuário autenticado:", matricula, "| Admin:", isAdmin);
+  } catch (err) {
+    console.error("🔥 Erro ao validar sessão:", err);
+    await signOut(auth);
+    window.location.href = "login.html";
   }
 });
 
-// ============================================================
-// 🔹 Envio de autenticação para iframe
-// ============================================================
+// ----------------------------------------------------------------------
+// ENVIA TOKEN PARA O IFRAME
+// ----------------------------------------------------------------------
 async function sendAuthToIframe() {
-  try {
-    const user = auth.currentUser;
-    if (!user) return;
+  const user = auth.currentUser;
+  if (!user) return;
 
-    const parts = (user.email||'').split('@');
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-    const isAdmin = userSnap.exists() ? userSnap.data().admin===true : false;
+  const snap = await getDoc(doc(db, "users", user.uid));
+  const isAdmin = snap.exists() ? snap.data().admin === true : false;
+  const matricula = (user.email || "").split("@")[0];
 
-    const payload = {
-      type: 'syncAuth',
-      usuario: { matricula: parts[0]||'', email:user.email||'', nome:user.displayName||'' },
+  frame.contentWindow.postMessage(
+    {
+      type: "syncAuth",
+      usuario: {
+        matricula,
+        email: user.email || "",
+        nome: user.displayName || ""
+      },
       admin: isAdmin
-    };
-
-    frame.contentWindow.postMessage(payload, "*");
-
-  } catch(err) {
-    console.error("Erro ao enviar auth ao iframe:", err);
-  }
+    },
+    "*"
+  );
 }
 
-// ============================================================
-// 🔹 Logout
-// ============================================================
+// ----------------------------------------------------------------------
+// LOGOUT
+// ----------------------------------------------------------------------
 if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      await signOut(auth);
-      window.location.href = 'login.html';
-    } catch(err) {
-      console.error("Erro ao deslogar:", err);
-      alert("Falha ao deslogar, tente novamente.");
-    }
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
   });
 }
 
-// ============================================================
-// 🔹 Ajuste automático de altura de iframe
-// ============================================================
+// ----------------------------------------------------------------------
+// AJUSTE AUTOMÁTICO DE ALTURA DO IFRAME
+// ----------------------------------------------------------------------
 function ajustarAlturaIframe(iframe) {
   try {
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     if (!doc) return;
-    const altura = doc.body.scrollHeight;
-    iframe.style.height = altura + "px";
-  } catch (err) {
-    console.warn("Não foi possível ajustar iframe:", err);
-  }
+    iframe.style.height = doc.body.scrollHeight + "px";
+  } catch {}
 }
 
-const observer = new MutationObserver(mutations => {
-  mutations.forEach(m => {
-    if (m.type === "attributes" && m.attributeName === "src") {
-      ajustarAlturaIframe(m.target);
-    }
-  });
-});
-observer.observe(frame, { attributes: true });
+new MutationObserver((m) => {
+  if (m[0].attributeName === "src") ajustarAlturaIframe(frame);
+}).observe(frame, { attributes: true });
 
-// 🔹 Alterar senha
+// ----------------------------------------------------------------------
+// ALTERAR SENHA
+// ----------------------------------------------------------------------
 if (changePassBtn) {
-  changePassBtn.addEventListener('click', async () => {
+  changePassBtn.addEventListener("click", async () => {
     const user = auth.currentUser;
-    if (!user) {
-      alert("Usuário não autenticado!");
-      return;
-    }
+    if (!user) return alert("Usuário não autenticado.");
 
-    // Solicita nova senha ao usuário
-    const newPassword = prompt("Digite a nova senha (mínimo 6 caracteres):");
-    if (!newPassword || newPassword.length < 6) {
-      alert("Senha inválida! Deve ter no mínimo 6 caracteres.");
-      return;
-    }
+    const nova = prompt("Digite a nova senha (mínimo 6 caracteres):");
+    if (!nova || nova.length < 6) return alert("Senha inválida.");
 
     try {
-      await updatePassword(user, newPassword);
-      alert("Senha alterada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao alterar senha:", error);
-
-      // Caso seja necessário reautenticar (comum em sessões antigas)
-      if (error.code === 'auth/requires-recent-login') {
-        alert("Por segurança, você precisa entrar novamente para alterar a senha.");
-        try {
-          await signOut(auth);
-          window.location.href = 'login.html';
-        } catch (signOutErr) {
-          console.error("Erro ao deslogar para reautenticação:", signOutErr);
-        }
+      await updatePassword(user, nova);
+      alert("Senha alterada com sucesso.");
+    } catch (err) {
+      if (err.code === "auth/requires-recent-login") {
+        alert("Você precisa fazer login novamente.");
+        await signOut(auth);
+        window.location.href = "login.html";
       } else {
-        alert("Falha ao alterar senha: " + error.message);
+        alert("Erro ao alterar senha.");
       }
     }
   });
