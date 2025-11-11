@@ -1,5 +1,5 @@
 // script.js
-import { auth, db } from "./firebaseConfig.js";
+import { auth, db } from "./firebaseConfig_v2.js.js";
 import { onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
