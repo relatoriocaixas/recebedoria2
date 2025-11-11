@@ -4,7 +4,6 @@
 import {
   auth,
   db,
-  onAuthStateChanged,
   collection,
   getDocs,
   addDoc,
@@ -88,47 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentYear;
 
   // =====================================================
-  // ✅ RECEBE AUTENTICAÇÃO DO PORTAL (iframe → interno)
+  // ✅ RECEBE AUTENTICAÇÃO — (ÚNICA FONTE DE AUTENTICAÇÃO)
   // =====================================================
   window.addEventListener("message", async (event) => {
-    if (event.data?.type === "syncAuth") {
-      console.log("[escala] Auth recebida do portal:", event.data);
+    if (event.data?.type !== "syncAuth") return;
 
-      const isAdmin = event.data.admin === true;
-      const matricula = event.data.usuario.matricula;
+    console.log("[escala] Auth recebida do portal:", event.data);
 
-      if (!isAdmin) {
-        btnSalvar.style.display = "none";
-      }
+    const isAdmin = event.data.admin === true;
+    const matricula = event.data.usuario.matricula;
 
-      await popularSelectMatriculas(isAdmin, matricula);
-
-      inicializarCalendario(isAdmin, matricula);
-
-      await carregarFolgas(isAdmin, matricula);
+    if (!isAdmin) {
+      btnSalvar.style.display = "none";
     }
-  });
 
-  // =====================================================
-  // ✅ BACKUP: caso o portal demore a enviar o token
-  // =====================================================
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return; // espera o portal
+    await popularSelectMatriculas(isAdmin, matricula);
 
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (!snap.exists()) return;
+    inicializarCalendario(isAdmin, matricula);
 
-    console.log("[escala] Auth via Firebase direta (fallback)");
-
-    const data = snap.data();
-    const isAdmin = data.admin === true;
-    const MAT = data.matricula;
-
-    if (!isAdmin) btnSalvar.style.display = "none";
-
-    await popularSelectMatriculas(isAdmin, MAT);
-    inicializarCalendario(isAdmin, MAT);
-    await carregarFolgas(isAdmin, MAT);
+    await carregarFolgas(isAdmin, matricula);
   });
 
   // =====================================================
@@ -169,7 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const dia = document.getElementById("inputDia").value;
     const horario = document.getElementById("inputHorario").value;
 
-    if (!mat || !dia) return alert("Preencha matrícula e data.");
+    if (!mat || !dia)
+      return alert("Preencha matrícula e data.");
 
     await addDoc(collection(db, "folgas"), {
       matricula: mat,
@@ -177,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
       periodo,
       dia,
       horario: tipo === "troca" ? horario : "",
-      criadoPor: auth.currentUser.uid,
+      criadoPor: auth.currentUser?.uid || "iframe",
       criadoEm: new Date().toISOString()
     });
 
@@ -284,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           badge.textContent = admin
             ? f.matricula
-            : (f.tipo === "troca" ? "Troca de horário" : "Folga");
+            : (f.tipo === "troca" ? "Troca" : "Folga");
 
           if (f.tipo !== "troca") {
             const cor = coresMatriculaFixas[f.matricula] || "#4da6ff";
