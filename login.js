@@ -30,7 +30,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-//
 // ============================================================
 // 🔐 LOGIN
 // ============================================================
@@ -63,7 +62,16 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   }
 });
 
-//
+// ✅ ENTER DISPARA O LOGIN
+document.addEventListener("keydown", (event) => {
+  const loginFormVisible = document.getElementById("loginForm").style.display !== "none";
+
+  if (event.key === "Enter" && loginFormVisible) {
+    event.preventDefault();
+    document.getElementById("btnLogin").click();
+  }
+});
+
 // ============================================================
 // 🧾 MODAL CRIAR CONTA
 // ============================================================
@@ -75,7 +83,6 @@ document.getElementById("closeModalBtn").addEventListener("click", () => {
   document.getElementById("createAccountModal").classList.add("hidden");
 });
 
-//
 // ============================================================
 // 🧍 CRIAR CONTA
 // ============================================================
@@ -97,14 +104,14 @@ document.getElementById("createAccountBtn").addEventListener("click", async () =
     : `${matricula}@movebuss.local`;
 
   try {
-    // 🔹 Cria o usuário no Firebase Auth
+    // Criar no Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
     const user = userCredential.user;
 
-    // 🔹 Define o nome corretamente no perfil Auth
+    // Atualiza nome no Auth
     await updateProfile(user, { displayName: nome });
 
-    // 🔹 Salva apenas na coleção "users"
+    // Salvar na coleção users
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
       nome,

@@ -267,3 +267,22 @@ td.matricula { font-weight: bold; text-align: center; }
     font-size: 0.9rem;
     margin-top: 20px;
 }
+
+#uploadMotoristasBtn {
+    display: inline-block !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+
+    /* Pode estilizar como quiser: */
+    padding: 10px 20px;
+    background: #00aaff;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#uploadMotoristasBtn:hover {
+    background: #0088dd;
+}

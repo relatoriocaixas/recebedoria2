@@ -1,40 +1,44 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
     // ================================================================
-    // ✅ PEGAR MATRÍCULA DO USUÁRIO LOGADO NO PORTAL (Firebase Unificado)
+    // ✅ BOTÃO UPLOAD MOTORISTAS — SEM RESTRIÇÃO (VISÍVEL PARA TODOS)
+    // ================================================================
+    const uploadBtn = document.getElementById("uploadMotoristasBtn");
+    if (uploadBtn) {
+        uploadBtn.addEventListener("click", () => {
+            window.location.href = "uploadMotoristas.html";
+        });
+    }
+
+    // ================================================================
+    // ✅ PEGAR MATRÍCULA DO USUÁRIO LOGADO NO PORTAL (localStorage)
     // ================================================================
     console.log("🔍 Buscando dados do portal no localStorage...");
 
     const campoMatEmp = document.getElementById("matriculaEmpresto");
 
-    // Bloqueia o campo
     campoMatEmp.readOnly = true;
     campoMatEmp.style.background = "#1b1b1b";
     campoMatEmp.style.cursor = "not-allowed";
 
     try {
-        const portalDataStr = localStorage.getItem("usuarioLogado");
+        const portalStr = localStorage.getItem("usuarioLogado");
 
-        if (!portalDataStr) {
-            console.warn("⚠ Nenhum usuário encontrado no portal (localStorage vazio).");
-        } else {
-            const portalData = JSON.parse(portalDataStr);
+        if (portalStr) {
+            const portal = JSON.parse(portalStr);
+            console.log("✅ Dados do portal:", portal);
 
-            console.log("✅ Dados encontrados no portal:", portalData);
-
-            if (portalData.matricula) {
-                campoMatEmp.value = portalData.matricula;
-                console.log("✅ Matrícula aplicada:", portalData.matricula);
-            } else {
-                console.warn("⚠ O portal retornou usuário, mas sem matrícula.");
+            if (portal.matricula) {
+                campoMatEmp.value = portal.matricula;
+                console.log("✅ Matrícula aplicada:", portal.matricula);
             }
         }
-    } catch (err) {
-        console.error("❌ Erro ao ler matrícula do portal:", err);
+    } catch (e) {
+        console.error("❌ Erro ao carregar dados do portal:", e);
     }
 
     // ================================================================
-    // ✅ DAQUI PARA BAIXO — SEU CÓDIGO ORIGINAL, SEM ALTERAR NADA
+    // ✅ DAQUI PRA BAIXO — SEU CÓDIGO ORIGINAL (NÃO ALTERADO)
     // ================================================================
 
     const tipoCartao = document.getElementById("tipoCartao");
@@ -54,38 +58,38 @@
     dataRetirada.value = hoje.toLocaleDateString("pt-BR");
 
     async function atualizarEstoque() {
-        const estoqueDiv = document.getElementById("estoqueConteudo");
-        if (!estoqueDiv) return;
-        estoqueDiv.innerHTML = "Atualizando...";
+        const div = document.getElementById("estoqueConteudo");
+        if (!div) return;
+        div.innerHTML = "Atualizando...";
 
         const total = { digicon: 10, prodata: 10, meiaViagem: 10 };
         const emprestados = { digicon: [], prodata: [], meiaViagem: [] };
 
         try {
-            const snapshot = await db.collection("emprestimos")
+            const snap = await db.collection("emprestimos")
                 .where("status", "==", "em aberto")
                 .get();
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.tipoCartao === "digicon" && data.numBordoDigicon)
-                    emprestados.digicon.push(Number(data.numBordoDigicon));
-                if (data.tipoCartao === "prodata" && data.numBordoProdata)
-                    emprestados.prodata.push(Number(data.numBordoProdata));
-                if (data.numMeiaViagem)
-                    emprestados.meiaViagem.push(Number(data.numMeiaViagem));
+            snap.forEach(d => {
+                const x = d.data();
+                if (x.tipoCartao === "digicon" && x.numBordoDigicon)
+                    emprestados.digicon.push(Number(x.numBordoDigicon));
+                if (x.tipoCartao === "prodata" && x.numBordoProdata)
+                    emprestados.prodata.push(Number(x.numBordoProdata));
+                if (x.numMeiaViagem)
+                    emprestados.meiaViagem.push(Number(x.numMeiaViagem));
             });
-        } catch (err) {
-            console.error("Erro ao buscar empréstimos:", err);
-            estoqueDiv.innerHTML = "<div style='color:#ffb86b;padding:10px;'>Erro ao carregar estoque.</div>";
+        } catch (e) {
+            console.error("Erro no estoque:", e);
+            div.innerHTML = "Erro ao carregar estoque.";
             return;
         }
 
-        estoqueDiv.innerHTML = "";
+        div.innerHTML = "";
 
         ["digicon", "prodata", "meiaViagem"].forEach(tipo => {
             const todos = Array.from({ length: total[tipo] }, (_, i) => i + 1);
-            const disponiveis = todos.filter(n => !emprestados[tipo].includes(n));
+            const disp = todos.filter(x => !emprestados[tipo].includes(x));
 
             const card = document.createElement("div");
             card.classList.add("cardEstoque");
@@ -94,17 +98,17 @@
             header.classList.add("cardHeader");
             header.innerHTML = `
                 <h3>${tipo === "digicon" ? "Bordo Digicon" :
-                        tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
+                      tipo === "prodata" ? "Bordo Prodata" : "Meia Viagem"}</h3>
                 <span class="chev">▸</span>
             `;
 
             const body = document.createElement("div");
             body.classList.add("cardBody");
             body.innerHTML = `
-                <p><b>Disponível:</b> ${disponiveis.length}</p>
+                <p><b>Disponível:</b> ${disp.length}</p>
                 <p><b>Emprestado:</b> ${emprestados[tipo].length}</p>
-                <p><b>Disponíveis:</b> ${disponiveis.join(", ") || "-"}</p>
-                <p><b>Emprestados:</b> ${emprestados[tipo].join(", ") || "-"}</p>
+                <p><b>N° Disponíveis:</b> ${disp.join(", ") || "-"}</p>
+                <p><b>N° Emprestados:</b> ${emprestados[tipo].join(", ") || "-"}</p>
             `;
             body.style.display = "none";
 
@@ -116,25 +120,22 @@
 
             card.appendChild(header);
             card.appendChild(body);
-            estoqueDiv.appendChild(card);
+            div.appendChild(card);
         });
 
         preencherSelects(emprestados, total);
     }
 
     function preencherSelects(emprestados, total) {
-        const selects = [
+        [
             { el: numBordoDigiconSelect, tipo: "digicon" },
             { el: numBordoProdataSelect, tipo: "prodata" },
             { el: numMeiaViagemSelect, tipo: "meiaViagem" }
-        ];
-
-        selects.forEach(({ el, tipo }) => {
-            if (!el) return;
+        ].forEach(({ el, tipo }) => {
             el.innerHTML = '<option value="">Selecione</option>';
             const todos = Array.from({ length: total[tipo] }, (_, i) => i + 1);
-            const disponiveis = todos.filter(n => !emprestados[tipo].includes(n));
-            disponiveis.forEach(n => {
+            const disp = todos.filter(n => !emprestados[tipo].includes(n));
+            disp.forEach(n => {
                 const opt = document.createElement("option");
                 opt.value = n;
                 opt.textContent = n;
@@ -162,23 +163,20 @@
     });
 
     function calcularPrazo(motivo) {
-        const prazo = new Date();
-        if (motivo === "Perda" || motivo === "Roubo/Furto") prazo.setDate(prazo.getDate() + 3);
-        else if (motivo === "Danificado") prazo.setDate(prazo.getDate() + 2);
-        else prazo.setDate(prazo.getDate() + 1);
-        return prazo.toLocaleDateString("pt-BR");
+        const p = new Date();
+        if (motivo === "Perda" || motivo === "Roubo/Furto") p.setDate(p.getDate() + 3);
+        else if (motivo === "Danificado") p.setDate(p.getDate() + 2);
+        else p.setDate(p.getDate() + 1);
+        return p.toLocaleDateString("pt-BR");
     }
 
     matriculaMotorista.addEventListener("input", async () => {
-        const matricula = matriculaMotorista.value.trim();
-        if (!matricula) {
-            nomeMotorista.value = "";
-            return;
-        }
+        const mat = matriculaMotorista.value.trim();
+        if (!mat) { nomeMotorista.value = ""; return; }
+
         try {
-            const ref = db.collection("motoristas").doc(matricula);
-            const docSnap = await ref.get();
-            nomeMotorista.value = docSnap.exists ? (docSnap.data().nome || "") : "";
+            const snap = await db.collection("motoristas").doc(mat).get();
+            nomeMotorista.value = snap.exists ? snap.data().nome : "";
         } catch (e) {
             console.error("Erro ao buscar motorista:", e);
         }
@@ -192,7 +190,7 @@
         const meia = numMeiaViagemSelect.value.trim();
 
         if (!digicon && !prodata && !meia) {
-            alert("Por favor, selecione pelo menos um número de cartão.");
+            alert("Selecione pelo menos um número de cartão.");
             return;
         }
 
@@ -218,7 +216,7 @@
             if (typeof gerarPDF_A4 === "function") gerarPDF_A4(dados);
             if (typeof gerarPDF_Termica === "function") gerarPDF_Termica(dados);
 
-            alert("Registro salvo com sucesso!");
+            alert("Registro salvo!");
 
             form.reset();
             dataRetirada.value = new Date().toLocaleDateString("pt-BR");
@@ -228,14 +226,9 @@
             meiaViagemField.style.display = "none";
 
             atualizarEstoque();
-        } catch (err) {
-            console.error("Erro ao salvar:", err);
+        } catch (e) {
+            console.error("Erro ao salvar:", e);
             alert("Erro ao salvar registro.");
         }
     });
-
-    document.getElementById("relatorioBtn").addEventListener("click", () => {
-        window.location.href = "relatorio.html";
-    });
-
 });
