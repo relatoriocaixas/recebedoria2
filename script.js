@@ -10,28 +10,25 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/
 // ===== Elementos da página =====
 const loader = document.getElementById("loader");
 const sidebar = document.getElementById("sidebar");
-const userBadge = document.getElementById("user-badge");
+const userBadge = document.getElementById("sidebarBadge"); // ✅ corrigido
 const mainFrame = document.getElementById("mainFrame");
 const iframeContainer = document.getElementById("iframeContainer");
-const avisos = document.getElementById("avisos");
+const avisos = document.getElementById("avisosSection"); // ✅ corrigido
 const logoutBtn = document.getElementById("logoutBtn");
 
 // ===== Base URL e Rotas =====
 const BASE = "https://relatoriocaixas.github.io/recebedoria2";
 const ROUTES = {
   home: null,
-  escala: `${BASE}/sistemas/escala/escala.html`,
-  funcionario: `${BASE}/sistemas/funcionario/index.html`,
-  suporte: `${BASE}/sistemas/suporte/index.html`,
-  pesquisa: `${BASE}/sistemas/cartoes/index.html`,
+  abastecimento: `${BASE}/sistemas/abastecimento/index.html`,
   emprestimo: `${BASE}/sistemas/emprestimo/index.html`,
   relatorios: `${BASE}/sistemas/emprestimo/emprestimocartao-main/relatorio.html`,
   diferencas: `${BASE}/sistemas/diferencas/index.html`,
 };
 
 // ===== Loader =====
-loader.style.display = "flex";
-iframeContainer.style.display = "none";
+if (loader) loader.style.display = "flex";
+if (iframeContainer) iframeContainer.style.display = "none";
 
 // ===== Estado global =====
 let currentUser = null;
@@ -55,10 +52,12 @@ onAuthStateChanged(auth, async (user) => {
   await ensureUserInFirestore(user);
 
   // Exibe interface
-  loader.style.display = "none";
-  iframeContainer.style.display = "block";
-  sidebar.style.display = "flex";
-  userBadge.textContent = (user.displayName || user.email.split("@")[0]);
+  if (loader) loader.style.display = "none";
+  if (iframeContainer) iframeContainer.style.display = "block";
+  if (sidebar) sidebar.style.display = "flex";
+
+  // Exibe nome/matrícula no badge
+  if (userBadge) userBadge.textContent = user.displayName || user.email.split("@")[0];
 
   // Envia token inicial aos iframes
   await refreshAndSendToken();
@@ -129,21 +128,23 @@ async function ensureUserInFirestore(user) {
 function goHome() {
   if (avisos) avisos.style.display = "block";
   if (iframeContainer) iframeContainer.classList.remove("full");
-  mainFrame.src = "";
+  if (mainFrame) mainFrame.src = "";
 }
 
 function openRoute(routeKey) {
   const route = ROUTES[routeKey];
   if (!route) return goHome();
 
-  avisos.style.display = "none";
-  iframeContainer.classList.add("full");
-  mainFrame.src = route;
+  if (avisos) avisos.style.display = "none";
+  if (iframeContainer) iframeContainer.classList.add("full");
+  if (mainFrame) mainFrame.src = route;
 
   // Quando iframe carregar, reenviar token
-  mainFrame.onload = async () => {
-    await refreshAndSendToken();
-  };
+  if (mainFrame) {
+    mainFrame.onload = async () => {
+      await refreshAndSendToken();
+    };
+  }
 }
 
 // Adiciona listeners às opções do menu
