@@ -1,20 +1,38 @@
-﻿// firebaseConfig_v2.js — versão exclusiva para sistemas dentro dos IFRAMES
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+// firebaseConfig.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+// 🔹 Aqui vem a parte do Firestore:
 import {
   getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
   doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  addDoc,
+  getDocs,
+  collection,
   query,
   where,
+  serverTimestamp,
   orderBy
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+// 🔹 `deleteDoc` deve ser importado separado (de firestore/lite)
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-lite.js";
+
+// ======================================================
+// Configuração Firebase
+// ======================================================
 export const firebaseConfig = {
   apiKey: "AIzaSyBWmq02P8pGbl2NmppEAIKtF9KtQ7AzTFQ",
   authDomain: "unificado-441cd.firebaseapp.com",
@@ -25,20 +43,33 @@ export const firebaseConfig = {
   measurementId: "G-6GQX395J9C"
 };
 
-// ✅ Apenas Firestore — SEM AUTH
+// Inicializa Firebase
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// ✅ Exporta apenas Firestore
+// Persistência de login
+setPersistence(auth, browserLocalPersistence);
+
+// ======================================================
+// Exportações para uso em outros módulos
+// ======================================================
 export {
-  collection,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword,
   doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  addDoc,
+  getDocs,
+  collection,
   query,
   where,
-  orderBy
+  serverTimestamp,
+  orderBy,
+  deleteDoc // ✅ agora realmente existe
 };

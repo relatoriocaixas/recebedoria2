@@ -1,6 +1,10 @@
-﻿// firebaseConfig_v2.js — versão exclusiva para sistemas dentro dos IFRAMES
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -22,15 +26,15 @@ export const firebaseConfig = {
   storageBucket: "unificado-441cd.firebasestorage.app",
   messagingSenderId: "671392063569",
   appId: "1:671392063569:web:57e3f6b54fcdc45862d870",
-  measurementId: "G-6GQX395J9C"
+  measurementId: "G-6GQX395J9C",
 };
 
-// ✅ Apenas Firestore — SEM AUTH
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// ✅ Exporta apenas Firestore
 export {
+  onAuthStateChanged,
   collection,
   getDocs,
   getDoc,
@@ -42,3 +46,5 @@ export {
   where,
   orderBy
 };
+
+setPersistence(auth, browserLocalPersistence);
