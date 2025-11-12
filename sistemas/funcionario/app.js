@@ -9,7 +9,7 @@ import {
   updateDoc,
   doc,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
@@ -51,7 +51,11 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "../../login.html";
     return;
   }
+
   usuarioAtual = user;
+
+  // 🔄 Envia o user autenticado para todos os iframes (para evitar “deslogar” dentro deles)
+  broadcastUserToIframes(user);
 
   const q = query(collection(db, "users"), where("email", "==", user.email));
   const snap = await getDocs(q);
@@ -68,6 +72,14 @@ onAuthStateChanged(auth, async (user) => {
     carregarMatriculasAdmin();
   }
 });
+
+// --- ENVIA USER PARA IFRAMES ---
+function broadcastUserToIframes(user) {
+  const iframes = document.querySelectorAll("iframe");
+  iframes.forEach((iframe) => {
+    iframe.contentWindow?.postMessage({ user }, "*");
+  });
+}
 
 // --- PERFIL ---
 async function carregarPerfil(dados) {
@@ -125,7 +137,7 @@ async function carregarAvisos(matricula) {
   snap.forEach((d) => {
     const p = document.createElement("p");
     p.textContent = d.data().texto;
-    p.style.color = "#fff"; // ✅ texto branco
+    p.style.color = "#fff";
     avisosLista.appendChild(p);
   });
 }
@@ -157,7 +169,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
     let totalAbastecimentos = 0;
     let totalDinheiro = 0;
 
-    snap.forEach(docSnap => {
+    snap.forEach((docSnap) => {
       const r = docSnap.data();
       if (!r.dataCaixa) return;
       const data = r.dataCaixa.toDate ? r.dataCaixa.toDate() : new Date(r.dataCaixa);
@@ -165,7 +177,6 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
 
       if (!dias[dia]) dias[dia] = { abastecimentos: 0, valorFolha: 0 };
 
-      // 🔹 Soma do campo "abastecimento" em vez de contar documentos
       dias[dia].abastecimentos += Number(r.abastecimento || 0);
       dias[dia].valorFolha += Number(r.valorFolha || 0);
 
@@ -196,7 +207,7 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             borderColor: "#444",
             borderWidth: 2,
             borderRadius: 8,
-            yAxisID: "y"
+            yAxisID: "y",
           },
           {
             label: "Valor Folha (R$)",
@@ -209,16 +220,16 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             yAxisID: "y1",
             pointStyle: "rectRot",
             pointRadius: 6,
-            pointBackgroundColor: "#00f5ff"
-          }
-        ]
+            pointBackgroundColor: "#00f5ff",
+          },
+        ],
       },
       options: {
         maintainAspectRatio: false,
         responsive: true,
         plugins: {
           legend: {
-            labels: { color: "#fff", font: { size: 14 } }
+            labels: { color: "#fff", font: { size: 14 } },
           },
           tooltip: {
             mode: "index",
@@ -227,26 +238,26 @@ async function carregarGraficoIndividual(matricula, mesEscolhido = null) {
             titleColor: "#00f5ff",
             bodyColor: "#fff",
             borderColor: "#00f5ff",
-            borderWidth: 1
-          }
+            borderWidth: 1,
+          },
         },
         scales: {
           y: {
             beginAtZero: true,
             ticks: { color: "#888" },
-            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] }
+            grid: { color: "rgba(0,128,128,0.2)", borderDash: [4, 2] },
           },
           y1: {
             position: "right",
             ticks: { color: "#00f5ff" },
-            grid: { drawOnChartArea: false }
+            grid: { drawOnChartArea: false },
           },
           x: {
             ticks: { color: "#fff" },
-            grid: { color: "rgba(255,255,255,0.05)" }
-          }
-        }
-      }
+            grid: { color: "rgba(255,255,255,0.05)" },
+          },
+        },
+      },
     });
 
     totalInfoEl.innerHTML = `
@@ -266,7 +277,7 @@ async function carregarMatriculasAdmin() {
   const q = query(collection(db, "users"));
   const snap = await getDocs(q);
   adminMatriculaSelect.innerHTML = "";
-  snap.forEach(docSnap => {
+  snap.forEach((docSnap) => {
     const d = docSnap.data();
     const option = document.createElement("option");
     option.value = d.matricula;
@@ -287,7 +298,6 @@ btnSalvarHorario.addEventListener("click", async () => {
     const userDoc = snap.docs[0];
     await updateDoc(userDoc.ref, { horarioTrabalho: horario });
 
-    // ✅ Atualiza instantaneamente
     if (matriculaAtual === matricula) horarioEl.textContent = horario;
 
     alert("Horário salvo com sucesso!");
@@ -302,12 +312,11 @@ btnSalvarAviso.addEventListener("click", async () => {
   await addDoc(collection(db, "avisos"), {
     matricula,
     texto,
-    criadoEm: serverTimestamp()
+    criadoEm: serverTimestamp(),
   });
 
   adminAvisoInput.value = "";
 
-  // ✅ Atualiza avisos imediatamente
   if (matriculaAtual === matricula) carregarAvisos(matriculaAtual);
 
   alert("Aviso salvo com sucesso!");
@@ -319,11 +328,10 @@ btnVerAvisosAdmin.addEventListener("click", async () => {
   const snap = await getDocs(collection(db, "avisos"));
   adminAvisosLista.innerHTML = "";
 
-  snap.forEach(docSnap => {
+  snap.forEach((docSnap) => {
     const d = docSnap.data();
     const p = document.createElement("p");
     p.style.color = "#fff";
-
     p.innerHTML = `<strong>${d.matricula}:</strong> ${d.texto} `;
 
     const btnEditar = document.createElement("button");
@@ -359,13 +367,8 @@ btnToggleAdmin.addEventListener("click", () => {
   adminControls.style.display = adminPanelExpanded ? "flex" : "none";
 });
 
-// --- RESPOSTA À BARRA LATERAL DO PORTAL ---
+// --- COMUNICAÇÃO SIDEBAR ---
 window.addEventListener("message", (event) => {
-  if (event.data === "sidebarOpened") {
-    document.body.classList.add("sidebar-open");
-  }
-
-  if (event.data === "sidebarClosed") {
-    document.body.classList.remove("sidebar-open");
-  }
+  if (event.data === "sidebarOpened") document.body.classList.add("sidebar-open");
+  if (event.data === "sidebarClosed") document.body.classList.remove("sidebar-open");
 });

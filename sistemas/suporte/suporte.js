@@ -1,7 +1,12 @@
 ﻿import { auth, db } from "./firebaseConfig.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { 
+  collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// Referências do DOM
 const tipoInput = document.getElementById("tipoInput");
 const descricaoInput = document.getElementById("descricaoInput");
 const salvarBtn = document.getElementById("salvarBtn");
@@ -10,22 +15,33 @@ const sugestoesList = document.getElementById("sugestoesList");
 let userData = null;
 let isAdmin = false;
 
-// Inicializa usuário e verifica admin
+// 🔹 Espera autenticação ser detectada pelo portal
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  const parts = user.email.split("@");
-  userData = { matricula: parts[0], email: user.email };
-  
-  const userSnap = await getDocs(collection(db, "users"));
-  const currentUserDoc = userSnap.docs.find(d => d.data().email === user.email);
-  isAdmin = currentUserDoc ? currentUserDoc.data().admin : false;
+  if (!user) {
+    console.warn("Usuário não autenticado. Aguardando login no portal...");
+    return;
+  }
+
+  const matricula = user.email.split("@")[0];
+  userData = { matricula, email: user.email };
+
+  try {
+    const userSnap = await getDocs(collection(db, "users"));
+    const currentUserDoc = userSnap.docs.find(d => d.data().email === user.email);
+    isAdmin = currentUserDoc ? currentUserDoc.data().admin : false;
+  } catch (err) {
+    console.error("Erro ao verificar admin:", err);
+  }
 
   carregarSugestoes();
 });
 
-// Salvar entrada (sempre começa EM ANÁLISE)
+// 🔹 Salvar entrada (sempre começa EM ANÁLISE)
 salvarBtn.addEventListener("click", async () => {
-  if (!descricaoInput.value.trim()) return;
+  if (!descricaoInput.value.trim() || !userData) {
+    alert("Preencha a descrição e aguarde o login ser carregado.");
+    return;
+  }
 
   const tipo = tipoInput.value;
   const collectionName = tipo === "sugestao" ? "sugestoes" : "reports";
@@ -33,24 +49,27 @@ salvarBtn.addEventListener("click", async () => {
   try {
     await addDoc(collection(db, collectionName), {
       matricula: userData.matricula,
-      descricao: descricaoInput.value,
+      descricao: descricaoInput.value.trim(),
       tipo,
       status: "em analise",
       criadoEm: new Date()
     });
+
     descricaoInput.value = "";
     carregarSugestoes();
   } catch (err) {
     console.error("Erro ao salvar:", err);
+    alert("Erro ao salvar sugestão.");
   }
 });
 
-// Atualiza lista ao trocar tipo
-tipoInput.addEventListener("change", () => carregarSugestoes());
+// 🔹 Atualiza lista ao trocar tipo
+tipoInput.addEventListener("change", carregarSugestoes);
 
-// Carregar sugestões/reports
+// 🔹 Carregar sugestões/reports
 async function carregarSugestoes() {
   sugestoesList.innerHTML = "";
+
   if (!userData) return;
 
   const filtroTipo = tipoInput.value;
@@ -60,10 +79,15 @@ async function carregarSugestoes() {
     const q = query(collection(db, collectionName), orderBy("criadoEm", "desc"));
     const snapshot = await getDocs(q);
 
-    snapshot.forEach(docSnap => {
+    if (snapshot.empty) {
+      sugestoesList.innerHTML = `<p class="sem-resultados">Nenhuma ${filtroTipo} encontrada.</p>`;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
       const data = docSnap.data();
 
-      // 🔹 FILTRO: se não for admin, só mostra itens do próprio usuário
+      // 🔒 Se não for admin, só mostra as próprias entradas
       if (!isAdmin && data.matricula !== userData.matricula) return;
 
       const card = document.createElement("div");
@@ -72,94 +96,72 @@ async function carregarSugestoes() {
       const badge = document.createElement("span");
       badge.classList.add("status-badge");
 
-      // Determina classe do status
-      let statusClass = "";
-      switch(data.status) {
-        case "solucionado":
-        case "aprovado":
-          statusClass = "btn-aprovado";
-          break;
-        case "reprovado":
-          statusClass = "btn-reprovado";
-          break;
-        case "correcao iniciada":
-          statusClass = "btn-correcao";
-          break;
-        default:
-          statusClass = "btn-analise";
-      }
-
-      badge.classList.add(statusClass);
+      // 🔹 Define classe do status visual
+      const statusMap = {
+        "solucionado": "btn-aprovado",
+        "aprovado": "btn-aprovado",
+        "reprovado": "btn-reprovado",
+        "correcao iniciada": "btn-correcao",
+        "em analise": "btn-analise"
+      };
+      badge.classList.add(statusMap[data.status] || "btn-analise");
       badge.textContent = data.status;
+
+      // 🔹 Conteúdo principal
       card.innerHTML = `<strong>${data.matricula}</strong>: ${data.descricao}`;
       card.prepend(badge);
 
-      // Botões admin
+      // 🔹 Botões administrativos
       if (isAdmin) {
         const actions = document.createElement("div");
         actions.className = "admin-actions";
 
-        // Solucionado / Aprovado
-        const btnSolucionado = document.createElement("button");
-        btnSolucionado.className = "btn-aprovado";
-        btnSolucionado.textContent = filtroTipo === "report" ? "Solucionado" : "Aprovado";
-        btnSolucionado.onclick = async () =>
-          await updateStatus(docSnap.id, collectionName, filtroTipo === "report" ? "solucionado" : "aprovado");
+        const createButton = (text, cls, status) => {
+          const btn = document.createElement("button");
+          btn.className = cls;
+          btn.textContent = text;
+          btn.onclick = async () => await updateStatus(docSnap.id, collectionName, status);
+          return btn;
+        };
 
-        // Em Análise
-        const btnAnalise = document.createElement("button");
-        btnAnalise.className = "btn-analise";
-        btnAnalise.textContent = "Em análise";
-        btnAnalise.onclick = async () =>
-          await updateStatus(docSnap.id, collectionName, "em analise");
-
-        // Reprovado (somente quando filtro é sugestão)
-        let btnReprovado = null;
-        if (filtroTipo === "sugestao") {
-          btnReprovado = document.createElement("button");
-          btnReprovado.className = "btn-reprovado";
-          btnReprovado.textContent = "Reprovado";
-          btnReprovado.onclick = async () =>
-            await updateStatus(docSnap.id, collectionName, "reprovado");
-        }
-
-        // Correção iniciada (somente quando filtro é report)
-        let btnCorrecao = null;
         if (filtroTipo === "report") {
-          btnCorrecao = document.createElement("button");
-          btnCorrecao.className = "btn-correcao";
-          btnCorrecao.textContent = "Correção iniciada";
-          btnCorrecao.onclick = async () =>
-            await updateStatus(docSnap.id, collectionName, "correcao iniciada");
+          actions.append(
+            createButton("Solucionado", "btn-aprovado", "solucionado"),
+            createButton("Correção iniciada", "btn-correcao", "correcao iniciada"),
+            createButton("Em análise", "btn-analise", "em analise"),
+          );
+        } else {
+          actions.append(
+            createButton("Aprovado", "btn-aprovado", "aprovado"),
+            createButton("Em análise", "btn-analise", "em analise"),
+            createButton("Reprovado", "btn-reprovado", "reprovado"),
+          );
         }
 
-        const btnExcluir = document.createElement("button");
-        btnExcluir.className = "btn-excluir";
-        btnExcluir.textContent = "Excluir";
+        const btnExcluir = createButton("Excluir", "btn-excluir");
         btnExcluir.onclick = async () => {
           await deleteDoc(doc(db, collectionName, docSnap.id));
           carregarSugestoes();
         };
 
-        // Adiciona botões de acordo com o filtro
-        if (filtroTipo === "report") {
-          actions.append(btnSolucionado, btnCorrecao, btnAnalise, btnExcluir);
-        } else {
-          actions.append(btnSolucionado, btnAnalise, btnReprovado, btnExcluir);
-        }
-
+        actions.append(btnExcluir);
         card.appendChild(actions);
       }
 
       sugestoesList.appendChild(card);
     });
-  } catch(err) {
+
+  } catch (err) {
     console.error("Erro ao carregar entradas:", err);
   }
 }
 
-// Atualizar status no Firestore
+// 🔹 Atualiza status de um documento
 async function updateStatus(id, collectionName, status) {
-  await updateDoc(doc(db, collectionName, id), { status });
-  carregarSugestoes();
+  try {
+    await updateDoc(doc(db, collectionName, id), { status });
+    carregarSugestoes();
+  } catch (err) {
+    console.error("Erro ao atualizar status:", err);
+  }
 }
